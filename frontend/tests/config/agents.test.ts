@@ -326,12 +326,15 @@ describe('AGENT_CONFIG defaultStakingProgramId', () => {
     [AgentMap.Polystrat, STAKING_PROGRAM_IDS.PolystratVII],
     [AgentMap.Optimus, STAKING_PROGRAM_IDS.OptimusIV],
     [AgentMap.Basius, STAKING_PROGRAM_IDS.BasiusIV],
-  ])('%s defaults to its 50 OLAS-deposit program %s', (agentType, programId) => {
-    const config = AGENT_CONFIG[agentType];
-    expect(config.defaultStakingProgramId).toBe(programId);
-    expect(
-      STAKING_PROGRAMS[config.evmHomeChainId][programId].stakingRequirements
-        .OLAS,
-    ).toBe(100); // 50 OLAS deposit plus a 50 OLAS bond
-  });
+  ])(
+    '%s defaults to its 50 OLAS-deposit program %s',
+    (agentType, programId) => {
+      const config = AGENT_CONFIG[agentType];
+      expect(config.defaultStakingProgramId).toBe(programId);
+      expect(
+        STAKING_PROGRAMS[config.evmHomeChainId][programId].stakingRequirements
+          .OLAS,
+      ).toBe(100); // 50 OLAS deposit plus a 50 OLAS bond
+    },
+  );
 });
