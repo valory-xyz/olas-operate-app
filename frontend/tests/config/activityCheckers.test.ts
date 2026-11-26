@@ -217,7 +217,7 @@ describe('cross-chain completeness', () => {
       Object.keys(ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length;
 
     const totalPrograms = Object.keys(STAKING_PROGRAM_IDS).length;
-    // 16 + 11 + 5 + 3 + 3 = 38 (matches STAKING_PROGRAM_IDS count)
+    // one checker per staking program id, on every chain
     expect(totalCheckers).toBe(totalPrograms);
   });
 });

@@ -101,10 +101,7 @@ export abstract class ConnectService extends StakedAgentService {
     const isEligibleForRewards =
       !isAwaitingBaseline && eligibleRequests >= requiredRequests;
 
-    const availableRewardsForEpoch = Math.max(
-      rewardsPerSecond * livenessPeriod,
-      rewardsPerSecond * secondsSinceCheckpoint,
-    );
+    const availableRewardsForEpoch = rewardsPerSecond * effectivePeriod;
 
     return {
       serviceInfo,

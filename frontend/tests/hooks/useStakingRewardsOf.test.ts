@@ -3,7 +3,6 @@ import { renderHook } from '@testing-library/react';
 import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
-import type { StakingProgramId } from '../../constants/stakingProgram';
 import { createActiveStakingProgramIdQuery } from '../../hooks/useActiveStakingProgramId';
 import { createStakingRewardsQuery } from '../../hooks/useAgentStakingRewardsDetails';
 import { useServices } from '../../hooks/useServices';
@@ -533,13 +532,11 @@ describe('useStakingRewardsOf', () => {
 
   // -- no_staking (Connect) services excluded -------------------------------
   describe('no_staking (Connect) services', () => {
-    const makeGnosisConnectService = (
-      staking_program_id: StakingProgramId = 'no_staking',
-    ) =>
+    const makeGnosisConnectService = () =>
       makeConnectService(MiddlewareChainMap.GNOSIS, {
         service_config_id: MOCK_SERVICE_CONFIG_ID_2,
         chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
-          staking_program_id,
+          staking_program_id: 'no_staking',
         }),
       });
 

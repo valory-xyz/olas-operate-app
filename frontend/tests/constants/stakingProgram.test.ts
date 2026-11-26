@@ -239,7 +239,7 @@ describe('STAKING_PROGRAM_IDS', () => {
   });
 
   describe('completeness and uniqueness', () => {
-    it('covers exactly 57 staking programs across all chains', () => {
+    it('covers exactly 62 staking programs across all chains', () => {
       // Chain totals: 23 Gnosis (16 legacy + 7 Omenstrat) + 14 Base (11 + 3 Basius)
       // + 5 Mode + 6 Optimism (3 legacy + 3 Optimus) + 9 Polygon (3 legacy + 6 Polystrat)
       // + 2 Connect on Gnosis + 3 Connect on Robinhood = 62
