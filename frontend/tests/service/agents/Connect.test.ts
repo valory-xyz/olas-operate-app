@@ -161,6 +161,10 @@ describe('ConnectService.getAgentStakingRewardsInfo', () => {
     const result = await callWith();
 
     expect(result!.isEligibleForRewards).toBe(false);
+    // the epoch's rewards run to the late checkpoint, not one period
+    expect(result!.availableRewardsForEpoch).toBe(
+      REWARDS_PER_SECOND * 2 * DEFAULT_LIVENESS_PERIOD_S,
+    );
   });
 
   it('counts requests from the checker, not the safe nonce', async () => {
@@ -238,6 +242,27 @@ describe('ConnectService contract reads', () => {
       epochCounter: 2,
       livenessPeriod: DEFAULT_LIVENESS_PERIOD_S,
     });
+  });
+
+  it('reports no APY for a contract paying no rewards', async () => {
+    shared.multicallAll.mockResolvedValueOnce([
+      BN(0),
+      BN(44),
+      [],
+      BN(259200),
+      BN(MIN_STAKING_DEPOSIT.toString()),
+      BN(0),
+      BN(1),
+      BN(DEFAULT_LIVENESS_PERIOD_S),
+      BN(2),
+    ]);
+
+    const result = await ConnectService.getStakingContractDetails(
+      PROGRAM,
+      ROBINHOOD,
+    );
+
+    expect(result).toMatchObject({ apy: 0, rewardsPerWorkPeriod: 0 });
   });
 
   it('returns undefined for a program the chain does not have', async () => {
