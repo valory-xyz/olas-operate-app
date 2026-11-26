@@ -183,7 +183,8 @@ export const AgentOnboarding = () => {
     }
     setIsCreatingConnect(true);
     try {
-      // Creates the Connect service (no_staking) and routes to funding.
+      // Creates the Connect service (no_staking); `useCreateConnectService`
+      // decides whether staking selection or funding comes next.
       await createConnectService(selectedConnectChain);
     } catch (error) {
       console.error(error);

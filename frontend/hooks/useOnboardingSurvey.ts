@@ -158,7 +158,8 @@ export const useOnboardingSurvey = () => {
     survey.firstShownAt,
   ]);
 
-  // Connect never stakes; `Home` reports the first Profile visit as its equivalent moment.
+  // Connect may run unstaked (always on Polygon), so it has no reliable reward
+  // signal; `Home` reports the first Profile visit as its equivalent moment.
   const reportConnectProfileVisit = useCallback(() => {
     if (!isEligible || !isNewAccount) return;
     if (selectedAgentType !== AgentMap.Connect) return;

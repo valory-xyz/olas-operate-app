@@ -46,7 +46,8 @@ Both already existed; neither was built for this feature.
 | Staking agents | `firstStakingRewardAchieved` | `RewardProvider` writes it the first time `isEpochTargetMet` turns true — the green "earned" line, **not** an on-chain reward transfer |
 | Connect | First visit to the Profile tab | `Home` already sets `hasVisitedProfile` on `view === 'profile'` and reports it in |
 
-Connect never stakes, so it has no reward signal; the Profile visit is its equivalent moment.
+Connect may run unstaked (always on Polygon), so it has no reliable reward signal; the Profile
+visit is its equivalent moment.
 Every Connect user reaches it — `ConnectFirstRunModal` is non-dismissable and its CTA navigates
 there.
 
