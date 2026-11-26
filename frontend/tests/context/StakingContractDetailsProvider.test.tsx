@@ -132,6 +132,8 @@ const setupMocks = ({
     data: unknown;
     isLoading: boolean;
     isError?: boolean;
+    isFetching?: boolean;
+    errorUpdateCount?: number;
     refetch: jest.Mock;
   };
   useQueriesReturn?: Array<{
@@ -330,11 +332,34 @@ describe('StakingContractDetailsProvider', () => {
           data: undefined,
           isLoading: false,
           isError: true,
+          errorUpdateCount: 1,
           refetch: mockRefetch,
         },
       });
       const { result } = renderProvider();
       expect(result.current.isSelectedStakingContractDetailsError).toBe(true);
+    });
+
+    it('stays an error, not a load, while a Retry after the failure runs', () => {
+      // React Query v5 resets a refetch with no data to pending.
+      setupMocks({
+        useQueryReturn: {
+          data: undefined,
+          isLoading: true,
+          isError: false,
+          isFetching: true,
+          errorUpdateCount: 1,
+          refetch: mockRefetch,
+        },
+      });
+      const { result } = renderProvider();
+      expect(result.current.isSelectedStakingContractDetailsError).toBe(true);
+      expect(result.current.isSelectedStakingContractDetailsLoading).toBe(
+        false,
+      );
+      expect(result.current.isSelectedStakingContractDetailsFetching).toBe(
+        true,
+      );
     });
 
     it('is false when a refetch failed but earlier details remain', () => {
@@ -343,6 +368,7 @@ describe('StakingContractDetailsProvider', () => {
           data: STAKING_CONTRACT_DETAILS,
           isLoading: false,
           isError: true,
+          errorUpdateCount: 1,
           refetch: mockRefetch,
         },
       });

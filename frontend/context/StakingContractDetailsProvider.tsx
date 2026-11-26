@@ -220,7 +220,7 @@ export const StakingContractDetailsProvider = ({
   const {
     data: selectedStakingContractDetails,
     isLoading,
-    isError,
+    errorUpdateCount,
     isFetching,
     refetch,
   } = useStakingContractDetailsByStakingProgram({
@@ -232,6 +232,11 @@ export const StakingContractDetailsProvider = ({
   const { allStakingContractDetailsRecord, isAllStakingContractDetailsLoaded } =
     useAllStakingContractDetails();
 
+  // A retry after a failed read resets the query to pending; it stays an
+  // error, not a load, until details arrive.
+  const isSelectedStakingContractDetailsError =
+    errorUpdateCount > 0 && !selectedStakingContractDetails;
+
   const refetchSelectedStakingContractDetails = useCallback(async () => {
     await refetch();
   }, [refetch]);
@@ -241,9 +246,9 @@ export const StakingContractDetailsProvider = ({
       value={{
         // selected staking contract details
         selectedStakingContractDetails,
-        isSelectedStakingContractDetailsLoading: isLoading,
-        isSelectedStakingContractDetailsError:
-          isError && !selectedStakingContractDetails,
+        isSelectedStakingContractDetailsLoading:
+          isLoading && !isSelectedStakingContractDetailsError,
+        isSelectedStakingContractDetailsError,
         isSelectedStakingContractDetailsFetching: isFetching,
         refetchSelectedStakingContractDetails,
 
