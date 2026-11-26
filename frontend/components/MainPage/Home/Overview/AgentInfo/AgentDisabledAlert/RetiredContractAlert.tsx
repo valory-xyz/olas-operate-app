@@ -13,6 +13,8 @@ type RetiredContractAlertProps = {
   isWithdrawalOnly: boolean;
   /** End of the minimum staking period in seconds, while the agent is inside it. */
   cooldownEndsAt?: number;
+  /** False while the Safe type is loading or unreadable: no button is offered, as either one could be wrong. */
+  isSafeTypeKnown?: boolean;
 };
 
 const CooldownBody = ({ cooldownEndsAt }: { cooldownEndsAt: number }) => (
@@ -33,6 +35,7 @@ export const RetiredContractAlert = ({
   stakingProgramName,
   isWithdrawalOnly,
   cooldownEndsAt,
+  isSafeTypeKnown = true,
 }: RetiredContractAlertProps) => {
   const { goto } = usePageState();
 
@@ -52,6 +55,14 @@ export const RetiredContractAlert = ({
 
     if (cooldownEndsAt) {
       return <CooldownBody cooldownEndsAt={cooldownEndsAt} />;
+    }
+
+    if (!isSafeTypeKnown) {
+      return (
+        <Text className="text-sm flex mt-4">
+          {RETIRED_STAKING_PROGRAM_COPY.SWITCH}
+        </Text>
+      );
     }
 
     return (

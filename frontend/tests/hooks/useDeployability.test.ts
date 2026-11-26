@@ -4,7 +4,10 @@ import { RETIRED_STAKING_PROGRAM_COPY } from '../../constants/stakingProgram';
 import { ELIGIBILITY_REASON } from '../../context/AutoRunProvider/constants';
 import { useAgentRunning } from '../../hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '../../hooks/useBalanceAndRefillRequirementsContext';
-import { useDeployability } from '../../hooks/useDeployability';
+import {
+  SAFE_TYPE_UNKNOWN_REASON,
+  useDeployability,
+} from '../../hooks/useDeployability';
 import { useIsAgentGeoRestricted } from '../../hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '../../hooks/useIsInitiallyFunded';
 import { useIsPolySafeService } from '../../hooks/useIsPolySafeService';
@@ -120,6 +123,7 @@ const defaultStakingProgram = {
 const defaultPolySafe = {
   isPolySafeService: false,
   isMultisigTypeLoaded: true,
+  isMultisigTypeError: false,
 };
 
 const setupDefaults = (
@@ -372,6 +376,61 @@ describe('useDeployability', () => {
       });
       const { result } = renderHook(() => useDeployability());
       expect(result.current.canRun).toBe(true);
+    });
+
+    it.each([
+      [
+        'evicted inside its minimum period',
+        { isAgentEvicted: true, isEligibleForStaking: false },
+      ],
+      [
+        'unstaked, with the retired contract full',
+        { isServiceStaked: false, hasEnoughServiceSlots: false },
+      ],
+    ])(
+      'lets a PolySafe service start when %s, since it runs unstaked',
+      (_, staking) => {
+        setupDefaults({
+          stakingProgram: retired,
+          polySafe: { isPolySafeService: true },
+          staking,
+        });
+        const { result } = renderHook(() => useDeployability());
+        expect(result.current.canRun).toBe(true);
+      },
+    );
+
+    it('blocks the start instead of guessing when the Safe type cannot be read', () => {
+      setupDefaults({
+        stakingProgram: retired,
+        polySafe: { isMultisigTypeError: true },
+      });
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(false);
+      expect(result.current.reason).toBe(SAFE_TYPE_UNKNOWN_REASON);
+    });
+
+    it('comes after phased out and before under construction', () => {
+      setupDefaults({ stakingProgram: retired });
+      mockUseServices.mockReturnValue({
+        ...defaultServices,
+        selectedAgentConfig: {
+          ...defaultServices.selectedAgentConfig,
+          isUnderConstruction: true,
+        },
+      } as unknown as ReturnType<typeof useServices>);
+      const { result, rerender } = renderHook(() => useDeployability());
+      expect(result.current.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.SWITCH);
+
+      mockUseServices.mockReturnValue({
+        ...defaultServices,
+        selectedAgentConfig: {
+          ...defaultServices.selectedAgentConfig,
+          isPhasedOut: true,
+        },
+      } as unknown as ReturnType<typeof useServices>);
+      rerender();
+      expect(result.current.reason).toBe('Phased out');
     });
 
     it('waits for the Safe type before deciding', () => {

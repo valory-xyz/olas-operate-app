@@ -2,7 +2,10 @@ import { BigNumber } from 'ethers';
 import { isNil } from 'lodash';
 import { MutableRefObject } from 'react';
 
-import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import {
+  isRetiredStakingProgram,
+  STAKING_PROGRAMS,
+} from '@/config/stakingPrograms';
 import {
   AgentType,
   EvmChainId,
@@ -724,13 +727,12 @@ const runDeployabilityChecks = async (
     return { canRun: false, reason: 'Phased out' };
   }
 
-  // Not in rotation, PolySafe agents included: those run only when started by hand.
-  const stakingProgram =
-    STAKING_PROGRAMS[agentMeta.chainId]?.[agentMeta.stakingProgramId];
-  if (stakingProgram?.retired) {
+  // Skipped, PolySafe agents included: those run only when the user starts them.
+  if (isRetiredStakingProgram(agentMeta.chainId, agentMeta.stakingProgramId)) {
     return {
       canRun: false,
-      reason: stakingProgram.requiresPolySafe
+      reason: STAKING_PROGRAMS[agentMeta.chainId][agentMeta.stakingProgramId]
+        .requiresPolySafe
         ? RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY
         : RETIRED_STAKING_PROGRAM_COPY.SWITCH,
     };

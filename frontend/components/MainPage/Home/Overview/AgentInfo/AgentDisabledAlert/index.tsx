@@ -68,7 +68,8 @@ export const AgentDisabledAlert = () => {
     isServiceStakedForMinimumDuration,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
-  const { isPolySafeService } = useIsPolySafeService();
+  const { isPolySafeService, isMultisigTypeLoaded, isMultisigTypeError } =
+    useIsPolySafeService();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { getMasterSafeOf, masterWallets } = useMasterWalletContext();
   const { isAnotherAgentRunning } = useAgentRunning();
@@ -185,6 +186,7 @@ export const AgentDisabledAlert = () => {
             <RetiredContractAlert
               stakingProgramName={selectedStakingProgramMeta.name}
               isWithdrawalOnly={isPolySafeService}
+              isSafeTypeKnown={isMultisigTypeLoaded && !isMultisigTypeError}
               cooldownEndsAt={isInCooldown ? evictionExpiresAt : undefined}
             />
             <MasterEoaLowBalanceAlert />
@@ -276,6 +278,8 @@ export const AgentDisabledAlert = () => {
     isServiceStaked,
     isServiceStakedForMinimumDuration,
     isPolySafeService,
+    isMultisigTypeLoaded,
+    isMultisigTypeError,
     runsEvicted,
     prestartCheck,
     runningAgentIssues,

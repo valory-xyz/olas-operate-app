@@ -15,6 +15,9 @@ import { useSharedContext } from '@/hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
 
+export const SAFE_TYPE_UNKNOWN_REASON =
+  "Couldn't check the agent's Safe type. Check your internet connection and restart Pearl.";
+
 type DeployabilityResult = {
   isLoading: boolean;
   canRun: boolean;
@@ -63,7 +66,10 @@ export const useDeployability = ({
   const { isActiveStakingProgramLoaded, selectedStakingProgramMeta } =
     useStakingProgram();
   const isRetired = !!selectedStakingProgramMeta?.retired;
-  const { isPolySafeService, isMultisigTypeLoaded } = useIsPolySafeService();
+  const { isPolySafeService, isMultisigTypeLoaded, isMultisigTypeError } =
+    useIsPolySafeService();
+  // Starts unstaked (use_staking=false), so slots and eviction don't apply.
+  const isWithdrawalOnly = isRetired && isPolySafeService;
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
@@ -155,6 +161,9 @@ export const useDeployability = ({
 
     // A PolySafe agent can't switch contracts; it still starts, unstaked, to
     // redeem and withdraw.
+    if (isRetired && isMultisigTypeError) {
+      return { isLoading, canRun: false, reason: SAFE_TYPE_UNKNOWN_REASON };
+    }
     if (isRetired && !isPolySafeService) {
       return {
         isLoading,
@@ -186,7 +195,7 @@ export const useDeployability = ({
 
     // If not enough service slots, and service is not staked
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
-    if (hasSlot && !isServiceStaked && !runsEvicted) {
+    if (hasSlot && !isServiceStaked && !runsEvicted && !isWithdrawalOnly) {
       return { isLoading, canRun: false, reason: 'No available slots' };
     }
 
@@ -194,7 +203,8 @@ export const useDeployability = ({
     if (
       isAgentEvicted &&
       !isEligibleForStaking &&
-      !selectedAgentConfig.canRunWhileEvicted
+      !selectedAgentConfig.canRunWhileEvicted &&
+      !isWithdrawalOnly
     ) {
       return { isLoading, canRun: false, reason: 'Evicted' };
     }
@@ -225,9 +235,11 @@ export const useDeployability = ({
     isEligibleForStaking,
     isInitialFunded,
     isLoading,
+    isMultisigTypeError,
     isPolySafeService,
     isRetired,
     isServiceStaked,
+    isWithdrawalOnly,
     runsEvicted,
     safeEligibility,
     selectedAgentConfig.canRunWhileEvicted,

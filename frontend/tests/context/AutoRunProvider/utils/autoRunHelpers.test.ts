@@ -2076,6 +2076,25 @@ describe('fetchDeployabilityForAgent', () => {
     expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
   });
 
+  it.each([
+    [{ isPhasedOut: true }, 'Phased out'],
+    [{ isUnderConstruction: true }, RETIRED_STAKING_PROGRAM_COPY.SWITCH],
+  ])(
+    'checks a retired program after phased-out and before under-construction (%o)',
+    async (agentConfigOverrides, reason) => {
+      const base = makeAgentMeta();
+      const meta = {
+        ...base,
+        stakingProgramId: STAKING_PROGRAM_IDS.OmenstratIII,
+        agentConfig: { ...base.agentConfig, ...agentConfigOverrides },
+      } as AgentMeta;
+
+      const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+      expect(result.reason).toBe(reason);
+    },
+  );
+
   it('skips a PolySafe agent on a retired program with the withdrawal-only copy', async () => {
     const meta = {
       ...makeAgentMeta(),

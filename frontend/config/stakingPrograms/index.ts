@@ -21,12 +21,7 @@ import { POLYGON_STAKING_PROGRAMS } from './polygon';
 export type StakingProgramConfig = {
   chainId: EvmChainId;
   deprecated?: boolean; // hides program from UI unless user is already staked in this program
-  /**
-   * Pearl no longer stakes on or runs agents on this program. Hidden like
-   * `deprecated`, and an agent on it is blocked from starting (PolySafe agents
-   * excepted, in withdrawal-only mode). Mirrors the middleware's
-   * `RETIRED_STAKING_PROGRAMS`; both lists must hold the same ids.
-   */
+  /** No longer staked on or run; must hold the same ids as the middleware's `RETIRED_STAKING_PROGRAMS`. */
   retired?: boolean;
   /**
    * The contract pins `service.multisig.codehash` to the PolySafe proxy
@@ -84,7 +79,6 @@ export const STAKING_PROGRAMS: {
   [EvmChainIdMap.Robinhood]: {},
 };
 
-/** Whether Pearl no longer stakes on or runs agents on this program. */
 export const isRetiredStakingProgram = (
   chainId: EvmChainId,
   programId?: Nullable<StakingProgramId>,

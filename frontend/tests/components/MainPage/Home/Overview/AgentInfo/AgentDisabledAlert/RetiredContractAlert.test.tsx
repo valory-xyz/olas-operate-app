@@ -57,6 +57,21 @@ describe('RetiredContractAlert', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it('offers no button while the Safe type is unknown', () => {
+    render(
+      <RetiredContractAlert
+        stakingProgramName="Polystrat III"
+        isWithdrawalOnly={false}
+        isSafeTypeKnown={false}
+      />,
+    );
+
+    expect(alertText()).toBe(
+      'Polystrat III contract is deprecatedSwitch to one of the available contracts to run your agent. Pearl no longer supports deprecated contracts.',
+    );
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
   it('offers only Withdraw to a PolySafe agent, as in Figma frame 5, even inside the cooldown', () => {
     render(
       <RetiredContractAlert

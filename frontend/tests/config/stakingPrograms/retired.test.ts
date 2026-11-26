@@ -1,8 +1,4 @@
-/**
- * The retired list must hold exactly the middleware's RETIRED_STAKING_PROGRAMS
- * ids (operate/ledger/profiles.py), and every program it replaces with must be
- * live.
- */
+/** The retired ids mirror the middleware (see `StakingProgramConfig.retired`); every new program is live. */
 import {
   isRetiredStakingProgram,
   STAKING_PROGRAMS,

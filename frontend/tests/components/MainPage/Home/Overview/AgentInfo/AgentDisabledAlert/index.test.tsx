@@ -114,13 +114,16 @@ jest.mock(
       stakingProgramName,
       isWithdrawalOnly,
       cooldownEndsAt,
+      isSafeTypeKnown,
     }: {
       stakingProgramName: string;
       isWithdrawalOnly: boolean;
       cooldownEndsAt?: number;
+      isSafeTypeKnown?: boolean;
     }) => (
       <div>
         {`contract-retired: ${stakingProgramName} withdrawalOnly=${isWithdrawalOnly} cooldownEndsAt=${cooldownEndsAt ?? 'none'}`}
+        {isSafeTypeKnown === false && ' safe-type-unknown'}
       </div>
     ),
   }),
@@ -179,6 +182,7 @@ const setup = ({
   deprecatedStakingProgram = false,
   retiredStakingProgram = false,
   isPolySafeService = false,
+  multisigType = { isMultisigTypeLoaded: true, isMultisigTypeError: false },
   isRunning = false,
   agentIssues,
   prestartCheck,
@@ -195,6 +199,10 @@ const setup = ({
   deprecatedStakingProgram?: boolean;
   retiredStakingProgram?: boolean;
   isPolySafeService?: boolean;
+  multisigType?: {
+    isMultisigTypeLoaded: boolean;
+    isMultisigTypeError: boolean;
+  };
   isRunning?: boolean;
   agentIssues?: AgentIssue[];
   prestartCheck?: PrestartCheck;
@@ -262,7 +270,10 @@ const setup = ({
       name: 'Beta 3',
     },
   });
-  (useIsPolySafeService as jest.Mock).mockReturnValue({ isPolySafeService });
+  (useIsPolySafeService as jest.Mock).mockReturnValue({
+    isPolySafeService,
+    ...multisigType,
+  });
   return render(<AgentDisabledAlert />);
 };
 
@@ -637,6 +648,36 @@ describe('AgentDisabledAlert', () => {
         ),
       ).toBeInTheDocument();
     });
+
+    it('shows no cooldown while the staking details reload', () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: {
+          isSelectedStakingContractDetailsLoading: true,
+          isServiceStaked: true,
+          isServiceStakedForMinimumDuration: false,
+          evictionExpiresAt: 1_800_000_000,
+        },
+      });
+
+      expect(
+        screen.getByText(
+          'contract-retired: Beta 3 withdrawalOnly=false cooldownEndsAt=none',
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it.each([
+      ['loading', { isMultisigTypeLoaded: false, isMultisigTypeError: false }],
+      ['unreadable', { isMultisigTypeLoaded: true, isMultisigTypeError: true }],
+    ])(
+      'tells the alert the Safe type is unknown while it is %s',
+      (_, multisigType) => {
+        setup({ retiredStakingProgram: true, multisigType });
+
+        expect(screen.getByText(/safe-type-unknown/)).toBeInTheDocument();
+      },
+    );
 
     it('uses the withdrawal-only variant for a PolySafe service', () => {
       setup({ retiredStakingProgram: true, isPolySafeService: true });

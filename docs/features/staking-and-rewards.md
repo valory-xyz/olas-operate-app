@@ -71,7 +71,7 @@ The user picks which staking program to use. The view cycles through these state
 
 - Default program = `selectedAgentConfig.defaultStakingProgramId` (from `frontend/config/agents.ts`)
 - "Change Configuration" button toggles to list view (`LIST_MANUAL`)
-- List is ordered by `useStakingContracts`: current program first (shown even if deprecated), other deprecated programs hidden, filtered by `agentsSupported`, then filtered by multisig compatibility (see "Multisig compatibility" below). `currentStakingProgramId` here is the on-chain (subgraph) program falling back to the service-stored `staking_program_id` — it never falls back to the agent-config default, so the "Selected" badge can't land on a contract the user never joined (OPE-1841)
+- List is ordered by `useStakingContracts`: current program first (shown even if deprecated or retired), other deprecated and retired programs hidden, filtered by `agentsSupported`, then filtered by multisig compatibility (see "Multisig compatibility" below). `currentStakingProgramId` here is the on-chain (subgraph) program falling back to the service-stored `staking_program_id` — it never falls back to the agent-config default, so the "Current" badge can't land on a contract the user never joined (OPE-1841)
 - If the agent-config default is not in the compatible list, the page skips the "Recommended configuration" card and shows the list directly (with an info alert when the list is empty). The Back button is hidden in that case so the user can't reach the incompatible recommended card (OPE-1919)
 - On selection, `SelectStakingButton` writes the chosen `staking_program_id` to the service config before first deploy
 - Select failure toasts: with no service yet it creates one, and a failure shows *"Couldn't download the agent. Check your internet connection, VPN, proxy or antivirus HTTPS scanning, then try again."* for a package download error (`SERVICE_PACKAGE_DOWNLOAD_FAILED`), else *"Couldn't create the agent. Please try again."*. With an existing service, a failed contract update shows *"An error occurred while updating the staking contract."*
@@ -128,7 +128,7 @@ When the user clicks "Switch Staking Contract", SelectStakingPage opens in **mig
 
 Migration requires the agent to be stopped first (or auto-run to rotate away). The new program's slot availability and rewards are checked before the UI allows selection.
 
-## Retired staking programs (PSA-25)
+## Retired staking programs
 
 `StakingProgramConfig.retired` marks the programs Pearl no longer stakes on or runs agents on (the old Omenstrat, Polystrat, Optimus and Basius programs, and the Pearl Alpha/Beta family). The middleware keeps the same ids in `RETIRED_STAKING_PROGRAMS` and does the unstaking itself: its funding job unstakes a service on a retired program once its minimum staking period is over. The app never calls an unstake route. `deprecated` keeps its older meaning (hidden, warning alert, can still run).
 
@@ -303,11 +303,11 @@ Derives several status flags from `selectedStakingContractDetails`:
 
 ### Program ordering (useStakingContracts)
 
-`currentStakingProgramId` = subgraph-derived `activeStakingProgramId`, falling back to the service-stored `user_params.staking_program_id`, else `null`. It deliberately does **not** fall back to `defaultStakingProgramId` — the default is not evidence of a stake, and surfacing it as "current" marked contracts the user never joined as "Selected" (OPE-1841).
+`currentStakingProgramId` = subgraph-derived `activeStakingProgramId`, falling back to the service-stored `user_params.staking_program_id`, else `null`. It deliberately does **not** fall back to `defaultStakingProgramId` — the default is not evidence of a stake, and surfacing it as "current" marked contracts the user never joined as "Current" (OPE-1841).
 
 `orderedStakingProgramIds` is built by filtering and sorting available programs:
 
-1. Place the current staking program first — even if deprecated or incompatible, so a user staked in a legacy contract can still see it marked as selected
+1. Place the current staking program first — even if deprecated or incompatible, so a user staked in a legacy contract can still see it marked as current
 2. Skip remaining deprecated and retired programs
 3. Skip programs that don't support the selected agent type
 4. Skip programs whose multisig requirement doesn't match the service (see below)

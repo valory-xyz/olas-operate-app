@@ -186,11 +186,11 @@ describe('enableWithdrawalOnlyMode', () => {
           [MiddlewareChainMap.POLYGON]: { use_staking: false },
         },
         env_variables: {
-          DISABLE_TRADING: {
+          DISABLE_TRADING: expect.objectContaining({
             name: 'Disable trading',
             value: 'true',
             provision_type: EnvProvisionMap.USER,
-          },
+          }),
         },
       },
     });

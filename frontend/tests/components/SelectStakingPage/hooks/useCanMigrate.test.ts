@@ -101,7 +101,7 @@ describe('useCanMigrate', () => {
   });
 
   describe('isCurrentStakingProgram = true', () => {
-    it('returns "Selected" with canMigrate false', () => {
+    it('returns "Current" with canMigrate false', () => {
       const { isCurrentStakingProgram } = setupMocks({
         isCurrentStakingProgram: true,
       });
