@@ -1,7 +1,12 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
-import { AgentType, EvmChainId, EvmChainIdMap } from '@/constants';
-import { Address } from '@/types';
+import {
+  AgentType,
+  EvmChainId,
+  EvmChainIdMap,
+  StakingProgramId,
+} from '@/constants';
+import { Address, Nullable } from '@/types';
 
 import { MechType } from '../mechs';
 import { BASE_STAKING_PROGRAMS } from './base';
@@ -16,6 +21,13 @@ import { POLYGON_STAKING_PROGRAMS } from './polygon';
 export type StakingProgramConfig = {
   chainId: EvmChainId;
   deprecated?: boolean; // hides program from UI unless user is already staked in this program
+  /**
+   * Pearl no longer stakes on or runs agents on this program. Hidden like
+   * `deprecated`, and an agent on it is blocked from starting (PolySafe agents
+   * excepted, in withdrawal-only mode). Mirrors the middleware's
+   * `RETIRED_STAKING_PROGRAMS`; both lists must hold the same ids.
+   */
+  retired?: boolean;
   /**
    * The contract pins `service.multisig.codehash` to the PolySafe proxy
    * (`POLY_SAFE_PROXY_CODEHASH`), so only services deployed with a PolySafe can
@@ -71,3 +83,9 @@ export const STAKING_PROGRAMS: {
   // No staking programmes on Robinhood Chain yet (Connect runs `no_staking`).
   [EvmChainIdMap.Robinhood]: {},
 };
+
+/** Whether Pearl no longer stakes on or runs agents on this program. */
+export const isRetiredStakingProgram = (
+  chainId: EvmChainId,
+  programId?: Nullable<StakingProgramId>,
+): boolean => !!programId && !!STAKING_PROGRAMS[chainId]?.[programId]?.retired;

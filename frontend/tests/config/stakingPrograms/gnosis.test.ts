@@ -24,7 +24,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('GNOSIS_STAKING_PROGRAMS', () => {
-  it('covers all 23 Gnosis staking program IDs (16 legacy + 7 decoupled Omenstrat)', () => {
+  it('covers all 26 Gnosis staking program IDs (16 legacy + 10 decoupled Omenstrat)', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.PearlAlpha,
       STAKING_PROGRAM_IDS.PearlBeta,
@@ -49,11 +49,14 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.OmenstratV,
       STAKING_PROGRAM_IDS.OmenstratVI,
       STAKING_PROGRAM_IDS.OmenstratVII,
+      STAKING_PROGRAM_IDS.OmenstratVIII,
+      STAKING_PROGRAM_IDS.OmenstratIX,
+      STAKING_PROGRAM_IDS.OmenstratX,
     ];
     for (const id of expectedIds) {
       expect(GNOSIS_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(GNOSIS_STAKING_PROGRAMS)).toHaveLength(23);
+    expect(Object.keys(GNOSIS_STAKING_PROGRAMS)).toHaveLength(26);
   });
 
   it('all programs are on Gnosis chain (chainId 100)', () => {
@@ -218,6 +221,9 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.OmenstratV,
       STAKING_PROGRAM_IDS.OmenstratVI,
       STAKING_PROGRAM_IDS.OmenstratVII,
+      STAKING_PROGRAM_IDS.OmenstratVIII,
+      STAKING_PROGRAM_IDS.OmenstratIX,
+      STAKING_PROGRAM_IDS.OmenstratX,
     ];
 
     it('all Omenstrat programs carry an off-chain activityTarget of 8', () => {

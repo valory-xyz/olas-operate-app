@@ -56,10 +56,17 @@ const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
     '0xB7ab6F7e6993Df1f0c6A9B177B169Faf4b0C9CCa',
   [STAKING_PROGRAM_IDS.OmenstratVII]:
     '0xB801FD1728Eef27418FE03720b1FF3E769F35152',
+  [STAKING_PROGRAM_IDS.OmenstratVIII]:
+    '0x9C254A169D71cFF6766D9702425Ec467B62B95EC',
+  [STAKING_PROGRAM_IDS.OmenstratIX]:
+    '0x36CB5b4e6befc5Cc3f6801Cc290C3d9148f6D7Cf',
+  [STAKING_PROGRAM_IDS.OmenstratX]:
+    '0xd467492f65FCA11786982b9743ed4E1F79cE81A1',
 } as const;
 
 export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
   [STAKING_PROGRAM_IDS.PearlAlpha]: {
+    retired: true,
     deprecated: true,
     name: 'Pearl Alpha',
     chainId: EvmChainIdMap.Gnosis,
@@ -88,6 +95,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta]: {
+    retired: true,
     deprecated: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta',
@@ -110,6 +118,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta2]: {
+    retired: true,
     deprecated: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 2',
@@ -138,6 +147,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta3]: {
+    retired: true,
     deprecated: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 3',
@@ -166,6 +176,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta4]: {
+    retired: true,
     deprecated: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 4',
@@ -194,6 +205,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta5]: {
+    retired: true,
     deprecated: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 5',
@@ -222,6 +234,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBeta6]: {
+    retired: true,
     deprecated: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta 6',
@@ -250,6 +263,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace]: {
+    retired: true,
     deprecated: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace',
@@ -280,6 +294,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace1]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace',
     agentsSupported: [AgentMap.PredictTrader],
@@ -309,6 +324,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace2]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace II',
     agentsSupported: [AgentMap.PredictTrader],
@@ -338,6 +354,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace III',
     agentsSupported: [AgentMap.PredictTrader],
@@ -367,6 +384,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace4]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace IV',
     agentsSupported: [AgentMap.PredictTrader],
@@ -396,6 +414,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace5]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace V',
     agentsSupported: [AgentMap.PredictTrader],
@@ -425,6 +444,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace6]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace VI',
     agentsSupported: [AgentMap.PredictTrader],
@@ -454,6 +474,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace7]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace VII',
     agentsSupported: [AgentMap.PredictTrader],
@@ -483,6 +504,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.PearlBetaMechMarketplace8]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Pearl Beta Mech Marketplace VIII',
     agentsSupported: [AgentMap.PredictTrader],
@@ -512,6 +534,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.OmenstratI]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Omenstrat I',
     activityTarget: 8,
@@ -540,6 +563,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.OmenstratII]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Omenstrat II',
     activityTarget: 8,
@@ -570,6 +594,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.OmenstratIII]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Omenstrat III',
     activityTarget: 8,
@@ -600,6 +625,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.OmenstratIV]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Omenstrat IV',
     activityTarget: 8,
@@ -630,6 +656,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.OmenstratV]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Omenstrat V',
     activityTarget: 8,
@@ -658,6 +685,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.OmenstratVI]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Omenstrat VI',
     activityTarget: 8,
@@ -688,6 +716,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.OmenstratVII]: {
+    retired: true,
     chainId: EvmChainIdMap.Gnosis,
     name: 'Omenstrat VII',
     activityTarget: 8,
@@ -714,6 +743,97 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     id: deriveStakingProgramId(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.OmenstratVII
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratVIII]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat VIII',
+    stakingVersion: '0.4',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 50,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.OmenstratVIII
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVIII
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVIII
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratVIII
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratIX]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat IX',
+    stakingVersion: '0.4',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 2500,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.OmenstratIX
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIX
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIX
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratIX
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.OmenstratX]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Omenstrat X',
+    stakingVersion: '0.4',
+    activityTarget: 8,
+    agentsSupported: [AgentMap.PredictTrader],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 5000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.OmenstratX],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratX
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratX
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.OmenstratX
       ],
     ),
   },

@@ -50,6 +50,9 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'OmenstratV',
     'OmenstratVI',
     'OmenstratVII',
+    'OmenstratVIII',
+    'OmenstratIX',
+    'OmenstratX',
   ] as const;
 
   it('has an activity checker for every Gnosis staking program', () => {
@@ -61,9 +64,9 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 23 Gnosis staking programs', () => {
+  it('covers exactly 26 Gnosis staking programs', () => {
     expect(Object.keys(GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      23,
+      26,
     );
   });
 });
@@ -84,6 +87,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'BasiusI',
     'BasiusII',
     'BasiusIII',
+    'BasiusIV',
+    'BasiusV',
+    'BasiusVI',
   ] as const;
 
   it('has an activity checker for every Base staking program', () => {
@@ -93,9 +99,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 14 Base staking programs', () => {
+  it('covers exactly 17 Base staking programs', () => {
     expect(Object.keys(BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      14,
+      17,
     );
   });
 });
@@ -131,6 +137,9 @@ describe('OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'OptimusI',
     'OptimusII',
     'OptimusIII',
+    'OptimusIV',
+    'OptimusV',
+    'OptimusVI',
   ] as const;
 
   it('has an activity checker for every Optimism staking program', () => {
@@ -142,10 +151,10 @@ describe('OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 6 Optimism staking programs', () => {
+  it('covers exactly 9 Optimism staking programs', () => {
     expect(
       Object.keys(OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS),
-    ).toHaveLength(6);
+    ).toHaveLength(9);
   });
 });
 
@@ -160,6 +169,9 @@ describe('POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'PolystratIV',
     'PolystratV',
     'PolystratVI',
+    'PolystratVII',
+    'PolystratVIII',
+    'PolystratIX',
   ] as const;
 
   it('has an activity checker for every Polygon staking program', () => {
@@ -171,10 +183,10 @@ describe('POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 9 Polygon staking programs', () => {
+  it('covers exactly 12 Polygon staking programs', () => {
     expect(
       Object.keys(POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS),
-    ).toHaveLength(9);
+    ).toHaveLength(12);
   });
 });
 

@@ -138,6 +138,30 @@ describe('getCompatibleStakingProgramIds', () => {
     ).toEqual([POLY_SAFE_PROGRAM, STANDARD_SAFE_PROGRAM]);
   });
 
+  it('hides retired programs, and lists the current retired one first', () => {
+    const RETIRED_PROGRAM = 'polystrat_retired' as StakingProgramId;
+    const programs = {
+      ...POLYGON_PROGRAMS,
+      [RETIRED_PROGRAM]: polygonProgram({ retired: true }),
+    };
+
+    expect(
+      getCompatibleStakingProgramIds({
+        ...base,
+        programs,
+        isPolySafeService: false,
+      }),
+    ).toEqual([STANDARD_SAFE_PROGRAM]);
+    expect(
+      getCompatibleStakingProgramIds({
+        ...base,
+        programs,
+        isPolySafeService: false,
+        currentStakingProgramId: RETIRED_PROGRAM,
+      }),
+    ).toEqual([RETIRED_PROGRAM, STANDARD_SAFE_PROGRAM]);
+  });
+
   it('puts the current program first even when deprecated', () => {
     expect(
       getCompatibleStakingProgramIds({

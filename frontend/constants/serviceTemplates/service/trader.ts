@@ -317,6 +317,15 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       value: MECH_FACILITATOR_ENABLED_FLAGS[AgentMap.Polystrat].toString(),
       provision_type: EnvProvisionType.FIXED,
     },
+    // USER, not FIXED: withdrawal-only mode sets it to "true", and a FIXED
+    // variable is reset to the template on every start.
+    DISABLE_TRADING: {
+      name: 'Disable trading',
+      description:
+        'Stops placing trades; the agent only redeems. Set for withdrawal-only mode.',
+      value: 'false',
+      provision_type: EnvProvisionType.USER,
+    },
     USE_OFFCHAIN: {
       name: 'Use offchain mech dispatch',
       description:

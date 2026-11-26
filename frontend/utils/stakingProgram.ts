@@ -52,7 +52,7 @@ type GetCompatibleStakingProgramIdsParams = {
  * Ordered list of staking programs the user may select:
  * 1. The current program first — even if deprecated or incompatible, the user
  *    must be able to see the contract they are actually staked in.
- * 2. Deprecated programs are hidden.
+ * 2. Deprecated and retired programs are hidden.
  * 3. Programs not supporting the agent type are hidden.
  * 4. Programs whose multisig requirement doesn't match the service are hidden
  *    (the contract would reject the stake transaction anyway).
@@ -69,7 +69,7 @@ export const getCompatibleStakingProgramIds = ({
     if (stakingProgramId === currentStakingProgramId) {
       return [stakingProgramId, ...acc];
     }
-    if (program.deprecated) return acc;
+    if (program.deprecated || program.retired) return acc;
     if (!program.agentsSupported.includes(agentType)) return acc;
     if (!isStakingProgramCompatibleWithMultisig(program, isPolySafeService)) {
       return acc;

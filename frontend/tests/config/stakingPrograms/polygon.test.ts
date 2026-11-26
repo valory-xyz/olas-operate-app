@@ -23,7 +23,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('POLYGON_STAKING_PROGRAMS', () => {
-  it('covers all 9 Polygon staking program IDs (legacy PolygonBeta1/2/3 + PolySafe PolystratI/II/III + standard-Safe PolystratIV/V/VI)', () => {
+  it('covers all 12 Polygon staking program IDs (legacy PolygonBeta1/2/3 + PolySafe PolystratI/II/III + standard-Safe PolystratIV–IX)', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.PolygonBeta1,
       STAKING_PROGRAM_IDS.PolygonBeta2,
@@ -34,11 +34,14 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PolystratIV,
       STAKING_PROGRAM_IDS.PolystratV,
       STAKING_PROGRAM_IDS.PolystratVI,
+      STAKING_PROGRAM_IDS.PolystratVII,
+      STAKING_PROGRAM_IDS.PolystratVIII,
+      STAKING_PROGRAM_IDS.PolystratIX,
     ];
     for (const id of expectedIds) {
       expect(POLYGON_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(POLYGON_STAKING_PROGRAMS)).toHaveLength(9);
+    expect(Object.keys(POLYGON_STAKING_PROGRAMS)).toHaveLength(12);
   });
 
   it('all programs are on Polygon chain (chainId 137)', () => {
@@ -101,6 +104,9 @@ describe('POLYGON_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.PolystratIV,
       STAKING_PROGRAM_IDS.PolystratV,
       STAKING_PROGRAM_IDS.PolystratVI,
+      STAKING_PROGRAM_IDS.PolystratVII,
+      STAKING_PROGRAM_IDS.PolystratVIII,
+      STAKING_PROGRAM_IDS.PolystratIX,
     ];
 
     it('legacy and PolySafe Polystrat contracts require a PolySafe service', () => {

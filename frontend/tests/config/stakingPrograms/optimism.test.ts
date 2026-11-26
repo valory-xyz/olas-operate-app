@@ -23,7 +23,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('OPTIMISM_STAKING_PROGRAMS', () => {
-  it('covers all 6 Optimism staking program IDs (legacy OptimusAlpha2/3/4 + decoupled OptimusI/II/III)', () => {
+  it('covers all 9 Optimism staking program IDs (legacy OptimusAlpha2/3/4 + decoupled OptimusI–VI)', () => {
     const expectedIds = [
       OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2,
       OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3,
@@ -31,11 +31,14 @@ describe('OPTIMISM_STAKING_PROGRAMS', () => {
       OPTIMISM_STAKING_PROGRAM_IDS.OptimusI,
       OPTIMISM_STAKING_PROGRAM_IDS.OptimusII,
       OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII,
+      OPTIMISM_STAKING_PROGRAM_IDS.OptimusIV,
+      OPTIMISM_STAKING_PROGRAM_IDS.OptimusV,
+      OPTIMISM_STAKING_PROGRAM_IDS.OptimusVI,
     ];
     for (const id of expectedIds) {
       expect(OPTIMISM_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(OPTIMISM_STAKING_PROGRAMS)).toHaveLength(6);
+    expect(Object.keys(OPTIMISM_STAKING_PROGRAMS)).toHaveLength(9);
   });
 
   it('all programs are on Optimism chain (chainId 10)', () => {
@@ -132,6 +135,9 @@ describe('OPTIMISM_STAKING_PROGRAMS', () => {
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusI,
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusII,
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII,
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusIV,
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusV,
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusVI,
       ];
       for (const id of decoupledIds) {
         expect(OPTIMISM_STAKING_PROGRAMS[id].activityTarget).toBe(1);
