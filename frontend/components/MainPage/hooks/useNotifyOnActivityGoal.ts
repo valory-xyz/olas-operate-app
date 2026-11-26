@@ -4,6 +4,7 @@ import { AGENT_CONFIG } from '@/config/agents';
 import { useActivityGoal } from '@/hooks/useActivityGoal';
 import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useElectronApi } from '@/hooks/useElectronApi';
+import { isStakingAvailable } from '@/utils/stakingProgram';
 
 const GOAL_REACHED_MESSAGE =
   'Your agent reached its daily goal for this epoch.';
@@ -23,10 +24,15 @@ type LastSeenGoal = {
 export const useNotifyOnActivityGoal = () => {
   const { showNotification } = useElectronApi();
   const { runningAgentType, runningServiceConfigId } = useAgentRunning();
-  // `hasStaking`, not `isStakingAvailable`, on purpose: a Connect's goal is
-  // its minutes per run, and Auto-run's hand-over sends its notification.
+  const runningAgentConfig = runningAgentType
+    ? AGENT_CONFIG[runningAgentType]
+    : undefined;
+  // An agent on minutes per run (Connect, staked or not) is left out: its goal
+  // is the run window, and Auto-run's hand-over sends that notification.
   const isStakingAgent =
-    !!runningAgentType && AGENT_CONFIG[runningAgentType]?.hasStaking;
+    !!runningAgentConfig &&
+    isStakingAvailable(runningAgentConfig, runningAgentConfig.evmHomeChainId) &&
+    !runningAgentConfig.runsOnMinutesPerRun;
   const { activityGoal } = useActivityGoal(
     isStakingAgent ? runningServiceConfigId : null,
   );
