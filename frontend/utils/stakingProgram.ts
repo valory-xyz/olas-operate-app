@@ -118,3 +118,51 @@ export const isWithdrawalOnly = ({
   isRetired: boolean;
   isPolySafeService: boolean;
 }) => isRetired && isPolySafeService;
+
+/** What the retired-contract alert can say about a service on a retired program. */
+export type RetiredProgramStatus =
+  /** PolySafe (or already set up so): it only redeems and withdraws. */
+  | 'withdrawalOnly'
+  /** In the contract, inside its minimum staking period. */
+  | 'cooldown'
+  /** The Safe type couldn't be read, so neither variant can be offered. */
+  | 'safeTypeUnknown'
+  /** The staking details couldn't be read, so cooldown and switch are unknown. */
+  | 'stakingDetailsUnknown'
+  /** The Safe type or the staking details are still loading. */
+  | 'loading'
+  /** Past its period but still in the contract: the middleware has yet to unstake it. */
+  | 'awaitingUnstake'
+  /** Unstaked, standard Safe: it can switch to a live program. */
+  | 'switch';
+
+/**
+ * Classifies a service already known to be on a retired program. One order
+ * for every caller, so a state can't read as "switch" while it is unknown.
+ */
+export const getRetiredProgramStatus = ({
+  isWithdrawalOnly: withdrawalOnly,
+  isSafeTypeError,
+  hasStakingDetails,
+  isStakingDetailsError,
+  isInMinimumStakingPeriod,
+  isServiceOutOfContract,
+}: {
+  /** `undefined` while the Safe type is loading or couldn't be read. */
+  isWithdrawalOnly: boolean | undefined;
+  isSafeTypeError: boolean;
+  hasStakingDetails: boolean;
+  isStakingDetailsError: boolean;
+  isInMinimumStakingPeriod: boolean;
+  isServiceOutOfContract: boolean;
+}): RetiredProgramStatus => {
+  if (withdrawalOnly === true) return 'withdrawalOnly';
+  if (isInMinimumStakingPeriod) return 'cooldown';
+  if (withdrawalOnly === undefined) {
+    return isSafeTypeError ? 'safeTypeUnknown' : 'loading';
+  }
+  if (!hasStakingDetails) {
+    return isStakingDetailsError ? 'stakingDetailsUnknown' : 'loading';
+  }
+  return isServiceOutOfContract ? 'switch' : 'awaitingUnstake';
+};

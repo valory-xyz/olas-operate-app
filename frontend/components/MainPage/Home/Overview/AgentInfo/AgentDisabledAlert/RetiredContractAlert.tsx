@@ -7,16 +7,21 @@ import { formatToShortDateTime } from '@/utils/time';
 
 const { Text } = Typography;
 
-/** The one variant of the alert to show; built by `AgentDisabledAlert`. */
+/**
+ * The one variant of the alert to show, built by `AgentDisabledAlert` from
+ * `getRetiredProgramStatus`.
+ */
 export type RetiredContractAlertState =
-  /** The agent can't switch to a new contract: it only redeems and withdraws. */
   | { kind: 'withdrawalOnly' }
-  /** Inside the minimum staking period; `endsAt` in seconds. */
+  /** `endsAt` in seconds. */
   | { kind: 'cooldown'; endsAt: number }
-  /** The Safe type couldn't be read, so neither variant can be offered yet. */
   | { kind: 'safeTypeUnknown'; onRetry: () => void }
-  /** Switch to another program, once `canSwitch` (unstaked, details and Safe type known). */
-  | { kind: 'switch'; canSwitch: boolean };
+  | { kind: 'stakingDetailsUnknown'; onRetry: () => void }
+  /** The title only, until the Safe type and staking details are known. */
+  | { kind: 'loading' }
+  /** The switch copy, without the button the middleware would refuse. */
+  | { kind: 'awaitingUnstake' }
+  | { kind: 'switch' };
 
 type RetiredContractAlertProps = {
   /** Undefined once the program can no longer be named (stored as `no_staking`). */
@@ -27,15 +32,28 @@ type RetiredContractAlertProps = {
 const CooldownBody = ({ cooldownEndsAt }: { cooldownEndsAt: number }) => (
   <Text className="text-sm flex mt-4">
     <span>
-      Pearl no longer supports deprecated contracts. Your agent is in a cooldown
-      period until{' '}
+      {RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX}{' '}
       <span className="font-weight-600">
         {formatToShortDateTime(cooldownEndsAt * 1000)} (UTC)
       </span>
-      . After that, switch to one of the available contracts to run your agent
-      again.
+      {RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}
     </span>
   </Text>
+);
+
+const RetryBody = ({
+  copy,
+  onRetry,
+}: {
+  copy: string;
+  onRetry: () => void;
+}) => (
+  <>
+    <Text className="text-sm flex mt-4 mb-8">{copy}</Text>
+    <Button size="small" onClick={onRetry}>
+      Retry
+    </Button>
+  </>
 );
 
 export const RetiredContractAlert = ({
@@ -61,33 +79,36 @@ export const RetiredContractAlert = ({
         return <CooldownBody cooldownEndsAt={state.endsAt} />;
       case 'safeTypeUnknown':
         return (
-          <>
-            <Text className="text-sm flex mt-4 mb-8">
-              {RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN}
-            </Text>
-            <Button size="small" onClick={state.onRetry}>
-              Retry
-            </Button>
-          </>
+          <RetryBody
+            copy={RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN}
+            onRetry={state.onRetry}
+          />
         );
-      case 'switch':
-        if (!state.canSwitch) {
-          return (
-            <Text className="text-sm flex mt-4">
-              {RETIRED_STAKING_PROGRAM_COPY.SWITCH}
-            </Text>
-          );
-        }
+      case 'stakingDetailsUnknown':
+        return (
+          <RetryBody
+            copy={RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN}
+            onRetry={state.onRetry}
+          />
+        );
+      case 'loading':
+        return null;
+      case 'awaitingUnstake':
+      case 'switch': {
+        const canSwitch = state.kind === 'switch';
         return (
           <>
-            <Text className="text-sm flex mt-4 mb-8">
+            <Text className={`text-sm flex mt-4 ${canSwitch ? 'mb-8' : ''}`}>
               {RETIRED_STAKING_PROGRAM_COPY.SWITCH}
             </Text>
-            <Button size="small" onClick={() => goto(PAGES.SelectStaking)}>
-              Switch Staking Contract
-            </Button>
+            {canSwitch && (
+              <Button size="small" onClick={() => goto(PAGES.SelectStaking)}>
+                Switch Staking Contract
+              </Button>
+            )}
           </>
         );
+      }
     }
   };
 

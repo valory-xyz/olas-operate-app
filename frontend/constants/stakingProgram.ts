@@ -133,12 +133,20 @@ export type StakingProgramId =
  * Copy of the retired-contract alert, also sent as the Auto-run skip
  * notification body.
  */
+const NO_LONGER_SUPPORTED = 'Pearl no longer supports deprecated contracts.';
+
 export const RETIRED_STAKING_PROGRAM_COPY = {
-  SWITCH:
-    'Switch to one of the available contracts to run your agent. Pearl no longer supports deprecated contracts.',
+  SWITCH: `Switch to one of the available contracts to run your agent. ${NO_LONGER_SUPPORTED}`,
+  /** Around the cooldown's end date, which the alert renders between the two. */
+  COOLDOWN_PREFIX: `${NO_LONGER_SUPPORTED} Your agent is in a cooldown period until`,
+  COOLDOWN_SUFFIX:
+    '. After that, switch to one of the available contracts to run your agent again.',
   /** The Safe type can't be read, so neither SWITCH nor WITHDRAWAL_ONLY can be offered. */
   SAFE_TYPE_UNKNOWN:
     "Pearl couldn't check whether this agent can switch to a new contract. Check your internet connection and try again.",
+  /** The staking details can't be read, so neither the cooldown nor SWITCH can be offered. */
+  STAKING_DETAILS_UNKNOWN:
+    "Pearl couldn't check this agent's staking status. Check your internet connection and try again.",
   WITHDRAWAL_ONLY:
     'This agent can no longer trade because it cannot switch to a new staking contract. To keep using Polystrat, add a new agent. To get your funds back, start your agent and sell its positions on the Profile tab. Then withdraw from your Agent Wallet.',
 } as const;

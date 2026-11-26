@@ -29,7 +29,7 @@ describe('RetiredContractAlert', () => {
     render(
       <RetiredContractAlert
         stakingProgramName="Polystrat IV"
-        state={{ kind: 'switch', canSwitch: true }}
+        state={{ kind: 'switch' }}
       />,
     );
 
@@ -60,7 +60,7 @@ describe('RetiredContractAlert', () => {
     render(
       <RetiredContractAlert
         stakingProgramName="Polystrat III"
-        state={{ kind: 'switch', canSwitch: false }}
+        state={{ kind: 'awaitingUnstake' }}
       />,
     );
 
@@ -101,6 +101,34 @@ describe('RetiredContractAlert', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }));
     expect(mockGoto).toHaveBeenCalledWith(PAGES.AgentWallet);
+  });
+
+  it('offers a retry of the staking details when they could not be read', () => {
+    const onRetry = jest.fn();
+    render(
+      <RetiredContractAlert
+        stakingProgramName="Omenstrat III"
+        state={{ kind: 'stakingDetailsUnknown', onRetry }}
+      />,
+    );
+
+    expect(alertText()).toBe(
+      "Omenstrat III contract is deprecatedPearl couldn't check this agent's staking status. Check your internet connection and try again.Retry",
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the title only while loading', () => {
+    render(
+      <RetiredContractAlert
+        stakingProgramName="Polystrat III"
+        state={{ kind: 'loading' }}
+      />,
+    );
+
+    expect(alertText()).toBe('Polystrat III contract is deprecated');
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('falls back to a generic title once the program can no longer be named', () => {

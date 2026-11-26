@@ -33,6 +33,7 @@ type ContextValue = {
     StakingContractDetails & ServiceStakingDetails
   > | null;
   isSelectedStakingContractDetailsLoading?: boolean;
+  isSelectedStakingContractDetailsError?: boolean;
   allStakingContractDetailsRecord?: Record<
     StakingProgramId,
     Partial<StakingContractDetails>
@@ -75,6 +76,8 @@ function makeWrapper(overrides: ContextValue = {}) {
               overrides.selectedStakingContractDetails ?? null,
             isSelectedStakingContractDetailsLoading:
               overrides.isSelectedStakingContractDetailsLoading ?? false,
+            isSelectedStakingContractDetailsError:
+              overrides.isSelectedStakingContractDetailsError ?? false,
             allStakingContractDetailsRecord:
               overrides.allStakingContractDetailsRecord,
             isAllStakingContractDetailsRecordLoaded:
@@ -561,6 +564,41 @@ describe('useActiveStakingContractDetails', () => {
   });
 
   // ---- hasStakingDetails / isServiceOutOfContract ----
+
+  describe('isInMinimumStakingPeriod without staking details', () => {
+    it('is false while the details reload, even if the stale ones were in the period', () => {
+      jest
+        .spyOn(Date, 'now')
+        .mockReturnValue((DEFAULT_TS_CHECKPOINT + 10) * 1000);
+      const wrapper = makeWrapper({
+        isSelectedStakingContractDetailsLoading: true,
+        selectedStakingContractDetails: {
+          ...makeStakingContractDetails({
+            minimumStakingDuration: DEFAULT_LIVENESS_PERIOD_S,
+          }),
+          ...makeServiceStakingDetails({
+            serviceStakingState: StakingState.Staked,
+            serviceStakingStartTime: DEFAULT_TS_CHECKPOINT,
+          }),
+        },
+      });
+      const { result } = renderHook(() => useActiveStakingContractDetails(), {
+        wrapper,
+      });
+      expect(result.current.isServiceInContract).toBe(true);
+      expect(result.current.isInMinimumStakingPeriod).toBe(false);
+    });
+
+    it('passes on the read error', () => {
+      const wrapper = makeWrapper({
+        isSelectedStakingContractDetailsError: true,
+      });
+      const { result } = renderHook(() => useActiveStakingContractDetails(), {
+        wrapper,
+      });
+      expect(result.current.isStakingDetailsError).toBe(true);
+    });
+  });
 
   describe('hasStakingDetails and isServiceOutOfContract', () => {
     it('are false when the details failed to load, not "unstaked"', () => {

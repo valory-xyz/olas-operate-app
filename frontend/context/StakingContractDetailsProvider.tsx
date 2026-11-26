@@ -170,6 +170,8 @@ type StakingContractDetailsContextProps = {
     Partial<StakingContractDetails & ServiceStakingDetails>
   >;
   isSelectedStakingContractDetailsLoading: boolean;
+  /** The read failed and there are no earlier details to show. */
+  isSelectedStakingContractDetailsError: boolean;
   isPaused: boolean;
   allStakingContractDetailsRecord?: Record<
     StakingProgramId,
@@ -186,6 +188,7 @@ type StakingContractDetailsContextProps = {
 export const StakingContractDetailsContext =
   createContext<StakingContractDetailsContextProps>({
     isSelectedStakingContractDetailsLoading: false,
+    isSelectedStakingContractDetailsError: false,
     selectedStakingContractDetails: null,
     isAllStakingContractDetailsRecordLoaded: false,
     refetchSelectedStakingContractDetails: async () => {},
@@ -207,6 +210,7 @@ export const StakingContractDetailsProvider = ({
   const {
     data: selectedStakingContractDetails,
     isLoading,
+    isError,
     refetch,
   } = useStakingContractDetailsByStakingProgram({
     serviceNftTokenId,
@@ -227,6 +231,8 @@ export const StakingContractDetailsProvider = ({
         // selected staking contract details
         selectedStakingContractDetails,
         isSelectedStakingContractDetailsLoading: isLoading,
+        isSelectedStakingContractDetailsError:
+          isError && !selectedStakingContractDetails,
         refetchSelectedStakingContractDetails,
 
         // all staking contract details

@@ -118,17 +118,14 @@ jest.mock(
       state: {
         kind: string;
         endsAt?: number;
-        canSwitch?: boolean;
         onRetry?: () => void;
       };
     }) => (
       <div>
         {`contract-retired: ${stakingProgramName ?? 'unnamed'} ${state.kind}${
           state.kind === 'cooldown' ? ` endsAt=${state.endsAt}` : ''
-        }${state.kind === 'switch' ? ` canSwitch=${state.canSwitch}` : ''}`}
-        {state.onRetry && (
-          <button onClick={state.onRetry}>retry-safe-type</button>
-        )}
+        }`}
+        {state.onRetry && <button onClick={state.onRetry}>retry</button>}
       </div>
     ),
   }),
@@ -165,6 +162,7 @@ jest.mock(
 );
 
 const mockRefetchMultisigType = jest.fn();
+const mockRefetchStakingDetails = jest.fn();
 
 type StakingOverrides = {
   isSelectedStakingContractDetailsLoading?: boolean;
@@ -175,6 +173,7 @@ type StakingOverrides = {
   isInMinimumStakingPeriod?: boolean;
   hasStakingDetails?: boolean;
   isServiceOutOfContract?: boolean;
+  isStakingDetailsError?: boolean;
   evictionExpiresAt?: number;
   availableRewards?: number;
 };
@@ -192,7 +191,7 @@ const setup = ({
   retiredStakingProgram = false,
   isWithdrawalOnly = false as boolean | 'unknown',
   hasProgramMeta = true,
-  multisigType = { isMultisigTypeLoaded: true, isMultisigTypeError: false },
+  isMultisigTypeError = false,
   isRunning = false,
   agentIssues,
   prestartCheck,
@@ -211,10 +210,7 @@ const setup = ({
   /** 'unknown': the Safe type is not known yet, so the hook returns undefined. */
   isWithdrawalOnly?: boolean | 'unknown';
   hasProgramMeta?: boolean;
-  multisigType?: {
-    isMultisigTypeLoaded: boolean;
-    isMultisigTypeError: boolean;
-  };
+  isMultisigTypeError?: boolean;
   isRunning?: boolean;
   agentIssues?: AgentIssue[];
   prestartCheck?: PrestartCheck;
@@ -229,6 +225,8 @@ const setup = ({
     isInMinimumStakingPeriod: false,
     hasStakingDetails: true,
     isServiceOutOfContract: false,
+    isStakingDetailsError: false,
+    refetchSelectedStakingContractDetails: mockRefetchStakingDetails,
     evictionExpiresAt: 1_700_000_000,
     ...staking,
     selectedStakingContractDetails: {
@@ -291,7 +289,7 @@ const setup = ({
     isOnRetiredProgram: retiredStakingProgram,
     isWithdrawalOnly:
       isWithdrawalOnly === 'unknown' ? undefined : isWithdrawalOnly,
-    ...multisigType,
+    isMultisigTypeError,
     refetch: mockRefetchMultisigType,
   });
   return render(<AgentDisabledAlert />);
@@ -621,7 +619,7 @@ describe('AgentDisabledAlert', () => {
         },
       });
 
-      expect(retiredAlert('switch canSwitch=false')).toBeInTheDocument();
+      expect(retiredAlert('awaitingUnstake')).toBeInTheDocument();
       expect(screen.getByText('master-eoa-low-balance')).toBeInTheDocument();
       for (const marker of [
         'contract-deprecated',
@@ -650,17 +648,16 @@ describe('AgentDisabledAlert', () => {
       // The middleware unstakes it later; a switch before then is refused (409).
       setup({ retiredStakingProgram: true });
 
-      expect(retiredAlert('switch canSwitch=false')).toBeInTheDocument();
+      expect(retiredAlert('awaitingUnstake')).toBeInTheDocument();
     });
 
     it('offers the switch once the agent is unstaked', () => {
       setup({ retiredStakingProgram: true, staking: UNSTAKED });
 
-      expect(retiredAlert('switch canSwitch=true')).toBeInTheDocument();
+      expect(retiredAlert('switch')).toBeInTheDocument();
     });
 
-    it("offers neither the cooldown nor the switch when the staking details couldn't be read", () => {
-      // A failed read leaves the flags false, which must not pass for "unstaked".
+    it('shows the title only while the staking details are unknown', () => {
       setup({
         retiredStakingProgram: true,
         staking: {
@@ -671,20 +668,25 @@ describe('AgentDisabledAlert', () => {
         },
       });
 
-      expect(retiredAlert('switch canSwitch=false')).toBeInTheDocument();
+      expect(retiredAlert('loading')).toBeInTheDocument();
     });
 
-    it('shows no cooldown without staking details, even with the period flag set', () => {
+    it("offers a retry of the staking details when they couldn't be read", () => {
+      // A failed read leaves the flags false, which must not pass for "unstaked".
       setup({
         retiredStakingProgram: true,
         staking: {
+          isServiceStaked: false,
           hasStakingDetails: false,
-          isInMinimumStakingPeriod: true,
-          evictionExpiresAt: 1_800_000_000,
+          isStakingDetailsError: true,
+          isServiceOutOfContract: false,
+          isInMinimumStakingPeriod: false,
         },
       });
 
-      expect(retiredAlert('switch canSwitch=false')).toBeInTheDocument();
+      expect(retiredAlert('stakingDetailsUnknown')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('retry'));
+      expect(mockRefetchStakingDetails).toHaveBeenCalledTimes(1);
     });
 
     it('offers no switch while the Safe type loads', () => {
@@ -692,14 +694,11 @@ describe('AgentDisabledAlert', () => {
         retiredStakingProgram: true,
         isWithdrawalOnly: 'unknown',
         staking: UNSTAKED,
-        multisigType: {
-          isMultisigTypeLoaded: false,
-          isMultisigTypeError: false,
-        },
       });
 
-      expect(retiredAlert('switch canSwitch=false')).toBeInTheDocument();
-      expect(screen.queryByText('retry-safe-type')).not.toBeInTheDocument();
+      // Not the switch copy: a PolySafe agent can never switch.
+      expect(retiredAlert('loading')).toBeInTheDocument();
+      expect(screen.queryByText('retry')).not.toBeInTheDocument();
     });
 
     it("offers a retry of the Safe type read when it couldn't be read", () => {
@@ -707,11 +706,11 @@ describe('AgentDisabledAlert', () => {
         retiredStakingProgram: true,
         isWithdrawalOnly: 'unknown',
         staking: UNSTAKED,
-        multisigType: { isMultisigTypeLoaded: true, isMultisigTypeError: true },
+        isMultisigTypeError: true,
       });
 
       expect(retiredAlert('safeTypeUnknown')).toBeInTheDocument();
-      fireEvent.click(screen.getByText('retry-safe-type'));
+      fireEvent.click(screen.getByText('retry'));
       expect(mockRefetchMultisigType).toHaveBeenCalledTimes(1);
     });
 
@@ -723,7 +722,7 @@ describe('AgentDisabledAlert', () => {
           isInMinimumStakingPeriod: true,
           evictionExpiresAt: 1_800_000_000,
         },
-        multisigType: { isMultisigTypeLoaded: true, isMultisigTypeError: true },
+        isMultisigTypeError: true,
       });
 
       expect(retiredAlert('cooldown endsAt=1800000000')).toBeInTheDocument();

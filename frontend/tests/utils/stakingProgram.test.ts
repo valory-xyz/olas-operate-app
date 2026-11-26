@@ -9,6 +9,7 @@ import {
   deriveStakingProgramId,
   EVICTION_RUN_START_MARGIN_SECONDS,
   getCompatibleStakingProgramIds,
+  getRetiredProgramStatus,
   isNoStakingProgram,
   isStakingProgramCompatibleWithMultisig,
   isWithdrawalOnly,
@@ -259,4 +260,52 @@ describe('isWithdrawalOnly', () => {
       expect(isWithdrawalOnly({ isRetired, isPolySafeService })).toBe(expected);
     },
   );
+});
+
+describe('getRetiredProgramStatus', () => {
+  const known = {
+    isWithdrawalOnly: false as boolean | undefined,
+    isSafeTypeError: false,
+    hasStakingDetails: true,
+    isStakingDetailsError: false,
+    isInMinimumStakingPeriod: false,
+    isServiceOutOfContract: true,
+  };
+
+  it.each([
+    ['switch', {}],
+    ['awaitingUnstake', { isServiceOutOfContract: false }],
+    [
+      'cooldown',
+      { isInMinimumStakingPeriod: true, isServiceOutOfContract: false },
+    ],
+    [
+      'withdrawalOnly',
+      { isWithdrawalOnly: true, isInMinimumStakingPeriod: true },
+    ],
+    // Unknown Safe type: never the switch, which a PolySafe can't do.
+    ['loading', { isWithdrawalOnly: undefined }],
+    ['safeTypeUnknown', { isWithdrawalOnly: undefined, isSafeTypeError: true }],
+    // Cooldown is known regardless of the Safe type.
+    [
+      'cooldown',
+      {
+        isWithdrawalOnly: undefined,
+        isSafeTypeError: true,
+        isInMinimumStakingPeriod: true,
+      },
+    ],
+    // Unknown staking details: never the switch, which could be in a cooldown.
+    ['loading', { hasStakingDetails: false, isServiceOutOfContract: false }],
+    [
+      'stakingDetailsUnknown',
+      {
+        hasStakingDetails: false,
+        isStakingDetailsError: true,
+        isServiceOutOfContract: false,
+      },
+    ],
+  ] as const)('%s for %o', (expected, overrides) => {
+    expect(getRetiredProgramStatus({ ...known, ...overrides })).toBe(expected);
+  });
 });

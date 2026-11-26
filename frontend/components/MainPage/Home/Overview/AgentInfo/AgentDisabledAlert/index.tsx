@@ -30,6 +30,7 @@ import {
   useStakingProgram,
 } from '@/hooks';
 import { AgentIssue } from '@/types';
+import { getRetiredProgramStatus } from '@/utils/stakingProgram';
 
 import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
 import { AgentIssuesAlert } from './AgentIssuesAlert';
@@ -71,6 +72,8 @@ export const AgentDisabledAlert = () => {
     isInMinimumStakingPeriod,
     hasStakingDetails,
     isServiceOutOfContract,
+    isStakingDetailsError,
+    refetchSelectedStakingContractDetails,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
   const {
@@ -184,22 +187,31 @@ export const AgentDisabledAlert = () => {
     }
 
     if (isOnRetiredProgram) {
+      const status = getRetiredProgramStatus({
+        isWithdrawalOnly,
+        isSafeTypeError: isMultisigTypeError,
+        hasStakingDetails,
+        isStakingDetailsError,
+        isInMinimumStakingPeriod,
+        isServiceOutOfContract,
+      });
       const state = ((): RetiredContractAlertState => {
-        if (isWithdrawalOnly) return { kind: 'withdrawalOnly' };
-        if (hasStakingDetails && isInMinimumStakingPeriod) {
-          return { kind: 'cooldown', endsAt: evictionExpiresAt };
+        switch (status) {
+          case 'cooldown':
+            return { kind: 'cooldown', endsAt: evictionExpiresAt };
+          case 'safeTypeUnknown':
+            return {
+              kind: 'safeTypeUnknown',
+              onRetry: () => refetchMultisigType(),
+            };
+          case 'stakingDetailsUnknown':
+            return {
+              kind: 'stakingDetailsUnknown',
+              onRetry: () => refetchSelectedStakingContractDetails(),
+            };
+          default:
+            return { kind: status };
         }
-        if (isMultisigTypeError) {
-          return {
-            kind: 'safeTypeUnknown',
-            onRetry: () => refetchMultisigType(),
-          };
-        }
-        // The middleware refuses a switch until it has unstaked the agent.
-        return {
-          kind: 'switch',
-          canSwitch: isServiceOutOfContract && isWithdrawalOnly === false,
-        };
       })();
       return {
         key: 'contract-retired',
@@ -298,6 +310,8 @@ export const AgentDisabledAlert = () => {
     isServiceStaked,
     hasStakingDetails,
     isServiceOutOfContract,
+    isStakingDetailsError,
+    refetchSelectedStakingContractDetails,
     isInMinimumStakingPeriod,
     isOnRetiredProgram,
     isWithdrawalOnly,

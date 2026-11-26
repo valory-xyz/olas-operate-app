@@ -20,6 +20,8 @@ export const useActiveStakingContractDetails = () => {
   const {
     selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoading,
+    isSelectedStakingContractDetailsError,
+    refetchSelectedStakingContractDetails,
   } = useStakingContractContext();
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
 
@@ -86,9 +88,11 @@ export const useActiveStakingContractDetails = () => {
   /** Known to be out of the contract, which a switch to another program needs. */
   const isServiceOutOfContract = hasStakingDetails && !isServiceInContract;
 
-  /** In the contract and inside its minimum staking period: it can't be unstaked yet. */
+  /** Known to be in the contract and inside its minimum staking period: it can't be unstaked yet. */
   const isInMinimumStakingPeriod =
-    isServiceInContract && !isServiceStakedForMinimumDuration;
+    hasStakingDetails &&
+    isServiceInContract &&
+    !isServiceStakedForMinimumDuration;
 
   // Eviction expire time in seconds
   const evictionExpiresAt =
@@ -107,6 +111,8 @@ export const useActiveStakingContractDetails = () => {
     isInMinimumStakingPeriod,
     hasStakingDetails,
     isServiceOutOfContract,
+    isStakingDetailsError: isSelectedStakingContractDetailsError,
+    refetchSelectedStakingContractDetails,
     evictionExpiresAt,
     isSelectedStakingContractDetailsLoading,
     selectedStakingContractDetails,
