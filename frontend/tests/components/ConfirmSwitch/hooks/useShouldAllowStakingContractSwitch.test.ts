@@ -491,25 +491,4 @@ describe('useShouldAllowStakingContractSwitch', () => {
       });
     });
   });
-
-  describe('switching to Unstaked (no_staking)', () => {
-    it.each([
-      ['a staked service', DEFAULT_SERVICE_NFT_TOKEN_ID],
-      ['a service on its first deploy', 0],
-    ])('is allowed with no OLAS for %s', (_, serviceToken) => {
-      setupMocks({
-        stakingProgramIdToMigrateTo: 'no_staking',
-        safeOlasBalanceStr: '0',
-        stakedOlasBalance: 0,
-        serviceToken,
-      });
-
-      const { result } = renderHook(() =>
-        useShouldAllowStakingContractSwitch(),
-      );
-
-      expect(result.current.shouldAllowSwitch).toBe(true);
-      expect(result.current.olasRequiredToMigrate).toBe(0);
-    });
-  });
 });

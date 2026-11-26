@@ -9,11 +9,7 @@ import {
   useServices,
   useStakingProgram,
 } from '@/hooks';
-import {
-  asMiddlewareChain,
-  isNoStakingProgram,
-  isValidServiceId,
-} from '@/utils';
+import { asMiddlewareChain, isValidServiceId } from '@/utils';
 
 export const useShouldAllowStakingContractSwitch = () => {
   const { isLoaded: isBalanceLoaded, getStakedOlasBalanceByServiceConfigId } =
@@ -27,13 +23,10 @@ export const useShouldAllowStakingContractSwitch = () => {
   } = useServices();
 
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
-  // Unstaking needs no OLAS: the stake comes back instead.
   const minimumOlasRequiredToMigrate = useMemo(
     () =>
-      isNoStakingProgram(stakingProgramIdToMigrateTo)
-        ? 0
-        : STAKING_PROGRAMS[homeChainId][stakingProgramIdToMigrateTo!]
-            ?.stakingRequirements[TokenSymbolMap.OLAS],
+      STAKING_PROGRAMS[homeChainId][stakingProgramIdToMigrateTo!]
+        ?.stakingRequirements[TokenSymbolMap.OLAS],
     [homeChainId, stakingProgramIdToMigrateTo],
   );
 
