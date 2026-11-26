@@ -75,7 +75,7 @@ describe('RetiredContractAlert', () => {
     render(
       <RetiredContractAlert
         stakingProgramName="Polystrat III"
-        state={{ kind: 'safeTypeUnknown', onRetry }}
+        state={{ kind: 'safeTypeUnknown', onRetry, isRetrying: false }}
       />,
     );
 
@@ -108,7 +108,7 @@ describe('RetiredContractAlert', () => {
     render(
       <RetiredContractAlert
         stakingProgramName="Omenstrat III"
-        state={{ kind: 'stakingDetailsUnknown', onRetry }}
+        state={{ kind: 'stakingDetailsUnknown', onRetry, isRetrying: false }}
       />,
     );
 
@@ -118,6 +118,22 @@ describe('RetiredContractAlert', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it.each(['safeTypeUnknown', 'stakingDetailsUnknown'] as const)(
+    'shows the %s retry as loading while it re-reads',
+    (kind) => {
+      render(
+        <RetiredContractAlert
+          stakingProgramName="Omenstrat III"
+          state={{ kind, onRetry: jest.fn(), isRetrying: true }}
+        />,
+      );
+
+      expect(screen.getByRole('button', { name: /Retry/ })).toHaveClass(
+        'ant-btn-loading',
+      );
+    },
+  );
 
   it('shows the title only while loading', () => {
     render(

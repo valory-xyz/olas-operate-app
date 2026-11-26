@@ -20,6 +20,7 @@ import {
 } from '../../../../../../../hooks';
 import { PrestartCheck } from '../../../../../../../hooks/usePrestartCheck';
 import { AgentIssue } from '../../../../../../../types';
+import { RetiredProgramStakingDetails } from '../../../../../../../utils/stakingProgram';
 import {
   makeAgentIssue,
   makeFailedPrestartCheck,
@@ -119,13 +120,18 @@ jest.mock(
         kind: string;
         endsAt?: number;
         onRetry?: () => void;
+        isRetrying?: boolean;
       };
     }) => (
       <div>
         {`contract-retired: ${stakingProgramName ?? 'unnamed'} ${state.kind}${
           state.kind === 'cooldown' ? ` endsAt=${state.endsAt}` : ''
         }`}
-        {state.onRetry && <button onClick={state.onRetry}>retry</button>}
+        {state.onRetry && (
+          <button onClick={state.onRetry}>
+            {state.isRetrying ? 'retrying' : 'retry'}
+          </button>
+        )}
       </div>
     ),
   }),
@@ -170,10 +176,8 @@ type StakingOverrides = {
   isEligibleForStaking?: boolean;
   hasEnoughServiceSlots?: boolean | null;
   isServiceStaked?: boolean;
-  isInMinimumStakingPeriod?: boolean;
-  hasStakingDetails?: boolean;
-  isServiceOutOfContract?: boolean;
-  isStakingDetailsError?: boolean;
+  stakingDetailsState?: RetiredProgramStakingDetails;
+  isSelectedStakingContractDetailsFetching?: boolean;
   evictionExpiresAt?: number;
   availableRewards?: number;
 };
@@ -192,6 +196,7 @@ const setup = ({
   isWithdrawalOnly = false as boolean | 'unknown',
   hasProgramMeta = true,
   isMultisigTypeError = false,
+  isMultisigTypeFetching = false,
   isRunning = false,
   agentIssues,
   prestartCheck,
@@ -211,42 +216,24 @@ const setup = ({
   isWithdrawalOnly?: boolean | 'unknown';
   hasProgramMeta?: boolean;
   isMultisigTypeError?: boolean;
+  isMultisigTypeFetching?: boolean;
   isRunning?: boolean;
   agentIssues?: AgentIssue[];
   prestartCheck?: PrestartCheck;
   isChecking?: boolean;
 } = {}) => {
-  const details = {
-    hasStakingDetails: true,
-    isStakingDetailsError: false,
-    isInMinimumStakingPeriod: false,
-    isServiceOutOfContract: false,
-    evictionExpiresAt: 1_700_000_000,
-    ...staking,
-  };
-  // As the hook builds it from the same facts.
-  const stakingDetailsState = details.hasStakingDetails
-    ? {
-        state: 'loaded',
-        isInMinimumStakingPeriod: details.isInMinimumStakingPeriod,
-        isServiceOutOfContract: details.isServiceOutOfContract,
-        cooldownEndsAt: details.evictionExpiresAt,
-      }
-    : { state: details.isStakingDetailsError ? 'error' : 'loading' };
   (useActiveStakingContractDetails as jest.Mock).mockReturnValue({
     isSelectedStakingContractDetailsLoading: false,
     isAgentEvicted: false,
     isEligibleForStaking: true,
     hasEnoughServiceSlots: true,
     isServiceStaked: true,
-    isInMinimumStakingPeriod: false,
-    hasStakingDetails: true,
-    isServiceOutOfContract: false,
-    isStakingDetailsError: false,
+    // Staked past its minimum period, as `isServiceStaked` above.
+    stakingDetailsState: { state: 'loaded', placement: 'pastMinimumPeriod' },
+    isSelectedStakingContractDetailsFetching: false,
     refetchSelectedStakingContractDetails: mockRefetchStakingDetails,
     evictionExpiresAt: 1_700_000_000,
     ...staking,
-    stakingDetailsState,
     selectedStakingContractDetails: {
       availableRewards: staking.availableRewards ?? 10,
     },
@@ -308,6 +295,7 @@ const setup = ({
     isWithdrawalOnly:
       isWithdrawalOnly === 'unknown' ? undefined : isWithdrawalOnly,
     isMultisigTypeError,
+    isMultisigTypeFetching,
     refetch: mockRefetchMultisigType,
   });
   return render(<AgentDisabledAlert />);
@@ -620,9 +608,18 @@ describe('AgentDisabledAlert', () => {
 
     const UNSTAKED = {
       isServiceStaked: false,
-      isServiceOutOfContract: true,
-      isInMinimumStakingPeriod: false,
+      stakingDetailsState: {
+        state: 'loaded',
+        placement: 'outOfContract',
+      } as RetiredProgramStakingDetails,
     };
+    const inMinimumPeriod = (
+      cooldownEndsAt = 1_800_000_000,
+    ): RetiredProgramStakingDetails => ({
+      state: 'loaded',
+      placement: 'inMinimumPeriod',
+      cooldownEndsAt,
+    });
 
     it('pre-empts no-slots, eviction, empty-pool and agent low-balance alerts, keeping the Master EOA one', () => {
       setup({
@@ -653,17 +650,14 @@ describe('AgentDisabledAlert', () => {
     it('passes the end of the minimum staking period while the agent is inside it', () => {
       setup({
         retiredStakingProgram: true,
-        staking: {
-          isInMinimumStakingPeriod: true,
-          evictionExpiresAt: 1_800_000_000,
-        },
+        staking: { stakingDetailsState: inMinimumPeriod() },
       });
 
       expect(retiredAlert('cooldown endsAt=1800000000')).toBeInTheDocument();
     });
 
     it('offers no switch once the period is over but the agent is still in the contract', () => {
-      // The middleware unstakes it later; a switch before then is refused (409).
+      // The middleware unstakes it within the sweep interval.
       setup({ retiredStakingProgram: true });
 
       expect(retiredAlert('awaitingUnstake')).toBeInTheDocument();
@@ -680,9 +674,7 @@ describe('AgentDisabledAlert', () => {
         retiredStakingProgram: true,
         staking: {
           isServiceStaked: false,
-          hasStakingDetails: false,
-          isServiceOutOfContract: false,
-          isInMinimumStakingPeriod: false,
+          stakingDetailsState: { state: 'loading' },
         },
       });
 
@@ -690,21 +682,42 @@ describe('AgentDisabledAlert', () => {
     });
 
     it("offers a retry of the staking details when they couldn't be read", () => {
-      // A failed read leaves the flags false, which must not pass for "unstaked".
       setup({
         retiredStakingProgram: true,
         staking: {
           isServiceStaked: false,
-          hasStakingDetails: false,
-          isStakingDetailsError: true,
-          isServiceOutOfContract: false,
-          isInMinimumStakingPeriod: false,
+          stakingDetailsState: { state: 'error' },
         },
       });
 
       expect(retiredAlert('stakingDetailsUnknown')).toBeInTheDocument();
       fireEvent.click(screen.getByText('retry'));
       expect(mockRefetchStakingDetails).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows the staking-details retry as loading while it refetches', () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: {
+          isServiceStaked: false,
+          stakingDetailsState: { state: 'error' },
+          isSelectedStakingContractDetailsFetching: true,
+        },
+      });
+
+      expect(screen.getByText('retrying')).toBeInTheDocument();
+    });
+
+    it('shows the Safe-type retry as loading while it re-reads', () => {
+      setup({
+        retiredStakingProgram: true,
+        isWithdrawalOnly: 'unknown',
+        staking: UNSTAKED,
+        isMultisigTypeError: true,
+        isMultisigTypeFetching: true,
+      });
+
+      expect(screen.getByText('retrying')).toBeInTheDocument();
     });
 
     it('offers no switch while the Safe type loads', () => {
@@ -736,10 +749,7 @@ describe('AgentDisabledAlert', () => {
       setup({
         retiredStakingProgram: true,
         isWithdrawalOnly: 'unknown',
-        staking: {
-          isInMinimumStakingPeriod: true,
-          evictionExpiresAt: 1_800_000_000,
-        },
+        staking: { stakingDetailsState: inMinimumPeriod() },
         isMultisigTypeError: true,
       });
 
@@ -750,7 +760,7 @@ describe('AgentDisabledAlert', () => {
       setup({
         retiredStakingProgram: true,
         isWithdrawalOnly: true,
-        staking: { isInMinimumStakingPeriod: true },
+        staking: { stakingDetailsState: inMinimumPeriod() },
       });
 
       expect(retiredAlert('withdrawalOnly')).toBeInTheDocument();

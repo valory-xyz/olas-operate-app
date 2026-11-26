@@ -70,6 +70,7 @@ export const AgentDisabledAlert = () => {
     hasEnoughServiceSlots,
     isServiceStaked,
     stakingDetailsState,
+    isSelectedStakingContractDetailsFetching,
     refetchSelectedStakingContractDetails,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
@@ -77,6 +78,7 @@ export const AgentDisabledAlert = () => {
     isOnRetiredProgram,
     isWithdrawalOnly,
     isMultisigTypeError,
+    isMultisigTypeFetching,
     refetch: refetchMultisigType,
   } = useIsPolySafeService();
   const { isInitialFunded } = useIsInitiallyFunded();
@@ -192,11 +194,16 @@ export const AgentDisabledAlert = () => {
       const state = ((): RetiredContractAlertState => {
         switch (status.kind) {
           case 'safeTypeUnknown':
-            return { kind: status.kind, onRetry: () => refetchMultisigType() };
+            return {
+              kind: status.kind,
+              onRetry: () => refetchMultisigType(),
+              isRetrying: isMultisigTypeFetching,
+            };
           case 'stakingDetailsUnknown':
             return {
               kind: status.kind,
               onRetry: () => refetchSelectedStakingContractDetails(),
+              isRetrying: isSelectedStakingContractDetailsFetching,
             };
           default:
             return status;
@@ -297,10 +304,12 @@ export const AgentDisabledAlert = () => {
     isServiceRunning,
     isServiceStaked,
     stakingDetailsState,
+    isSelectedStakingContractDetailsFetching,
     refetchSelectedStakingContractDetails,
     isOnRetiredProgram,
     isWithdrawalOnly,
     isMultisigTypeError,
+    isMultisigTypeFetching,
     refetchMultisigType,
     runsEvicted,
     prestartCheck,

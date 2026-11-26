@@ -6,17 +6,19 @@ import { usePageState } from '@/hooks';
 import { RetiredProgramStatus } from '@/utils/stakingProgram';
 import { formatToShortDateTime } from '@/utils/time';
 
+import {
+  DeprecatedContractTitle,
+  SwitchStakingContractButton,
+} from './DeprecatedContract';
+
 const { Text } = Typography;
 
 type RetryableKind = 'safeTypeUnknown' | 'stakingDetailsUnknown';
 
-/**
- * The variant to show: a `RetiredProgramStatus`, with a retry for the two
- * unknown states. Derived, so a new status fails to compile until handled.
- */
+/** A `RetiredProgramStatus`, with a retry for the two unknown states. */
 export type RetiredContractAlertState =
   | Exclude<RetiredProgramStatus, { kind: RetryableKind }>
-  | { kind: RetryableKind; onRetry: () => void };
+  | { kind: RetryableKind; onRetry: () => void; isRetrying: boolean };
 
 type RetiredContractAlertProps = {
   /** Undefined once the program can no longer be named (stored as `no_staking`). */
@@ -39,13 +41,15 @@ const CooldownBody = ({ cooldownEndsAt }: { cooldownEndsAt: number }) => (
 const RetryBody = ({
   copy,
   onRetry,
+  isRetrying,
 }: {
   copy: string;
   onRetry: () => void;
+  isRetrying: boolean;
 }) => (
   <>
     <Text className="text-sm flex mt-4 mb-8">{copy}</Text>
-    <Button size="small" onClick={onRetry}>
+    <Button size="small" onClick={onRetry} loading={isRetrying}>
       Retry
     </Button>
   </>
@@ -77,6 +81,7 @@ export const RetiredContractAlert = ({
           <RetryBody
             copy={RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN}
             onRetry={state.onRetry}
+            isRetrying={state.isRetrying}
           />
         );
       case 'stakingDetailsUnknown':
@@ -84,6 +89,7 @@ export const RetiredContractAlert = ({
           <RetryBody
             copy={RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN}
             onRetry={state.onRetry}
+            isRetrying={state.isRetrying}
           />
         );
       case 'safeTypeLoading':
@@ -98,11 +104,7 @@ export const RetiredContractAlert = ({
             <Text className={`text-sm flex mt-4 ${canSwitch ? 'mb-8' : ''}`}>
               {RETIRED_STAKING_PROGRAM_COPY.SWITCH}
             </Text>
-            {canSwitch && (
-              <Button size="small" onClick={() => goto(PAGES.SelectStaking)}>
-                Switch Staking Contract
-              </Button>
-            )}
+            {canSwitch && <SwitchStakingContractButton />}
           </>
         );
       }
@@ -116,11 +118,7 @@ export const RetiredContractAlert = ({
       type="error"
       message={
         <>
-          <Text className="text-sm font-weight-500">
-            {stakingProgramName
-              ? `${stakingProgramName} contract is deprecated`
-              : 'Staking contract is deprecated'}
-          </Text>
+          <DeprecatedContractTitle stakingProgramName={stakingProgramName} />
           {renderBody()}
         </>
       }
