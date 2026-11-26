@@ -130,6 +130,8 @@ export type StakingProgramId =
   | typeof NO_STAKING_PROGRAM_ID;
 
 const NO_LONGER_SUPPORTED = 'Pearl no longer supports deprecated contracts.';
+const STAKING_DETAILS_NOT_LOADED =
+  "Pearl couldn't load this agent's staking details. Try again in a few minutes.";
 
 /** Copy of the retired-contract alert, also used as start-gate and Auto-run skip reasons. */
 export const RETIRED_STAKING_PROGRAM_COPY = {
@@ -139,11 +141,9 @@ export const RETIRED_STAKING_PROGRAM_COPY = {
   COOLDOWN_SUFFIX:
     '. After that, switch to one of the available contracts to run your agent again.',
   /** The Safe type can't be read, so neither SWITCH nor WITHDRAWAL_ONLY can be offered. */
-  SAFE_TYPE_UNKNOWN:
-    "Pearl couldn't check whether this agent can switch to a new contract. Check your internet connection and try again.",
+  SAFE_TYPE_UNKNOWN: STAKING_DETAILS_NOT_LOADED,
   /** The staking details can't be read, so neither the cooldown nor SWITCH can be offered. */
-  STAKING_DETAILS_UNKNOWN:
-    "Pearl couldn't check this agent's staking status. Check your internet connection and try again.",
+  STAKING_DETAILS_UNKNOWN: STAKING_DETAILS_NOT_LOADED,
   WITHDRAWAL_ONLY:
     'This agent can no longer trade because it cannot switch to a new staking contract. To keep using Polystrat, add a new agent. To get your funds back, start your agent and sell its positions on the Profile tab. Then withdraw from your Agent Wallet.',
 } as const;

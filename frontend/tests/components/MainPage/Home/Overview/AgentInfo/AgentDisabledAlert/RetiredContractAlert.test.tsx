@@ -80,7 +80,7 @@ describe('RetiredContractAlert', () => {
     );
 
     expect(alertText()).toBe(
-      "Polystrat III contract is deprecatedPearl couldn't check whether this agent can switch to a new contract. Check your internet connection and try again.Retry",
+      "Polystrat III contract is deprecatedPearl couldn't load this agent's staking details. Try again in a few minutes.Retry",
     );
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -113,7 +113,7 @@ describe('RetiredContractAlert', () => {
     );
 
     expect(alertText()).toBe(
-      "Omenstrat III contract is deprecatedPearl couldn't check this agent's staking status. Check your internet connection and try again.Retry",
+      "Omenstrat III contract is deprecatedPearl couldn't load this agent's staking details. Try again in a few minutes.Retry",
     );
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
