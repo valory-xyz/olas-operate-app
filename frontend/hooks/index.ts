@@ -1,4 +1,4 @@
-export * from './useAchievementModalOpen';
+export * from './useAchievementPending';
 export * from './useActiveStakingProgramId';
 export * from './useActivityGoal';
 export * from './useAgentActivity';

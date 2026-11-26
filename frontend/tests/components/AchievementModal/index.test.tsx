@@ -59,11 +59,11 @@ jest.mock(
 );
 
 const mockGetAgentTypeFromService = jest.fn();
-const mockSetAchievementModalOpen = jest.fn();
+const mockSetAchievementPending = jest.fn();
 jest.mock('../../../hooks', () => ({
   useServices: () => ({ getAgentTypeFromService: mockGetAgentTypeFromService }),
-  useAchievementModalOpen: () => ({
-    setAchievementModalOpen: mockSetAchievementModalOpen,
+  useAchievementPending: () => ({
+    setAchievementPending: mockSetAchievementPending,
   }),
 }));
 
@@ -87,14 +87,16 @@ jest.mock(
 );
 
 const setCurrentAchievement = (
-  currentAchievement: ReturnType<typeof makePolystratPayoutAchievement>,
+  currentAchievement: ReturnType<typeof makePolystratPayoutAchievement> | null,
+  { isLoading = false, isError = false } = {},
 ) =>
   mockUseCurrentAchievement.mockReturnValue({
     currentAchievement,
     markCurrentAchievementAsShown: mockMarkCurrentAchievementAsShown,
     skipCurrentAchievement: mockSkipCurrentAchievement,
-    isLoading: false,
-    isError: false,
+    hasPendingAchievement: !!currentAchievement,
+    isLoading,
+    isError,
   });
 
 const renderModal = async () => {
@@ -122,24 +124,38 @@ describe('AchievementModal', () => {
     expect(mockMarkCurrentAchievementAsShown).not.toHaveBeenCalled();
   });
 
-  it('tells the other modals while it is showing, and when it closes', async () => {
+  it('tells the other modals while it is showing, and once it is closed', async () => {
     mockGetAgentTypeFromService.mockReturnValue(AgentMap.PredictTrader);
     setCurrentAchievement(makeOmenstratPayoutAchievement());
 
     await renderModal();
-    expect(mockSetAchievementModalOpen).toHaveBeenLastCalledWith(true);
+    expect(mockSetAchievementPending).toHaveBeenLastCalledWith(true);
 
+    // it stays current for a minute after closing, but no longer holds others
     fireEvent.click(screen.getByRole('button', { name: 'close' }));
-    expect(mockSetAchievementModalOpen).toHaveBeenLastCalledWith(false);
+    expect(mockSetAchievementPending).toHaveBeenLastCalledWith(false);
   });
 
-  it('never reports itself open for an achievement it skips', async () => {
-    mockGetAgentTypeFromService.mockReturnValue(AgentMap.Optimus);
-    setCurrentAchievement(makeOmenstratPayoutAchievement());
-
+  it('holds the other modals while the achievements load', async () => {
+    setCurrentAchievement(null, { isLoading: true });
     await renderModal();
+    expect(mockSetAchievementPending).toHaveBeenLastCalledWith(true);
+  });
 
-    expect(mockSetAchievementModalOpen).not.toHaveBeenCalledWith(true);
+  it('holds the other modals while the agent type is still unknown', async () => {
+    mockGetAgentTypeFromService.mockReturnValue(null);
+    setCurrentAchievement(makeOmenstratPayoutAchievement());
+    await renderModal();
+    expect(mockSetAchievementPending).toHaveBeenLastCalledWith(true);
+  });
+
+  it.each([
+    ['no achievement', {}],
+    ['achievements that cannot be read', { isError: true }],
+  ])('holds nothing with %s', async (_, state) => {
+    setCurrentAchievement(null, state);
+    await renderModal();
+    expect(mockSetAchievementPending).not.toHaveBeenCalledWith(true);
   });
 
   it.each(['close', 'share'])(

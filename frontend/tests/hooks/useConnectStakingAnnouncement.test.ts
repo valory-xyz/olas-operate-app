@@ -4,7 +4,7 @@ import { MiddlewareChainMap } from '../../constants/chains';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { PAGES } from '../../constants/pages';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
-import { useAchievementModalOpen } from '../../hooks/useAchievementModalOpen';
+import { useAchievementPending } from '../../hooks/useAchievementPending';
 import { useArchivedAgents } from '../../hooks/useArchivedAgents';
 import { useConnectStakingAnnouncement } from '../../hooks/useConnectStakingAnnouncement';
 import { useElectronApi } from '../../hooks/useElectronApi';
@@ -29,8 +29,8 @@ jest.mock('../../utils', () => ({
     ({ gnosis: 100, robinhood: 4663, polygon: 137 })[chain],
   matchesAgentConfig: (service: { isConnect?: boolean }) => !!service.isConnect,
 }));
-jest.mock('../../hooks/useAchievementModalOpen', () => ({
-  useAchievementModalOpen: jest.fn(),
+jest.mock('../../hooks/useAchievementPending', () => ({
+  useAchievementPending: jest.fn(),
 }));
 jest.mock('../../hooks/useArchivedAgents', () => ({
   useArchivedAgents: jest.fn(),
@@ -63,7 +63,8 @@ type Setup = {
   selectedAgentType?: string;
   selectedService?: object;
   archivedInstances?: string[];
-  isAchievementModalOpen?: boolean;
+  isAchievementPending?: boolean;
+  isFetched?: boolean;
 };
 
 const setup = (overrides: Setup = {}) => {
@@ -74,11 +75,14 @@ const setup = (overrides: Setup = {}) => {
     selectedAgentType = 'trader',
     selectedService,
     archivedInstances = [],
-    isAchievementModalOpen = false,
+    isAchievementPending = false,
+    isFetched = true,
   } = overrides;
-  (useArchivedAgents as jest.Mock).mockReturnValue({ archivedInstances });
-  (useAchievementModalOpen as jest.Mock).mockReturnValue({
-    isAchievementModalOpen,
+  (useArchivedAgents as jest.Mock).mockReturnValue({
+    isArchived: (id: string) => archivedInstances.includes(id),
+  });
+  (useAchievementPending as jest.Mock).mockReturnValue({
+    isAchievementPending,
   });
   // An explicit `undefined` is the not-yet-loaded store, not "use the default".
   const storeState = 'storeState' in overrides ? overrides.storeState : {};
@@ -96,6 +100,7 @@ const setup = (overrides: Setup = {}) => {
   });
   (useServices as jest.Mock).mockReturnValue({
     services,
+    isFetched,
     selectedService,
     selectedAgentType,
     updateSelectedServiceConfigId: mockUpdateSelectedServiceConfigId,
@@ -119,7 +124,11 @@ describe('useConnectStakingAnnouncement', () => {
       ['the store has not loaded', { storeState: undefined }],
       ['the user is in setup', { pageState: PAGES.Setup }],
       ['the onboarding survey is open', { isSurveyOpen: true }],
-      ['an achievement is showing', { isAchievementModalOpen: true }],
+      [
+        'an achievement is loading, showing or about to show',
+        { isAchievementPending: true },
+      ],
+      ['the services have not loaded', { isFetched: false }],
       [
         "a running Connect's first run is pending, before its server is ready",
         {

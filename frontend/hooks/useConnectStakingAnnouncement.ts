@@ -9,7 +9,7 @@ import {
 } from '@/constants';
 import { asEvmChainId, matchesAgentConfig } from '@/utils';
 
-import { useAchievementModalOpen } from './useAchievementModalOpen';
+import { useAchievementPending } from './useAchievementPending';
 import { useArchivedAgents } from './useArchivedAgents';
 import { isConnectFirstRunComplete } from './useConnectSession';
 import { useElectronApi } from './useElectronApi';
@@ -34,12 +34,13 @@ export const useConnectStakingAnnouncement = () => {
   const { isModalOpen: isSurveyOpen } = useOnboardingSurvey();
   const {
     services,
+    isFetched: isServicesFetched,
     selectedService,
     selectedAgentType,
     updateSelectedServiceConfigId,
   } = useServices();
-  const { archivedInstances } = useArchivedAgents();
-  const { isAchievementModalOpen } = useAchievementModalOpen();
+  const { isArchived } = useArchivedAgents();
+  const { isAchievementPending } = useAchievementPending();
 
   const isStoreHydrated = storeState !== undefined;
   const isSeen = storeState?.connectStakingAnnouncementSeen === true;
@@ -58,8 +59,10 @@ export const useConnectStakingAnnouncement = () => {
     !isSeen &&
     pageState === PAGES.Main &&
     !isSurveyOpen &&
+    // until the services load, a pending Connect first run cannot be ruled out
+    !!isServicesFetched &&
     !isConnectFirstRunPending &&
-    !isAchievementModalOpen;
+    !isAchievementPending;
 
   // The Connect instance whose contract list the button opens, if any: in
   // `stakingChains` order, Gnosis first.
@@ -70,12 +73,12 @@ export const useConnectStakingAnnouncement = () => {
         (candidate) =>
           matchesAgentConfig(candidate, connectConfig) &&
           asEvmChainId(candidate.home_chain) === chainId &&
-          !archivedInstances.includes(candidate.service_config_id),
+          !isArchived(candidate.service_config_id),
       );
       if (service) return service.service_config_id;
     }
     return null;
-  }, [services, archivedInstances]);
+  }, [services, isArchived]);
 
   const markSeen = useCallback(() => {
     store?.set?.('connectStakingAnnouncementSeen', true);
