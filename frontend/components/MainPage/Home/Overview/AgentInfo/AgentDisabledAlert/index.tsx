@@ -21,16 +21,15 @@ import {
   useCompleteAgentSetup,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
-  useIsPolySafeService,
   useMasterWalletContext,
   usePageState,
   usePrestartCheck,
+  useRetiredProgramStatus,
   useRunsInsideEvictionWindow,
   useServices,
   useStakingProgram,
 } from '@/hooks';
 import { AgentIssue } from '@/types';
-import { getRetiredProgramStatus } from '@/utils/stakingProgram';
 
 import { AgentGeoBlockedAlert } from './AgentGeoBlockedAlert';
 import { AgentIssuesAlert } from './AgentIssuesAlert';
@@ -69,18 +68,14 @@ export const AgentDisabledAlert = () => {
     evictionExpiresAt,
     hasEnoughServiceSlots,
     isServiceStaked,
-    stakingDetailsState,
-    isSelectedStakingContractDetailsFetching,
-    refetchSelectedStakingContractDetails,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
   const {
-    isOnRetiredProgram,
-    isWithdrawalOnly,
-    isMultisigTypeError,
-    isMultisigTypeFetching,
-    refetch: refetchMultisigType,
-  } = useIsPolySafeService();
+    status: retiredStatus,
+    stakingProgramName: retiredProgramName,
+    safeTypeRetry,
+    stakingDetailsRetry,
+  } = useRetiredProgramStatus();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { getMasterSafeOf, masterWallets } = useMasterWalletContext();
   const { isAnotherAgentRunning } = useAgentRunning();
@@ -185,28 +180,15 @@ export const AgentDisabledAlert = () => {
       return { key: 'another-running', content: <AgentRunningAlert /> };
     }
 
-    if (isOnRetiredProgram) {
-      const status = getRetiredProgramStatus({
-        isWithdrawalOnly,
-        isSafeTypeError: isMultisigTypeError,
-        stakingDetails: stakingDetailsState,
-      });
+    if (retiredStatus) {
       const state = ((): RetiredContractAlertState => {
-        switch (status.kind) {
+        switch (retiredStatus.kind) {
           case 'safeTypeUnknown':
-            return {
-              kind: status.kind,
-              onRetry: () => refetchMultisigType(),
-              isRetrying: isMultisigTypeFetching,
-            };
+            return { kind: retiredStatus.kind, ...safeTypeRetry };
           case 'stakingDetailsUnknown':
-            return {
-              kind: status.kind,
-              onRetry: () => refetchSelectedStakingContractDetails(),
-              isRetrying: isSelectedStakingContractDetailsFetching,
-            };
+            return { kind: retiredStatus.kind, ...stakingDetailsRetry };
           default:
-            return status;
+            return retiredStatus;
         }
       })();
       return {
@@ -214,7 +196,7 @@ export const AgentDisabledAlert = () => {
         content: (
           <>
             <RetiredContractAlert
-              stakingProgramName={selectedStakingProgramMeta?.name}
+              stakingProgramName={retiredProgramName}
               state={state}
             />
             <MasterEoaLowBalanceAlert />
@@ -303,14 +285,10 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
-    stakingDetailsState,
-    isSelectedStakingContractDetailsFetching,
-    refetchSelectedStakingContractDetails,
-    isOnRetiredProgram,
-    isWithdrawalOnly,
-    isMultisigTypeError,
-    isMultisigTypeFetching,
-    refetchMultisigType,
+    retiredStatus,
+    retiredProgramName,
+    safeTypeRetry,
+    stakingDetailsRetry,
     runsEvicted,
     prestartCheck,
     runningAgentIssues,

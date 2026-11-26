@@ -22,13 +22,14 @@ import {
 import { sleepAwareDelay } from '@/utils/delay';
 import { isInWithdrawalOnlyMode, isValidServiceId } from '@/utils/service';
 import {
-  computeIsWithdrawalOnly,
   getLoadedRetiredProgramStakingDetails,
   getRetiredProgramReason,
   getRetiredProgramStatus,
   isNoStakingProgram,
   RetiredProgramStakingDetails,
+  RetiredSafeState,
   runsInsideEvictionWindow,
+  toRetiredSafeState,
 } from '@/utils/stakingProgram';
 import {
   deriveIsEpochTargetMet,
@@ -727,7 +728,40 @@ const getCurrentStakingProgramId = async (
   return onChainProgramId ?? agentMeta.stakingProgramId;
 };
 
-/** The instance's place in its retired program, as `useActiveStakingContractDetails` reads it. */
+/** One read of a service's place in a staking program, for the retired check and step 4. */
+const readServiceStakingFacts = async (
+  agentMeta: AgentMeta,
+  serviceNftTokenId: number,
+  stakingProgramId: StakingProgramId,
+) => {
+  const { serviceApi } = agentMeta.agentConfig;
+  const [contractDetails, stakingDetails] = await Promise.all([
+    serviceApi.getStakingContractDetails(stakingProgramId, agentMeta.chainId),
+    serviceApi.getServiceStakingDetails(
+      serviceNftTokenId,
+      stakingProgramId,
+      agentMeta.chainId,
+    ),
+  ]);
+  const { serviceStakingState, serviceStakingStartTime } = stakingDetails;
+  const minimumStakingDuration = contractDetails?.minimumStakingDuration;
+  const evictionExpiresAt =
+    isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)
+      ? undefined
+      : serviceStakingStartTime + minimumStakingDuration;
+  return {
+    contractDetails,
+    isAgentEvicted: serviceStakingState === StakingState.Evicted,
+    isServiceStaked:
+      !!serviceStakingStartTime && serviceStakingState === StakingState.Staked,
+    isServiceStakedForMinimumDuration:
+      !isNil(evictionExpiresAt) &&
+      Math.round(Date.now() / 1000) >= evictionExpiresAt,
+    evictionExpiresAt: evictionExpiresAt ?? 0,
+  };
+};
+
+/** The instance's place in its retired program; rejects on missing contract details, as the provider does. */
 const readRetiredProgramStakingDetails = async (
   agentMeta: AgentMeta,
   stakingProgramId: StakingProgramId,
@@ -735,29 +769,20 @@ const readRetiredProgramStakingDetails = async (
   if (!isValidServiceId(agentMeta.serviceNftTokenId)) {
     return { state: 'loaded', placement: 'outOfContract' };
   }
-  const { serviceApi } = agentMeta.agentConfig;
-  const [contractDetails, stakingDetails] = await Promise.all([
-    serviceApi.getStakingContractDetails(stakingProgramId, agentMeta.chainId),
-    serviceApi.getServiceStakingDetails(
-      agentMeta.serviceNftTokenId,
-      stakingProgramId,
-      agentMeta.chainId,
-    ),
-  ]);
-  const { serviceStakingState, serviceStakingStartTime } = stakingDetails;
-  const minimumStakingDuration = contractDetails?.minimumStakingDuration;
-  const isServiceInContract =
-    serviceStakingState === StakingState.Evicted ||
-    (!!serviceStakingStartTime && serviceStakingState === StakingState.Staked);
+  const facts = await readServiceStakingFacts(
+    agentMeta,
+    agentMeta.serviceNftTokenId,
+    stakingProgramId,
+  );
+  if (!facts.contractDetails) {
+    throw new Error(
+      `getStakingContractDetails returned undefined for program ${stakingProgramId}`,
+    );
+  }
   return getLoadedRetiredProgramStakingDetails({
-    isServiceInContract,
-    isServiceStakedForMinimumDuration:
-      !isNil(serviceStakingStartTime) &&
-      !isNil(minimumStakingDuration) &&
-      Math.round(Date.now() / 1000) - serviceStakingStartTime >=
-        minimumStakingDuration,
-    cooldownEndsAt:
-      (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0),
+    isServiceInContract: facts.isAgentEvicted || facts.isServiceStaked,
+    isServiceStakedForMinimumDuration: facts.isServiceStakedForMinimumDuration,
+    cooldownEndsAt: facts.evictionExpiresAt,
   });
 };
 
@@ -767,50 +792,40 @@ const getRetiredProgramSkip = async (
   ctx: FetchDeployabilityContext,
   stakingProgramId: StakingProgramId,
 ): Promise<DeployabilityCheckResult> => {
-  let isPolySafeService: boolean;
+  let safeState: RetiredSafeState;
   try {
-    isPolySafeService = await ctx.isPolySafeService(agentMeta);
+    const isPolySafeService = await ctx.isPolySafeService(agentMeta);
+    safeState = toRetiredSafeState(isPolySafeService ? 'polySafe' : 'standard');
   } catch (error) {
     // The read's own log is renderer-only; this one reaches the saved logs.
     ctx.logMessage(
       `fetchDeployabilityForAgent: Safe type read failed for ${agentMeta.serviceConfigId} (multisig ${agentMeta.multisig} on chain ${agentMeta.chainId}): ${error}`,
     );
-    return {
-      canRun: false,
-      reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
-    };
+    safeState = 'error';
   }
-  if (computeIsWithdrawalOnly({ isRetired: true, isPolySafeService })) {
-    return {
-      canRun: false,
-      reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
-    };
+  let stakingDetails: RetiredProgramStakingDetails = { state: 'loading' };
+  // A withdrawal-only instance's copy doesn't depend on its staking details.
+  if (safeState !== 'withdrawalOnly') {
+    try {
+      stakingDetails = await readRetiredProgramStakingDetails(
+        agentMeta,
+        stakingProgramId,
+      );
+    } catch (error) {
+      ctx.logMessage(
+        `fetchDeployabilityForAgent: retired-program staking details read failed for ${agentMeta.serviceConfigId}: ${error}`,
+      );
+      stakingDetails = { state: 'error' };
+    }
   }
-  let stakingDetails: RetiredProgramStakingDetails;
-  try {
-    stakingDetails = await readRetiredProgramStakingDetails(
-      agentMeta,
-      stakingProgramId,
-    );
-  } catch (error) {
-    ctx.logMessage(
-      `fetchDeployabilityForAgent: retired-program staking details read failed for ${agentMeta.serviceConfigId}: ${error}`,
-    );
-    return {
-      canRun: false,
-      reason: RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN,
-      isTransient: true,
-    };
-  }
-  const status = getRetiredProgramStatus({
-    isWithdrawalOnly: false,
-    isSafeTypeError: false,
-    stakingDetails,
-  });
+  const status = getRetiredProgramStatus({ safeState, stakingDetails });
   return {
     canRun: false,
     reason:
       getRetiredProgramReason(status) ?? RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+    // Both unknowns clear once the read works.
+    ...((status.kind === 'safeTypeUnknown' ||
+      status.kind === 'stakingDetailsUnknown') && { isTransient: true }),
   };
 };
 
@@ -868,7 +883,7 @@ const runDeployabilityChecks = async (
     };
   }
 
-  // 4a. Retired current program: the on-chain read joins the other step-4 reads.
+  // 4a. A service still staked on a retired program skips before the step-4 reads.
   let currentStakingProgramId: StakingProgramId;
   try {
     currentStakingProgramId = await getCurrentStakingProgramId(agentMeta);
@@ -904,28 +919,21 @@ const runDeployabilityChecks = async (
     !isNoStakingProgram(agentMeta.stakingProgramId)
   ) {
     try {
-      const [contractDetails, stakingDetails] = await Promise.all([
-        agentMeta.agentConfig.serviceApi.getStakingContractDetails(
-          agentMeta.stakingProgramId,
-          agentMeta.chainId,
-        ),
-        agentMeta.agentConfig.serviceApi.getServiceStakingDetails(
-          agentMeta.serviceNftTokenId,
-          agentMeta.stakingProgramId,
-          agentMeta.chainId,
-        ),
-      ]);
-
-      const { serviceStakingState, serviceStakingStartTime } = stakingDetails;
-      const isAgentEvicted = serviceStakingState === StakingState.Evicted;
-      const isServiceStaked =
-        !!serviceStakingStartTime &&
-        serviceStakingState === StakingState.Staked;
+      const {
+        contractDetails,
+        isAgentEvicted,
+        isServiceStaked,
+        isServiceStakedForMinimumDuration: isEligibleAfterEviction,
+        evictionExpiresAt,
+      } = await readServiceStakingFacts(
+        agentMeta,
+        agentMeta.serviceNftTokenId,
+        agentMeta.stakingProgramId,
+      );
 
       const {
         serviceIds,
         maxNumServices,
-        minimumStakingDuration,
         availableRewards: contractAvailableRewards,
       } = contractDetails ?? {};
       availableRewards = contractAvailableRewards;
@@ -934,11 +942,6 @@ const runDeployabilityChecks = async (
           ? null
           : serviceIds.length < maxNumServices;
 
-      const isEligibleAfterEviction =
-        !isNil(serviceStakingStartTime) &&
-        !isNil(minimumStakingDuration) &&
-        Math.round(Date.now() / 1000) - serviceStakingStartTime >=
-          minimumStakingDuration;
       isEvictedRunnable =
         isAgentEvicted &&
         !isEligibleAfterEviction &&
@@ -946,10 +949,7 @@ const runDeployabilityChecks = async (
       const runsEvicted = runsInsideEvictionWindow({
         isAgentEvicted,
         canRunWhileEvicted: agentMeta.agentConfig.canRunWhileEvicted,
-        evictionExpiresAt:
-          isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)
-            ? 0
-            : serviceStakingStartTime + minimumStakingDuration,
+        evictionExpiresAt,
         nowSeconds: Math.round(Date.now() / 1000),
       });
 

@@ -21,7 +21,8 @@ import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { isInWithdrawalOnlyMode } from '@/utils/service';
 import {
   chainHasPolySafePrograms,
-  computeIsWithdrawalOnly,
+  RetiredSafeState,
+  toRetiredSafeState,
 } from '@/utils/stakingProgram';
 
 import { useServices } from './useServices';
@@ -86,8 +87,8 @@ type SafeType = 'loading' | 'error' | 'polySafe' | 'standard';
  * 4. Otherwise `keccak256(getCode(multisig)) === POLY_SAFE_PROXY_CODEHASH`.
  *    On RPC failure `isMultisigTypeError` is set instead of a guess.
  *
- * `isOnRetiredProgram` and `isWithdrawalOnly` follow `computeIsWithdrawalOnly`
- * and docs/features/staking-and-rewards.md ("Retired staking programs").
+ * `isOnRetiredProgram` and `retiredSafeState` follow
+ * docs/features/staking-and-rewards.md ("Retired staking programs").
  */
 export const useIsPolySafeService = () => {
   const { selectedService, selectedAgentConfig } = useServices();
@@ -120,8 +121,7 @@ export const useIsPolySafeService = () => {
 
   const {
     data: isPolySafeFromCodehash,
-    isFetched,
-    isError,
+    errorUpdateCount,
     isFetching,
     refetch,
   } = useQuery({
@@ -136,8 +136,11 @@ export const useIsPolySafeService = () => {
       return activeProgram.requiresPolySafe ? 'polySafe' : 'standard';
     }
     if (!multisig) return 'standard';
-    if (isError) return 'error';
-    if (!isFetched) return 'loading';
+    // Only data decides the type. A retry after a failure resets the query to
+    // pending, which must not read as "standard".
+    if (isPolySafeFromCodehash === undefined) {
+      return errorUpdateCount > 0 ? 'error' : 'loading';
+    }
     return isPolySafeFromCodehash ? 'polySafe' : 'standard';
   })();
 
@@ -151,18 +154,11 @@ export const useIsPolySafeService = () => {
     );
 
   const isPolySafeService = safeType === 'polySafe';
-  const isWithdrawalOnly = ((): boolean | undefined => {
-    if (isAlreadyWithdrawalOnly) return true;
-    if (
-      isOnRetiredProgram &&
-      (safeType === 'loading' || safeType === 'error')
-    ) {
-      return undefined;
-    }
-    return computeIsWithdrawalOnly({
-      isRetired: isOnRetiredProgram,
-      isPolySafeService,
-    });
+  const retiredSafeState = ((): RetiredSafeState => {
+    if (isAlreadyWithdrawalOnly) return 'withdrawalOnly';
+    // Only a retired program waits on the Safe type.
+    if (!isOnRetiredProgram) return 'canSwitch';
+    return toRetiredSafeState(safeType);
   })();
 
   return {
@@ -171,7 +167,7 @@ export const useIsPolySafeService = () => {
     isMultisigTypeError: safeType === 'error',
     isMultisigTypeFetching: isFetching,
     isOnRetiredProgram,
-    isWithdrawalOnly,
+    retiredSafeState,
     refetch,
   };
 };

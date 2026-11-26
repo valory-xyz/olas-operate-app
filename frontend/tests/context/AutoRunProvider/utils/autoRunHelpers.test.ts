@@ -2199,6 +2199,51 @@ describe('fetchDeployabilityForAgent', () => {
     );
   });
 
+  it('gives the cooldown copy to an agent evicted inside its period', async () => {
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.Evicted,
+      serviceStakingStartTime: Math.floor(Date.now() / 1000) - 100,
+    });
+    const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result.reason).toEqual(
+      expect.stringContaining(RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX),
+    );
+  });
+
+  it('switches exactly at the end of the minimum period', async () => {
+    const start = 1_800_000_000;
+    const now = jest.spyOn(Date, 'now').mockReturnValue((start + 86400) * 1000);
+    try {
+      mockGetServiceStakingDetails.mockResolvedValue({
+        serviceStakingState: StakingState.Staked,
+        serviceStakingStartTime: start,
+      });
+      const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
+
+      const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+      expect(result.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.SWITCH);
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  it('defers instead of reporting a past cooldown when the contract details are missing', async () => {
+    mockGetStakingContractDetails.mockResolvedValue(undefined);
+    const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result).toEqual({
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN,
+      isTransient: true,
+    });
+  });
+
   it.each([
     [{ isPhasedOut: true }, {}, 'Phased out'],
     [{ isUnderConstruction: true }, {}, 'Under construction'],
@@ -2269,7 +2314,8 @@ describe('fetchDeployabilityForAgent', () => {
     },
   );
 
-  it("skips with the Safe-type copy when the Safe type can't be read", async () => {
+  it("skips with the Safe-type copy, transient, when the Safe type can't be read", async () => {
+    setUnstaked();
     const meta = {
       ...makeAgentMeta(),
       chainId: EvmChainIdMap.Polygon,
@@ -2285,10 +2331,31 @@ describe('fetchDeployabilityForAgent', () => {
     expect(result).toEqual({
       canRun: false,
       reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
+      isTransient: true,
     });
     expect(ctx.logMessage).toHaveBeenCalledWith(
       expect.stringContaining('Safe type read failed for'),
     );
+  });
+
+  it('gives the cooldown copy over an unreadable Safe type, as Home does', async () => {
+    const meta = {
+      ...makeAgentMeta(),
+      chainId: EvmChainIdMap.Polygon,
+      stakingProgramId: STAKING_PROGRAM_IDS.PolystratIV,
+    };
+
+    const result = await fetchDeployabilityForAgent(
+      meta,
+      makeCtx({
+        isPolySafeService: jest.fn().mockRejectedValue(new Error('rpc down')),
+      }),
+    );
+
+    expect(result.reason).toEqual(
+      expect.stringContaining(RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX),
+    );
+    expect(result.isTransient).toBeUndefined();
   });
 
   it('keeps skipping an agent already started withdrawal-only, now stored as no_staking', async () => {

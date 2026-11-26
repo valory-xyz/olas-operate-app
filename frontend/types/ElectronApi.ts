@@ -1,4 +1,4 @@
-import { AgentMap, AgentType } from '@/constants';
+import { AgentMap, AgentType, StakingProgramId } from '@/constants';
 
 import { BackupWalletType } from './BackupWallet';
 import { Nullable } from './Util';
@@ -82,6 +82,9 @@ export type PearlStore = {
   archivedAgents?: AgentType[];
   /** serviceConfigIds of archived instances (hidden from sidebar, restorable). */
   archivedInstances?: string[];
+
+  /** Each withdrawal-only service's retired program, saved before its `no_staking` PATCH, for the alert title. */
+  retiredStakingProgramIdByServiceConfigId?: Record<string, StakingProgramId>;
 
   recoveryPhraseBackedUp?: boolean;
 

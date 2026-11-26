@@ -3,8 +3,10 @@ import { Button, Typography } from 'antd';
 import { Alert } from '@/components/ui';
 import { PAGES, RETIRED_STAKING_PROGRAM_COPY } from '@/constants';
 import { usePageState } from '@/hooks';
-import { RetiredProgramStatus } from '@/utils/stakingProgram';
-import { formatToShortDateTime } from '@/utils/time';
+import {
+  formatCooldownEnd,
+  RetiredProgramStatus,
+} from '@/utils/stakingProgram';
 
 import {
   DeprecatedContractTitle,
@@ -31,7 +33,7 @@ const CooldownBody = ({ cooldownEndsAt }: { cooldownEndsAt: number }) => (
     <span>
       {RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX}{' '}
       <span className="font-weight-600">
-        {formatToShortDateTime(cooldownEndsAt * 1000)} (UTC)
+        {formatCooldownEnd(cooldownEndsAt)}
       </span>
       {RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}
     </span>

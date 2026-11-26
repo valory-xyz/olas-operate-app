@@ -7,17 +7,14 @@ import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
-import { useIsPolySafeService } from '@/hooks/useIsPolySafeService';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
+import { useRetiredProgramStatus } from '@/hooks/useRetiredProgramStatus';
 import { useRunsInsideEvictionWindow } from '@/hooks/useRunsInsideEvictionWindow';
 import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
-import {
-  getRetiredProgramReason,
-  getRetiredProgramStatus,
-} from '@/utils/stakingProgram';
+import { getRetiredProgramReason } from '@/utils/stakingProgram';
 
 type DeployabilityResult = {
   isLoading: boolean;
@@ -65,19 +62,10 @@ export const useDeployability = ({
     isServiceStaked,
     hasEnoughServiceSlots,
     isSelectedStakingContractDetailsLoading,
-    stakingDetailsState,
   } = useActiveStakingContractDetails();
   const { isActiveStakingProgramLoaded } = useStakingProgram();
-  const { isOnRetiredProgram, isWithdrawalOnly, isMultisigTypeError } =
-    useIsPolySafeService();
-  // The same classification and copy as the retired-contract alert.
-  const retiredStatus = isOnRetiredProgram
-    ? getRetiredProgramStatus({
-        isWithdrawalOnly,
-        isSafeTypeError: isMultisigTypeError,
-        stakingDetails: stakingDetailsState,
-      })
-    : null;
+  // The same status and copy as the retired-contract alert.
+  const { status: retiredStatus } = useRetiredProgramStatus();
   const retiredStatusKind = retiredStatus?.kind ?? null;
   const retiredReason = retiredStatus
     ? getRetiredProgramReason(retiredStatus)

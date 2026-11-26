@@ -11,16 +11,20 @@ import {
   useCompleteAgentSetup,
   useIsAgentGeoRestricted,
   useIsInitiallyFunded,
-  useIsPolySafeService,
   useMasterWalletContext,
   usePageState,
   usePrestartCheck,
+  useRetiredProgramStatus,
   useServices,
   useStakingProgram,
 } from '../../../../../../../hooks';
 import { PrestartCheck } from '../../../../../../../hooks/usePrestartCheck';
 import { AgentIssue } from '../../../../../../../types';
-import { RetiredProgramStakingDetails } from '../../../../../../../utils/stakingProgram';
+import {
+  getRetiredProgramStatus,
+  RetiredProgramStakingDetails,
+  RetiredSafeState,
+} from '../../../../../../../utils/stakingProgram';
 import {
   makeAgentIssue,
   makeFailedPrestartCheck,
@@ -38,7 +42,7 @@ jest.mock('../../../../../../../hooks', () => ({
   useCompleteAgentSetup: jest.fn(),
   useIsAgentGeoRestricted: jest.fn(),
   useIsInitiallyFunded: jest.fn(),
-  useIsPolySafeService: jest.fn(),
+  useRetiredProgramStatus: jest.fn(),
   useMasterWalletContext: jest.fn(),
   usePageState: jest.fn(),
   usePrestartCheck: jest.fn(),
@@ -222,16 +226,18 @@ const setup = ({
   prestartCheck?: PrestartCheck;
   isChecking?: boolean;
 } = {}) => {
+  const stakingDetailsState: RetiredProgramStakingDetails =
+    staking.stakingDetailsState ?? {
+      // Staked past its minimum period, as `isServiceStaked` below.
+      state: 'loaded',
+      placement: 'pastMinimumPeriod',
+    };
   (useActiveStakingContractDetails as jest.Mock).mockReturnValue({
     isSelectedStakingContractDetailsLoading: false,
     isAgentEvicted: false,
     isEligibleForStaking: true,
     hasEnoughServiceSlots: true,
     isServiceStaked: true,
-    // Staked past its minimum period, as `isServiceStaked` above.
-    stakingDetailsState: { state: 'loaded', placement: 'pastMinimumPeriod' },
-    isSelectedStakingContractDetailsFetching: false,
-    refetchSelectedStakingContractDetails: mockRefetchStakingDetails,
     evictionExpiresAt: 1_700_000_000,
     ...staking,
     selectedStakingContractDetails: {
@@ -290,13 +296,29 @@ const setup = ({
         }
       : null,
   });
-  (useIsPolySafeService as jest.Mock).mockReturnValue({
-    isOnRetiredProgram: retiredStakingProgram,
-    isWithdrawalOnly:
-      isWithdrawalOnly === 'unknown' ? undefined : isWithdrawalOnly,
-    isMultisigTypeError,
-    isMultisigTypeFetching,
-    refetch: mockRefetchMultisigType,
+  const safeState = ((): RetiredSafeState => {
+    if (isWithdrawalOnly === 'unknown') {
+      return isMultisigTypeError ? 'error' : 'loading';
+    }
+    return isWithdrawalOnly ? 'withdrawalOnly' : 'canSwitch';
+  })();
+  // The real classifier, so these tests pin the alert's mapping of each status.
+  (useRetiredProgramStatus as jest.Mock).mockReturnValue({
+    status: retiredStakingProgram
+      ? getRetiredProgramStatus({
+          safeState,
+          stakingDetails: stakingDetailsState,
+        })
+      : null,
+    stakingProgramName: hasProgramMeta ? 'Beta 3' : undefined,
+    safeTypeRetry: {
+      onRetry: mockRefetchMultisigType,
+      isRetrying: isMultisigTypeFetching,
+    },
+    stakingDetailsRetry: {
+      onRetry: mockRefetchStakingDetails,
+      isRetrying: staking.isSelectedStakingContractDetailsFetching ?? false,
+    },
   });
   return render(<AgentDisabledAlert />);
 };
@@ -771,7 +793,11 @@ describe('AgentDisabledAlert', () => {
         retiredStakingProgram: true,
         isWithdrawalOnly: true,
         hasProgramMeta: false,
-        staking: UNSTAKED,
+        // A `no_staking` service's details query is disabled.
+        staking: {
+          isServiceStaked: false,
+          stakingDetailsState: { state: 'loading' },
+        },
       });
 
       expect(retiredAlert('withdrawalOnly', 'unnamed')).toBeInTheDocument();

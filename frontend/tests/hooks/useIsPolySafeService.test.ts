@@ -320,22 +320,22 @@ describe('useIsPolySafeService', () => {
     expect(result.current.isPolySafeService).toBe(true);
     expect(mockGetCodePolygon).toHaveBeenCalledTimes(3);
   });
-  describe('isWithdrawalOnly', () => {
+  describe('retiredSafeState', () => {
     it.each([
-      [true, POLY_SAFE_PROGRAM, true],
-      [true, STANDARD_SAFE_PROGRAM, false],
-      [false, POLY_SAFE_PROGRAM, false],
+      [true, POLY_SAFE_PROGRAM, 'withdrawalOnly'],
+      [true, STANDARD_SAFE_PROGRAM, 'canSwitch'],
+      [false, POLY_SAFE_PROGRAM, 'canSwitch'],
     ])(
       'retired=%s, staked on %s -> %s',
       (isRetired, activeStakingProgramId, expected) => {
         setupMocks({ isRetired, activeStakingProgramId });
 
         const { result } = renderIsPolySafe();
-        expect(result.current.isWithdrawalOnly).toBe(expected);
+        expect(result.current.retiredSafeState).toBe(expected);
       },
     );
 
-    it('is undefined while the Safe type is unreadable', async () => {
+    it('is an error while the Safe type is unreadable', async () => {
       jest.spyOn(console, 'error').mockImplementation();
       mockGetCodePolygon.mockRejectedValue(new Error('rpc down'));
       setupMocks({ isRetired: true });
@@ -346,28 +346,50 @@ describe('useIsPolySafeService', () => {
         { timeout: 4000 },
       );
       expect(result.current.isMultisigTypeError).toBe(true);
-      expect(result.current.isWithdrawalOnly).toBeUndefined();
+      expect(result.current.retiredSafeState).toBe('error');
     });
 
-    it('is undefined while the Safe type loads', () => {
+    it('stays an error, never "standard", while a Retry after a failure runs', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+      mockGetCodePolygon.mockRejectedValue(new Error('rpc down'));
+      setupMocks({ isRetired: true });
+
+      const { result } = renderIsPolySafe();
+      await waitFor(
+        () => expect(result.current.isMultisigTypeError).toBe(true),
+        { timeout: 4000 },
+      );
+      mockGetCodePolygon.mockReturnValue(new Promise(() => {}));
+      act(() => {
+        void result.current.refetch();
+      });
+
+      await waitFor(() =>
+        expect(result.current.isMultisigTypeFetching).toBe(true),
+      );
+      expect(result.current.retiredSafeState).toBe('error');
+      expect(result.current.isMultisigTypeError).toBe(true);
+    });
+
+    it('is loading while the Safe type loads', () => {
       mockGetCodePolygon.mockReturnValue(new Promise(() => {}));
       setupMocks({ isRetired: true });
 
       const { result } = renderIsPolySafe();
       expect(result.current.isMultisigTypeLoaded).toBe(false);
-      expect(result.current.isWithdrawalOnly).toBeUndefined();
+      expect(result.current.retiredSafeState).toBe('loading');
     });
 
-    it('is false on a live program while the Safe type loads', () => {
+    it('is canSwitch on a live program while the Safe type loads', () => {
       mockGetCodePolygon.mockReturnValue(new Promise(() => {}));
       setupMocks({ isRetired: false });
 
       const { result } = renderIsPolySafe();
       expect(result.current.isMultisigTypeLoaded).toBe(false);
-      expect(result.current.isWithdrawalOnly).toBe(false);
+      expect(result.current.retiredSafeState).toBe('canSwitch');
     });
 
-    it('is false on a live program when the Safe type is unreadable', async () => {
+    it('is canSwitch on a live program when the Safe type is unreadable', async () => {
       jest.spyOn(console, 'error').mockImplementation();
       mockGetCodePolygon.mockRejectedValue(new Error('rpc down'));
       setupMocks({ isRetired: false });
@@ -377,7 +399,7 @@ describe('useIsPolySafeService', () => {
         () => expect(result.current.isMultisigTypeError).toBe(true),
         { timeout: 4000 },
       );
-      expect(result.current.isWithdrawalOnly).toBe(false);
+      expect(result.current.retiredSafeState).toBe('canSwitch');
     });
 
     it('reports the codehash read as fetching while it runs', () => {
@@ -389,8 +411,8 @@ describe('useIsPolySafeService', () => {
     });
 
     it.each([
-      [POLY_SAFE_PROXY_BYTECODE, true],
-      [STANDARD_SAFE_PROXY_BYTECODE, false],
+      [POLY_SAFE_PROXY_BYTECODE, 'withdrawalOnly'],
+      [STANDARD_SAFE_PROXY_BYTECODE, 'canSwitch'],
     ])(
       'reads the codehash of a retired, deployed but unstaked service (%#)',
       async (bytecode, expected) => {
@@ -401,7 +423,7 @@ describe('useIsPolySafeService', () => {
         await waitFor(() =>
           expect(result.current.isMultisigTypeLoaded).toBe(true),
         );
-        expect(result.current.isWithdrawalOnly).toBe(expected);
+        expect(result.current.retiredSafeState).toBe(expected);
       },
     );
 
@@ -483,7 +505,7 @@ describe('useIsPolySafeService', () => {
 
       const { result } = renderIsPolySafe();
       expect(result.current.isOnRetiredProgram).toBe(true);
-      expect(result.current.isWithdrawalOnly).toBe(true);
+      expect(result.current.retiredSafeState).toBe('withdrawalOnly');
     });
 
     it('is neither once trading is on again', () => {
@@ -491,7 +513,7 @@ describe('useIsPolySafeService', () => {
 
       const { result } = renderIsPolySafe();
       expect(result.current.isOnRetiredProgram).toBe(false);
-      expect(result.current.isWithdrawalOnly).toBe(false);
+      expect(result.current.retiredSafeState).toBe('canSwitch');
     });
   });
 

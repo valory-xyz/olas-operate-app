@@ -8,9 +8,9 @@ import {
 } from '../../constants/stakingProgram';
 import {
   chainHasPolySafePrograms,
-  computeIsWithdrawalOnly,
   deriveStakingProgramId,
   EVICTION_RUN_START_MARGIN_SECONDS,
+  formatCooldownEnd,
   getCompatibleStakingProgramIds,
   getLoadedRetiredProgramStakingDetails,
   getRetiredProgramReason,
@@ -19,8 +19,8 @@ import {
   isStakingProgramCompatibleWithMultisig,
   RetiredProgramStakingDetails,
   runsInsideEvictionWindow,
+  toRetiredSafeState,
 } from '../../utils/stakingProgram';
-import { formatToShortDateTime } from '../../utils/time';
 import { makeStakingProgramConfig } from '../helpers/factories';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -262,20 +262,15 @@ describe('runsInsideEvictionWindow', () => {
   });
 });
 
-describe('computeIsWithdrawalOnly', () => {
+describe('toRetiredSafeState', () => {
   it.each([
-    [true, true, true],
-    [true, false, false],
-    [false, true, false],
-    [false, false, false],
-  ])(
-    'retired=%s, PolySafe=%s -> %s',
-    (isRetired, isPolySafeService, expected) => {
-      expect(computeIsWithdrawalOnly({ isRetired, isPolySafeService })).toBe(
-        expected,
-      );
-    },
-  );
+    ['polySafe', 'withdrawalOnly'],
+    ['standard', 'canSwitch'],
+    ['loading', 'loading'],
+    ['error', 'error'],
+  ] as const)('%s -> %s', (safeType, expected) => {
+    expect(toRetiredSafeState(safeType)).toBe(expected);
+  });
 });
 
 describe('getRetiredProgramStatus', () => {
@@ -295,37 +290,35 @@ describe('getRetiredProgramStatus', () => {
   };
 
   it.each([
-    ['switch', false, false, OUT],
-    ['awaitingUnstake', false, false, PAST],
-    ['cooldown', false, false, IN_PERIOD],
-    ['withdrawalOnly', true, false, IN_PERIOD],
+    ['switch', 'canSwitch', OUT],
+    ['awaitingUnstake', 'canSwitch', PAST],
+    ['cooldown', 'canSwitch', IN_PERIOD],
+    ['withdrawalOnly', 'withdrawalOnly', IN_PERIOD],
+    // A no_staking service's details query is disabled: it must still withdraw.
+    ['withdrawalOnly', 'withdrawalOnly', { state: 'loading' }],
+    ['withdrawalOnly', 'withdrawalOnly', { state: 'error' }],
     // Unknown Safe type: never the switch, which a PolySafe can't do.
-    ['safeTypeLoading', undefined, false, OUT],
-    ['safeTypeUnknown', undefined, true, OUT],
+    ['safeTypeLoading', 'loading', OUT],
+    ['safeTypeUnknown', 'error', OUT],
     // Unknown staking details: never the switch, which could be in a cooldown.
-    ['stakingDetailsLoading', false, false, { state: 'loading' }],
-    ['stakingDetailsUnknown', false, false, { state: 'error' }],
+    ['stakingDetailsLoading', 'canSwitch', { state: 'loading' }],
+    ['stakingDetailsUnknown', 'canSwitch', { state: 'error' }],
     // Both unknown: the Safe type is resolved first, so its Retry is offered.
-    ['safeTypeUnknown', undefined, true, { state: 'error' }],
-    ['safeTypeLoading', undefined, false, { state: 'error' }],
+    ['safeTypeUnknown', 'error', { state: 'error' }],
+    ['safeTypeLoading', 'loading', { state: 'error' }],
   ] as const)(
-    '%s for withdrawalOnly=%s, safeTypeError=%s, details %o',
-    (expected, isWithdrawalOnly, isSafeTypeError, stakingDetails) => {
-      expect(
-        getRetiredProgramStatus({
-          isWithdrawalOnly,
-          isSafeTypeError,
-          stakingDetails,
-        }).kind,
-      ).toBe(expected);
+    '%s for Safe state %s, details %o',
+    (expected, safeState, stakingDetails) => {
+      expect(getRetiredProgramStatus({ safeState, stakingDetails }).kind).toBe(
+        expected,
+      );
     },
   );
 
   it('carries the cooldown end, known regardless of the Safe type', () => {
     expect(
       getRetiredProgramStatus({
-        isWithdrawalOnly: undefined,
-        isSafeTypeError: true,
+        safeState: 'error',
         stakingDetails: IN_PERIOD,
       }),
     ).toEqual({ kind: 'cooldown', endsAt: COOLDOWN_END });
@@ -337,11 +330,8 @@ describe('getRetiredProgramStatus', () => {
       { state: 'error' },
     ] as const) {
       expect(
-        getRetiredProgramStatus({
-          isWithdrawalOnly: false,
-          isSafeTypeError: false,
-          stakingDetails,
-        }).kind,
+        getRetiredProgramStatus({ safeState: 'canSwitch', stakingDetails })
+          .kind,
       ).not.toBe('cooldown');
     }
   });
@@ -395,8 +385,10 @@ describe('getRetiredProgramReason', () => {
       kind: 'cooldown',
       endsAt: 1_800_000_000,
     });
+    // 1_800_000_000 s is 2027-01-15 08:00 UTC.
+    expect(formatCooldownEnd(1_800_000_000)).toBe('Jan 15, 8:00 AM (UTC)');
     expect(reason).toBe(
-      `${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX} ${formatToShortDateTime(1_800_000_000_000)} (UTC)${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}`,
+      'Pearl no longer supports deprecated contracts. Your agent is in a cooldown period until Jan 15, 8:00 AM (UTC). After that, switch to one of the available contracts to run your agent again.',
     );
   });
 });

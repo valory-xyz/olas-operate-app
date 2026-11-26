@@ -111,14 +111,24 @@ export const runsInsideEvictionWindow = ({
   !!canRunWhileEvicted &&
   evictionExpiresAt - nowSeconds > EVICTION_RUN_START_MARGIN_SECONDS;
 
-/** A PolySafe can't switch off a retired program (no live one accepts it), so it only withdraws. */
-export const computeIsWithdrawalOnly = ({
-  isRetired,
-  isPolySafeService,
-}: {
-  isRetired: boolean;
-  isPolySafeService: boolean;
-}) => isRetired && isPolySafeService;
+/**
+ * What a service on a retired program can do, by its Safe type: a PolySafe
+ * can't switch (no live program accepts it), so it only withdraws.
+ */
+export type RetiredSafeState =
+  | 'withdrawalOnly'
+  | 'canSwitch'
+  | 'loading'
+  | 'error';
+
+/** The retired-program state for a known Safe type, or one that is loading or unreadable. */
+export const toRetiredSafeState = (
+  safeType: 'polySafe' | 'standard' | 'loading' | 'error',
+): RetiredSafeState => {
+  if (safeType === 'polySafe') return 'withdrawalOnly';
+  if (safeType === 'standard') return 'canSwitch';
+  return safeType;
+};
 
 /** What is known of a service's place in its staking contract. */
 export type RetiredProgramStakingDetails =
@@ -157,25 +167,21 @@ export type RetiredProgramStatus =
 
 /** Classifies a service on a retired program for the alert and the start gate. */
 export const getRetiredProgramStatus = ({
-  isWithdrawalOnly,
-  isSafeTypeError,
+  safeState,
   stakingDetails,
 }: {
-  /** `undefined` while the Safe type is loading or couldn't be read. */
-  isWithdrawalOnly: boolean | undefined;
-  isSafeTypeError: boolean;
+  safeState: RetiredSafeState;
   stakingDetails: RetiredProgramStakingDetails;
 }): RetiredProgramStatus => {
-  if (isWithdrawalOnly === true) return { kind: 'withdrawalOnly' };
+  if (safeState === 'withdrawalOnly') return { kind: 'withdrawalOnly' };
   if (
     stakingDetails.state === 'loaded' &&
     stakingDetails.placement === 'inMinimumPeriod'
   ) {
     return { kind: 'cooldown', endsAt: stakingDetails.cooldownEndsAt };
   }
-  if (isWithdrawalOnly === undefined) {
-    return { kind: isSafeTypeError ? 'safeTypeUnknown' : 'safeTypeLoading' };
-  }
+  if (safeState === 'error') return { kind: 'safeTypeUnknown' };
+  if (safeState === 'loading') return { kind: 'safeTypeLoading' };
   if (stakingDetails.state === 'error')
     return { kind: 'stakingDetailsUnknown' };
   if (stakingDetails.state === 'loading') {
@@ -189,6 +195,10 @@ export const getRetiredProgramStatus = ({
   };
 };
 
+/** The cooldown's end, as the alert and the reasons show it; `endsAt` in seconds. */
+export const formatCooldownEnd = (endsAt: number) =>
+  `${formatToShortDateTime(endsAt * 1000)} (UTC)`;
+
 /** The alert's copy for a status, as a start-gate or Auto-run reason; `null` while loading. */
 export const getRetiredProgramReason = (
   status: RetiredProgramStatus,
@@ -197,7 +207,7 @@ export const getRetiredProgramReason = (
     case 'withdrawalOnly':
       return RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY;
     case 'cooldown':
-      return `${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX} ${formatToShortDateTime(status.endsAt * 1000)} (UTC)${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}`;
+      return `${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX} ${formatCooldownEnd(status.endsAt)}${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}`;
     case 'safeTypeUnknown':
       return RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN;
     case 'stakingDetailsUnknown':

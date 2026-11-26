@@ -54,6 +54,7 @@ export * from './usePageState';
 export * from './usePause';
 export * from './usePrestartCheck';
 export * from './useRecoveryPhraseBackup';
+export * from './useRetiredProgramStatus';
 export * from './useRewardContext';
 export * from './useRewardsHistory';
 export * from './useRunsInsideEvictionWindow';
