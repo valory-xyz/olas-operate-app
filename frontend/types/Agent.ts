@@ -145,6 +145,17 @@ export type AgentConfig = {
   hasAgentChat?: boolean;
   /** Can be started while evicted inside its minimum staking period, to redeem. */
   canRunWhileEvicted?: boolean;
+  /**
+   * Chains where an agent that defaults to `no_staking` may stake. Absent →
+   * `hasStaking` alone decides. Read through `isStakingAvailable`.
+   */
+  stakingChains?: EvmChainId[];
+  /**
+   * Auto-Run: the agent's turn is its minutes per run, and the staking skip
+   * conditions (eviction, empty reward pool, rewards already earned) never
+   * apply, even while it is staked.
+   */
+  runsOnMinutesPerRun?: boolean;
   /** Its activity goal can report `no_markets_left`, which decides done before the KPI. */
   canReportNoMarketsLeft?: boolean;
 } & needsOpenProfileEachAgentRun;

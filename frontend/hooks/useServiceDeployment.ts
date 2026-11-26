@@ -26,6 +26,7 @@ import {
   getSafeEligibility,
   getSafeEligibilityMessage,
 } from '@/utils/safe';
+import { isStakingAvailable } from '@/utils/stakingProgram';
 
 const createSafeIfNeeded = async ({
   masterSafes,
@@ -103,14 +104,17 @@ export const useServiceDeployment = () => {
     // no_staking agents have no staking contracts, so their
     // staking-details record never "loads" — don't gate deployability on it.
     if (
-      selectedAgentConfig.hasStaking &&
+      isStakingAvailable(
+        selectedAgentConfig,
+        selectedAgentConfig.evmHomeChainId,
+      ) &&
       !isAllStakingContractDetailsRecordLoaded
     ) {
       return true;
     }
     return false;
   }, [
-    selectedAgentConfig.hasStaking,
+    selectedAgentConfig,
     isAllStakingContractDetailsRecordLoaded,
     isServiceRunning,
     isServicesLoading,

@@ -3,6 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { AGENT_CONFIG } from '../../config/agents';
 import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
+import type { StakingProgramId } from '../../constants/stakingProgram';
 import { createActiveStakingProgramIdQuery } from '../../hooks/useActiveStakingProgramId';
 import { createStakingRewardsQuery } from '../../hooks/useAgentStakingRewardsDetails';
 import { useServices } from '../../hooks/useServices';
@@ -532,10 +533,14 @@ describe('useStakingRewardsOf', () => {
 
   // -- no_staking (Connect) services excluded -------------------------------
   describe('no_staking (Connect) services', () => {
-    const makeGnosisConnectService = () =>
+    const makeGnosisConnectService = (
+      staking_program_id: StakingProgramId = 'no_staking',
+    ) =>
       makeConnectService(MiddlewareChainMap.GNOSIS, {
         service_config_id: MOCK_SERVICE_CONFIG_ID_2,
-        chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS),
+        chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
+          staking_program_id,
+        }),
       });
 
     it('does not throw and issues no staking queries for a lone Connect service', () => {
@@ -578,6 +583,35 @@ describe('useStakingRewardsOf', () => {
           serviceConfigId: DEFAULT_SERVICE_CONFIG_ID,
           agentConfig: traderConfig,
         }),
+      );
+    });
+  });
+
+  describe('staked Connect services', () => {
+    it('queries the rewards of a Connect service its user staked', () => {
+      const connect = makeConnectService(MiddlewareChainMap.GNOSIS, {
+        service_config_id: MOCK_SERVICE_CONFIG_ID_2,
+        chain_configs: makeChainConfig(MiddlewareChainMap.GNOSIS, {
+          staking_program_id: 'connect_i',
+        }),
+      });
+      setupServices({ services: [connect] });
+      setupUseQueries({
+        stakingProgramResults: [{ data: 'connect_i', isLoading: false }],
+        rewardsResults: [
+          {
+            data: { accruedServiceStakingRewards: 2 },
+            isLoading: false,
+            isSuccess: true,
+          },
+        ],
+      });
+
+      const { result } = renderHook(() => useStakingRewardsOf(GNOSIS));
+
+      expect(result.current.totalStakingRewards).toBe('2.0');
+      expect(mockCreateStakingRewardsQuery).toHaveBeenCalledWith(
+        expect.objectContaining({ serviceConfigId: MOCK_SERVICE_CONFIG_ID_2 }),
       );
     });
   });

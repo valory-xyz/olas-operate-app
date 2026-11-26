@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { AgentLowBalanceAlert } from '../../components/AgentLowBalanceAlert';
+import { EvmChainIdMap } from '../../constants/chains';
 import { useAgentFundingRequests, useServices } from '../../hooks';
 
 jest.mock('../../hooks', () => ({
@@ -15,15 +16,22 @@ const setup = (
   over: {
     isAgentBalanceLow?: boolean;
     hasStaking?: boolean;
+    stakingChains?: number[];
+    evmHomeChainId?: number;
   } = {},
 ) => {
-  const { isAgentBalanceLow = true, hasStaking = true } = over;
+  const {
+    isAgentBalanceLow = true,
+    hasStaking = true,
+    stakingChains,
+    evmHomeChainId = EvmChainIdMap.Gnosis,
+  } = over;
   mockUseAgentFundingRequests.mockReturnValue({
     isAgentBalanceLow,
     agentTokenRequirementsFormatted: '5 XDAI',
   });
   mockUseServices.mockReturnValue({
-    selectedAgentConfig: { hasStaking },
+    selectedAgentConfig: { hasStaking, stakingChains, evmHomeChainId },
   });
   return render(<AgentLowBalanceAlert onFund={jest.fn()} />);
 };
@@ -54,4 +62,21 @@ describe('AgentLowBalanceAlert', () => {
       screen.queryByText(/meet staking requirements/i),
     ).not.toBeInTheDocument();
   });
+
+  it.each([
+    [EvmChainIdMap.Gnosis, true],
+    [EvmChainIdMap.Polygon, false],
+  ])(
+    'follows where Connect can stake (chain %s → mentions staking: %s)',
+    (evmHomeChainId, mentionsStaking) => {
+      setup({
+        hasStaking: false,
+        stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+        evmHomeChainId,
+      });
+      expect(!!screen.queryByText(/meet staking requirements/i)).toBe(
+        mentionsStaking,
+      );
+    },
+  );
 });

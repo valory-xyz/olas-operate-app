@@ -2,6 +2,7 @@ import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
 import { useAgentFundingRequests, useServices } from '@/hooks';
+import { isStakingAvailable } from '@/utils/stakingProgram';
 
 const { Text } = Typography;
 
@@ -32,7 +33,10 @@ export const AgentLowBalanceAlert = ({ onFund }: AgentLowBalanceAlertProps) => {
             </span>{' '}
             to keep running your agent. It&apos;s needed for the agent to
             perform on-chain activity
-            {selectedAgentConfig.hasStaking
+            {isStakingAvailable(
+              selectedAgentConfig,
+              selectedAgentConfig.evmHomeChainId,
+            )
               ? ' and meet staking requirements'
               : ''}
             .

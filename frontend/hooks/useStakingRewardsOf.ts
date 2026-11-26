@@ -43,20 +43,19 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
         const agent = ACTIVE_AGENTS.find(([, agentConfig]) =>
           matchesAgentConfig(service, agentConfig),
         );
-        // Skip unmatched services and no_staking agents (e.g. Connect) —
-        // they have no staking rewards to fetch.
-        if (
-          !agent ||
-          isNoStakingProgram(AGENT_CONFIG[agent[0]].defaultStakingProgramId)
-        ) {
-          return null;
-        }
-        const agentType = agent[0];
-
         const chainConfigs = service.chain_configs;
         const chainDetails = isNil(chainConfigs)
           ? null
           : chainConfigs[asMiddlewareChain(chainId)]?.chain_data;
+        // Skip unmatched services and services that run unstaked (Connect
+        // unless the user staked it) — they have no staking rewards to fetch.
+        if (
+          !agent ||
+          isNoStakingProgram(chainDetails?.user_params?.staking_program_id)
+        ) {
+          return null;
+        }
+        const agentType = agent[0];
         const serviceNftTokenId = chainDetails?.token;
         return {
           agentConfig: AGENT_CONFIG[agentType],

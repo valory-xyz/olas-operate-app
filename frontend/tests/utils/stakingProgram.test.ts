@@ -9,7 +9,9 @@ import {
   deriveStakingProgramId,
   EVICTION_RUN_START_MARGIN_SECONDS,
   getCompatibleStakingProgramIds,
+  hasUnstakedOption,
   isNoStakingProgram,
+  isStakingAvailable,
   isStakingProgramCompatibleWithMultisig,
   runsInsideEvictionWindow,
 } from '../../utils/stakingProgram';
@@ -219,5 +221,60 @@ describe('runsInsideEvictionWindow', () => {
     expect(
       run({ evictionExpiresAt: NOW + EVICTION_RUN_START_MARGIN_SECONDS + 1 }),
     ).toBe(true);
+  });
+});
+
+describe('isStakingAvailable', () => {
+  const connect = {
+    hasStaking: false,
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+  };
+
+  it.each([
+    [EvmChainIdMap.Gnosis, true],
+    [EvmChainIdMap.Robinhood, true],
+    [EvmChainIdMap.Polygon, false],
+  ])(
+    'decides per chain from stakingChains (chain %s → %s)',
+    (chainId, expected) => {
+      expect(isStakingAvailable(connect, chainId)).toBe(expected);
+    },
+  );
+
+  it.each([true, false])(
+    'falls back to hasStaking (%s) without stakingChains',
+    (hasStaking) => {
+      expect(isStakingAvailable({ hasStaking }, EvmChainIdMap.Gnosis)).toBe(
+        hasStaking,
+      );
+    },
+  );
+});
+
+describe('hasUnstakedOption', () => {
+  const connect = {
+    hasStaking: false,
+    defaultStakingProgramId: 'no_staking' as StakingProgramId,
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+  };
+
+  it('is true where an agent defaulting to no_staking can stake', () => {
+    expect(hasUnstakedOption(connect, EvmChainIdMap.Gnosis)).toBe(true);
+  });
+
+  it('is false where it cannot stake', () => {
+    expect(hasUnstakedOption(connect, EvmChainIdMap.Polygon)).toBe(false);
+  });
+
+  it('is false for an agent that always stakes', () => {
+    expect(
+      hasUnstakedOption(
+        {
+          hasStaking: true,
+          defaultStakingProgramId: STAKING_PROGRAM_IDS.OmenstratI,
+        },
+        EvmChainIdMap.Gnosis,
+      ),
+    ).toBe(false);
   });
 });

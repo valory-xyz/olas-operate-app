@@ -111,12 +111,35 @@ describe('AGENT_CONFIG', () => {
 });
 
 describe('AGENT_CONFIG canRunWhileEvicted', () => {
-  it('lets only Omenstrat run while evicted', () => {
+  it('lets only Omenstrat and Connect run while evicted', () => {
     const agents = Object.entries(AGENT_CONFIG)
       .filter(([, config]) => config.canRunWhileEvicted)
       .map(([agentType]) => agentType);
 
-    expect(agents).toEqual([AgentMap.PredictTrader]);
+    expect(agents).toEqual([AgentMap.PredictTrader, AgentMap.Connect]);
+  });
+});
+
+describe('AGENT_CONFIG Connect staking', () => {
+  it('lets Connect stake on Gnosis and Robinhood only, never Polygon', () => {
+    expect(AGENT_CONFIG[AgentMap.Connect].stakingChains).toEqual([
+      EvmChainIdMap.Gnosis,
+      EvmChainIdMap.Robinhood,
+    ]);
+  });
+
+  it('keeps Connect unstaked by default', () => {
+    expect(AGENT_CONFIG[AgentMap.Connect].defaultStakingProgramId).toBe(
+      'no_staking',
+    );
+  });
+
+  it('runs only Connect on minutes per run', () => {
+    const agents = Object.entries(AGENT_CONFIG)
+      .filter(([, config]) => config.runsOnMinutesPerRun)
+      .map(([agentType]) => agentType);
+
+    expect(agents).toEqual([AgentMap.Connect]);
   });
 });
 

@@ -1,9 +1,11 @@
 import { MainContentContainer } from '@/components/ui';
-import { useServices } from '@/hooks';
+import { useServices, useStakingProgram } from '@/hooks';
+import { isNoStakingProgram, isStakingAvailable } from '@/utils/stakingProgram';
 
 import { AgentChat } from './AgentChat';
 import { AgentInfo } from './AgentInfo';
 import { Performance } from './Performance';
+import { NotStaked } from './Staking/NotStaked';
 import { Staking } from './Staking/Staking';
 import { Wallet } from './Wallet';
 
@@ -14,7 +16,9 @@ type OverviewProps = {
 
 export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
   const { selectedAgentConfig, selectedServiceConfigId } = useServices();
-  const { hasStaking, hasPerformance, hasAgentChat } = selectedAgentConfig;
+  const { selectedStakingProgramId } = useStakingProgram();
+  const { hasPerformance, hasAgentChat, evmHomeChainId } = selectedAgentConfig;
+  const hasStaking = isStakingAvailable(selectedAgentConfig, evmHomeChainId);
 
   if (hasAgentChat) {
     return (
@@ -33,7 +37,12 @@ export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
           hasVisitedProfile={hasVisitedProfile}
         />
       )}
-      {hasStaking && <Staking />}
+      {hasStaking &&
+        (isNoStakingProgram(selectedStakingProgramId) ? (
+          <NotStaked />
+        ) : (
+          <Staking />
+        ))}
       <Wallet />
     </MainContentContainer>
   );

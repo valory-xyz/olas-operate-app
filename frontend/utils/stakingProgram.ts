@@ -2,8 +2,8 @@ import type {
   StakingProgramConfig,
   StakingProgramMap,
 } from '@/config/stakingPrograms';
-import type { AgentType, StakingProgramId } from '@/constants';
-import { Address, Nullable } from '@/types';
+import type { AgentType, EvmChainId, StakingProgramId } from '@/constants';
+import { Address, AgentConfig, Nullable } from '@/types';
 
 /**
  * Given an address, returns a normalized staking program ID by lowercasing the address
@@ -22,6 +22,33 @@ export const deriveStakingProgramId = (address: Address): string => {
 export const isNoStakingProgram = (
   stakingProgramId: Nullable<StakingProgramId> | undefined,
 ) => stakingProgramId === 'no_staking';
+
+/**
+ * Whether an instance of the agent on `chainId` can stake. Agents with
+ * `stakingChains` (Connect) stake only on those chains; others follow
+ * `hasStaking`.
+ */
+export const isStakingAvailable = (
+  agentConfig: Pick<AgentConfig, 'hasStaking' | 'stakingChains'>,
+  chainId: EvmChainId,
+) =>
+  agentConfig.stakingChains
+    ? agentConfig.stakingChains.includes(chainId)
+    : agentConfig.hasStaking;
+
+/**
+ * Whether the agent's contract lists offer an Unstaked option: staking is
+ * optional for it (its default is `no_staking`) and possible on this chain.
+ */
+export const hasUnstakedOption = (
+  agentConfig: Pick<
+    AgentConfig,
+    'hasStaking' | 'stakingChains' | 'defaultStakingProgramId'
+  >,
+  chainId: EvmChainId,
+) =>
+  isNoStakingProgram(agentConfig.defaultStakingProgramId) &&
+  isStakingAvailable(agentConfig, chainId);
 
 /** Whether any program on the chain only accepts PolySafe-deployed services. */
 export const chainHasPolySafePrograms = (programs: StakingProgramMap) =>
