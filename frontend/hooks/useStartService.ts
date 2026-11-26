@@ -21,7 +21,6 @@ import {
   isPrestartCheckBlocking,
   prestartCheckQuery,
 } from './usePrestartCheck';
-import { useStore } from './useStore';
 
 /** Thrown by `startService` when the agent's prestart check stops the start. */
 export class PrestartCheckFailedError extends Error {
@@ -66,9 +65,6 @@ type StartServiceInput = {
 export const useStartService = () => {
   const queryClient = useQueryClient();
   const { store } = useElectronApi();
-  const { storeState } = useStore();
-  const retiredProgramIds =
-    storeState?.retiredStakingProgramIdByServiceConfigId;
 
   const startService = useCallback(
     async ({
@@ -102,10 +98,11 @@ export const useStartService = () => {
             stakingProgramId &&
             !isNoStakingProgram(stakingProgramId)
           ) {
-            await store?.set?.('retiredStakingProgramIdByServiceConfigId', {
-              ...retiredProgramIds,
-              [service.service_config_id]: stakingProgramId,
-            });
+            // This service's entry only: a whole-map write from a stale snapshot drops others.
+            await store?.set?.(
+              `retiredStakingProgramIdByServiceConfigId.${service.service_config_id}`,
+              stakingProgramId,
+            );
           }
           await enableWithdrawalOnlyMode(service, agentType);
         }
@@ -153,7 +150,7 @@ export const useStartService = () => {
       await ServicesService.startService(serviceToStart.service_config_id);
       return serviceToStart;
     },
-    [queryClient, store, retiredProgramIds],
+    [queryClient, store],
   );
 
   return { startService };

@@ -45,12 +45,7 @@ const mockStoreSet = jest.fn();
 jest.mock('../../hooks/useElectronApi', () => ({
   useElectronApi: () => ({ store: { set: mockStoreSet } }),
 }));
-const mockStoreState: { current: Record<string, unknown> | undefined } = {
-  current: undefined,
-};
-jest.mock('../../hooks/useStore', () => ({
-  useStore: () => ({ storeState: mockStoreState.current }),
-}));
+
 jest.mock('../../config/stakingPrograms', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const factories = require('../helpers/factories');
@@ -127,7 +122,6 @@ describe('useStartService', () => {
     mockGetPrestartCheck.mockResolvedValue(PASSED);
     mockEnableWithdrawalOnlyMode.mockResolvedValue(undefined);
     mockIsInWithdrawalOnlyMode.mockReturnValue(false);
-    mockStoreState.current = undefined;
   });
 
   it('calls createSafeIfNeeded before anything else', async () => {
@@ -224,7 +218,7 @@ describe('useStartService', () => {
       expect(mockStartService).not.toHaveBeenCalled();
     });
 
-    it('saves the retired program before the no_staking PATCH, keeping other services', async () => {
+    it("saves only this service's retired program, before the no_staking PATCH", async () => {
       const callOrder: string[] = [];
       mockStoreSet.mockImplementation(async () => {
         callOrder.push('store');
@@ -232,10 +226,6 @@ describe('useStartService', () => {
       mockEnableWithdrawalOnlyMode.mockImplementation(async () => {
         callOrder.push('withdrawalOnly');
       });
-      mockStoreState.current = {
-        retiredStakingProgramIdByServiceConfigId: { other: 'polystrat_i' },
-      };
-
       const { result } = renderStartService();
       await result.current.startService({
         ...baseInput,
@@ -244,12 +234,10 @@ describe('useStartService', () => {
         withdrawalOnly: true,
       });
 
+      // A dot path, so other services' saved ids are never rewritten.
       expect(mockStoreSet).toHaveBeenCalledWith(
-        'retiredStakingProgramIdByServiceConfigId',
-        {
-          other: 'polystrat_i',
-          [DEFAULT_SERVICE_CONFIG_ID]: DEFAULT_STAKING_PROGRAM_ID,
-        },
+        `retiredStakingProgramIdByServiceConfigId.${DEFAULT_SERVICE_CONFIG_ID}`,
+        DEFAULT_STAKING_PROGRAM_ID,
       );
       expect(callOrder).toEqual(['store', 'withdrawalOnly']);
     });

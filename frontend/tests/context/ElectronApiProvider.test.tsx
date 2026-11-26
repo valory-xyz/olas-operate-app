@@ -616,6 +616,7 @@ describe('ElectronApiProvider', () => {
       expect(deletedKeys).toContain('trader');
       expect(deletedKeys).toContain('autoRun');
       expect(deletedKeys).toContain('lastSelectedServiceConfigId');
+      expect(deletedKeys).toContain('retiredStakingProgramIdByServiceConfigId');
     });
 
     it('drops queued writes so a later failure cannot resurrect reset data', async () => {
