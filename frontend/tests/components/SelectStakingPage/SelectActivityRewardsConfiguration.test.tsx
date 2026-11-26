@@ -33,6 +33,14 @@ jest.mock('../../../components/SelectStakingPage/hooks/useCanMigrate', () => ({
   useCanMigrate: jest.fn(() => ({ canMigrate: true, buttonText: 'Select' })),
 }));
 
+const mockUseAreOmenstratContractsFull = jest.fn(() => false);
+jest.mock(
+  '../../../components/SelectStakingPage/hooks/useAreOmenstratContractsFull',
+  () => ({
+    useAreOmenstratContractsFull: () => mockUseAreOmenstratContractsFull(),
+  }),
+);
+
 jest.mock('../../../components/NoStakingRewardsAlert', () => ({
   NoStakingRewardsAlert: () => null,
 }));
@@ -187,5 +195,26 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
       `card-${DEFAULT_STAKING_PROGRAM_ID}`,
       `card-${SECOND_STAKING_PROGRAM_ID}`,
     ]);
+  });
+});
+
+describe('SelectActivityRewardsConfiguration — Omenstrat contracts full', () => {
+  const HINT =
+    'All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead.';
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('points at Connect when every new Omenstrat contract is full', () => {
+    mockUseAreOmenstratContractsFull.mockReturnValue(true);
+    setup({ orderedStakingProgramIds: [DEFAULT_STAKING_PROGRAM_ID] });
+
+    expect(screen.getByText(HINT)).toBeInTheDocument();
+  });
+
+  it('says nothing while a slot is free', () => {
+    mockUseAreOmenstratContractsFull.mockReturnValue(false);
+    setup({ orderedStakingProgramIds: [DEFAULT_STAKING_PROGRAM_ID] });
+
+    expect(screen.queryByText(HINT)).toBeNull();
   });
 });
