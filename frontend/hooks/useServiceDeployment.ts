@@ -101,8 +101,8 @@ export const useServiceDeployment = () => {
 
   const isLoading = useMemo(() => {
     if (isServicesLoading || isServiceRunning) return true;
-    // no_staking agents have no staking contracts, so their
-    // staking-details record never "loads" — don't gate deployability on it.
+    // An agent that cannot stake on this chain has no staking contracts here,
+    // so its staking-details record never "loads": don't gate on it.
     if (
       isStakingAvailable(
         selectedAgentConfig,

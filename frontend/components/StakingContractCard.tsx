@@ -164,7 +164,7 @@ const ProgramContractCard = ({
       <Divider />
 
       <RewardAndDeposit
-        reward={`~${contractDetails?.rewardsPerWorkPeriod?.toFixed(2)}`}
+        reward={<>~{contractDetails?.rewardsPerWorkPeriod?.toFixed(2)}</>}
         deposit={contractDetails?.olasStakeRequired}
       />
 

@@ -39,6 +39,10 @@ import {
 } from '../constants';
 import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
 
+/** See `AgentConfig.runsOnMinutesPerRun`. */
+export const runsOnMinutesPerRun = (meta: Pick<AgentMeta, 'agentConfig'>) =>
+  !!meta.agentConfig.runsOnMinutesPerRun;
+
 /**
  * Returns true when the staking epoch has expired but no on-chain checkpoint
  * has been called yet (i.e. livenessPeriod seconds have elapsed since tsCheckpoint).
@@ -46,14 +50,6 @@ import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
  * Used to normalize the epoch-target-met signal to false so auto-run doesn't
  * skip all agents and stall until someone manually triggers the next checkpoint.
  */
-/**
- * Whether Auto-Run gives the agent its minutes per run and ignores its
- * staking (eviction, an empty reward pool, rewards already earned), whether or
- * not it is staked. Connect: its rewards depend on the user's own request.
- */
-export const runsOnMinutesPerRun = (meta: Pick<AgentMeta, 'agentConfig'>) =>
-  !!meta.agentConfig.runsOnMinutesPerRun;
-
 export const isStakingEpochExpired = ({
   livenessPeriod,
   tsCheckpoint,

@@ -16,8 +16,7 @@ export const FundYourAgent = () => {
   const handleBack = () => {
     resetTokenRequirements();
     // An agent that defaults to no_staking skips SelectStaking unless it can
-    // stake on this chain (Connect on Gnosis or Robinhood), so back returns
-    // to the step it came from.
+    // stake on this chain, so back returns to the step it came from.
     goto(
       isNoStakingProgram(selectedAgentConfig.defaultStakingProgramId) &&
         !hasUnstakedOption(

@@ -113,7 +113,7 @@ export const useAutoRunController = ({
           selectedActivityGoalReadAt ?? 0,
         )
       : (stakingRewardsDataUpdatedAt ?? 0);
-  const isSelectedNoStakingAgent =
+  const isSelectedOnMinutesPerRun =
     !!selectedMeta && runsOnMinutesPerRun(selectedMeta);
   const selectedRewardsEpoch = useMemo(
     () =>
@@ -232,7 +232,7 @@ export const useAutoRunController = ({
     runningServiceConfigId,
     isSelectedAgentDetailsLoading,
     isSelectedDoneForEpoch,
-    isSelectedNoStakingAgent,
+    isSelectedOnMinutesPerRun,
     isEpochExpired,
     selectedStakingProgramId: selectedMeta?.stakingProgramId,
     selectedRewardsEpoch,

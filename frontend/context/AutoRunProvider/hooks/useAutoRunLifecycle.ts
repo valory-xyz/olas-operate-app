@@ -331,9 +331,9 @@ export const useAutoRunLifecycle = ({
       const currentMeta = configuredAgents.find(
         (agent) => agent.serviceConfigId === currentServiceConfigId,
       );
-      const isNoStakingAgent =
+      const isOnMinutesPerRun =
         !!currentMeta && runsOnMinutesPerRun(currentMeta);
-      const stalled = !isNoStakingAgent && isStalled(currentServiceConfigId);
+      const stalled = !isOnMinutesPerRun && isStalled(currentServiceConfigId);
       const trigger =
         stalled && options?.trigger === 'rewards'
           ? 'stall'
@@ -357,7 +357,7 @@ export const useAutoRunLifecycle = ({
         if (stalled) restartStallClock(currentServiceConfigId);
         // Connect's `is_met` never goes back to false within a process, so the
         // reset is what lets the next rewards poll check again.
-        if (isNoStakingAgent) {
+        if (isOnMinutesPerRun) {
           lastRewardsEligibilityRef.current[currentServiceConfigId] = undefined;
         }
         // A forced rotation (watchdog, eviction), or an alternate whose rewards
@@ -388,9 +388,9 @@ export const useAutoRunLifecycle = ({
       // to try, finished its run: a watchdog, eviction or stall hand-over
       // does not.
       const noMarketsStandby =
-        !isNoStakingAgent && isNoMarketsStandby(currentServiceConfigId);
+        !isOnMinutesPerRun && isNoMarketsStandby(currentServiceConfigId);
       const notifyGoalReached =
-        (isNoStakingAgent || noMarketsStandby) && !options?.force;
+        (isOnMinutesPerRun || noMarketsStandby) && !options?.force;
       // Deferred only once stopped: after a stop timeout it is still running.
       const onStopped = () => {
         if (stalled) deferStalled(currentServiceConfigId);

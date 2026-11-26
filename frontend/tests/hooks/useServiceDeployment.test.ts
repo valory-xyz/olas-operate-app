@@ -282,6 +282,33 @@ describe('useServiceDeployment', () => {
     });
   });
 
+  describe('isLoading — Connect, which can stake only on some chains', () => {
+    it.each([
+      ['Gnosis', 100, 'gnosis', true],
+      ['Polygon', 137, 'polygon', false],
+    ])(
+      'on %s, waits for the staking details: %s',
+      (_, evmHomeChainId, middlewareHomeChainId, expected) => {
+        mockUseServices.mockReturnValue({
+          ...mockUseServices(),
+          selectedAgentConfig: {
+            evmHomeChainId,
+            middlewareHomeChainId,
+            hasStaking: false,
+            stakingChains: [100, 4663],
+          },
+          selectedAgentType: 'connect',
+        } as unknown as ReturnType<typeof useServices>);
+        mockUseStakingContractContext.mockReturnValue({
+          ...mockUseStakingContractContext(),
+          isAllStakingContractDetailsRecordLoaded: false,
+        } as unknown as ReturnType<typeof useStakingContractContext>);
+        const { result } = renderHook(() => useServiceDeployment());
+        expect(result.current.isLoading).toBe(expected);
+      },
+    );
+  });
+
   describe('isDeployable', () => {
     it('returns true when canRun=true and not loading', () => {
       const { result } = renderHook(() => useServiceDeployment());

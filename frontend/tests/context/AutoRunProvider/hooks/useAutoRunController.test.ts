@@ -342,11 +342,11 @@ describe('useAutoRunController', () => {
       );
       const signalsArgs = lastCallArgs(useAutoRunSignals);
       expect(signalsArgs.isSelectedDoneForEpoch).toBe(true);
-      expect(signalsArgs.isSelectedNoStakingAgent).toBe(false);
+      expect(signalsArgs.isSelectedOnMinutesPerRun).toBe(false);
       expect(signalsArgs).not.toHaveProperty('isEpochTargetMet');
     });
 
-    it('flags a selected Connect instance as no-staking', () => {
+    it('flags a selected Connect instance as on minutes per run', () => {
       renderHook(() =>
         useAutoRunController(
           makeHookParams({
@@ -355,12 +355,12 @@ describe('useAutoRunController', () => {
           }),
         ),
       );
-      expect(lastCallArgs(useAutoRunSignals).isSelectedNoStakingAgent).toBe(
+      expect(lastCallArgs(useAutoRunSignals).isSelectedOnMinutesPerRun).toBe(
         true,
       );
     });
 
-    it('flags a selected Connect instance as no-staking while it is staked', () => {
+    it('flags a selected Connect instance as on minutes per run while it is staked', () => {
       const stakedConnectMeta = {
         ...connectMeta,
         stakingProgramId: 'connect_i' as const,
@@ -373,7 +373,7 @@ describe('useAutoRunController', () => {
           }),
         ),
       );
-      expect(lastCallArgs(useAutoRunSignals).isSelectedNoStakingAgent).toBe(
+      expect(lastCallArgs(useAutoRunSignals).isSelectedOnMinutesPerRun).toBe(
         true,
       );
     });

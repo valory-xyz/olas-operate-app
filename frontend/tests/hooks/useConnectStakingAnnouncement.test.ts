@@ -4,6 +4,7 @@ import { MiddlewareChainMap } from '../../constants/chains';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { PAGES } from '../../constants/pages';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
+import { useConnectSession } from '../../hooks/useConnectSession';
 import { useConnectStakingAnnouncement } from '../../hooks/useConnectStakingAnnouncement';
 import { useElectronApi } from '../../hooks/useElectronApi';
 import { useOnboardingSurvey } from '../../hooks/useOnboardingSurvey';
@@ -13,7 +14,12 @@ import { useSetup } from '../../hooks/useSetup';
 import { useStore } from '../../hooks/useStore';
 
 jest.mock('../../config/agents', () => ({
-  AGENT_CONFIG: { connect: { servicePublicId: 'valory/connect:0.1.0' } },
+  AGENT_CONFIG: {
+    connect: {
+      servicePublicId: 'valory/connect:0.1.0',
+      stakingChains: [100, 4663],
+    },
+  },
 }));
 // `@/constants` loads `config/chains`, which needs the real number formatters.
 jest.mock('../../utils', () => ({
@@ -21,6 +27,9 @@ jest.mock('../../utils', () => ({
   asEvmChainId: (chain: string) =>
     ({ gnosis: 100, robinhood: 4663, polygon: 137 })[chain],
   matchesAgentConfig: (service: { isConnect?: boolean }) => !!service.isConnect,
+}));
+jest.mock('../../hooks/useConnectSession', () => ({
+  useConnectSession: jest.fn(),
 }));
 jest.mock('../../hooks/useElectronApi', () => ({ useElectronApi: jest.fn() }));
 jest.mock('../../hooks/useOnboardingSurvey', () => ({
@@ -49,6 +58,7 @@ type Setup = {
   services?: object[];
   selectedAgentType?: string;
   selectedService?: object;
+  showFirstRunModal?: boolean;
 };
 
 const setup = (overrides: Setup = {}) => {
@@ -58,7 +68,9 @@ const setup = (overrides: Setup = {}) => {
     services = [],
     selectedAgentType = 'trader',
     selectedService,
+    showFirstRunModal = false,
   } = overrides;
+  (useConnectSession as jest.Mock).mockReturnValue({ showFirstRunModal });
   // An explicit `undefined` is the not-yet-loaded store, not "use the default".
   const storeState = 'storeState' in overrides ? overrides.storeState : {};
   (useElectronApi as jest.Mock).mockReturnValue({
@@ -98,19 +110,30 @@ describe('useConnectStakingAnnouncement', () => {
       ['the store has not loaded', { storeState: undefined }],
       ['the user is in setup', { pageState: PAGES.Setup }],
       ['the onboarding survey is open', { isSurveyOpen: true }],
-      [
-        "Connect's first-run modal is due",
-        {
-          selectedAgentType: 'connect',
-          selectedService: {
-            service_config_id: 'sc-1',
-            deploymentStatus: MiddlewareDeploymentStatusMap.DEPLOYED,
-          },
-          storeState: { connect: { firstRunCompleted: {} } },
-        },
-      ],
+      ["Connect's first-run modal is showing", { showFirstRunModal: true }],
     ])('stays closed while %s', (_, overrides) => {
       expect(setup(overrides as Setup).current.isOpen).toBe(false);
+    });
+
+    it.each([
+      [
+        'a stopped Connect before its first run',
+        'connect',
+        MiddlewareDeploymentStatusMap.STOPPED,
+      ],
+      [
+        "a running Connect whose first-run modal is not showing (its server isn't ready)",
+        'connect',
+        MiddlewareDeploymentStatusMap.DEPLOYED,
+      ],
+      ['a running trader', 'trader', MiddlewareDeploymentStatusMap.DEPLOYED],
+    ])('opens for %s', (_, selectedAgentType, deploymentStatus) => {
+      const result = setup({
+        selectedAgentType,
+        selectedService: { service_config_id: 'sc-1', deploymentStatus },
+        storeState: { connect: { firstRunCompleted: {} } },
+      });
+      expect(result.current.isOpen).toBe(true);
     });
 
     it("opens once Connect's first run is complete", () => {

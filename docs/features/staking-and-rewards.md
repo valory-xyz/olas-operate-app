@@ -302,7 +302,7 @@ Derives several status flags from `selectedStakingContractDetails`:
 
 The pure logic lives in `getCompatibleStakingProgramIds()` (`frontend/utils/stakingProgram.ts`). Returns empty array (and `isStakingContractsLoaded: false`) while `isActiveStakingProgramLoaded` or `isMultisigTypeLoaded` is false.
 
-When staking is optional for the agent on this chain (`hasUnstakedOption`: its default is `no_staking` and `isStakingAvailable` allows the chain), `no_staking` is put first: the Unstaked tile (0 OLAS reward, 0 OLAS deposit). Only Connect on Gnosis and Robinhood Chain has it.
+When staking is optional for the agent on this chain (`hasUnstakedOption`: its default is `no_staking` and `isStakingAvailable` allows the chain), `no_staking` is put first: the Unstaked tile (0 OLAS reward, 0 OLAS deposit). See [Optional staking (Connect)](#optional-staking-connect).
 
 ### Optional staking (Connect)
 

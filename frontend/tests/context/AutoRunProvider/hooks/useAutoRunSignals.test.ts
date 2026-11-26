@@ -91,7 +91,7 @@ const makeHookParams = (overrides: Partial<HookParams> = {}) => ({
   runningServiceConfigId: null as string | null,
   isSelectedAgentDetailsLoading: false,
   isSelectedDoneForEpoch: undefined as boolean | undefined,
-  isSelectedNoStakingAgent: false,
+  isSelectedOnMinutesPerRun: false,
   isEpochExpired: false,
   selectedStakingProgramId:
     DEFAULT_STAKING_PROGRAM_ID as HookParams['selectedStakingProgramId'],
@@ -368,7 +368,7 @@ describe('useAutoRunSignals', () => {
     it('does not overwrite the snapshot of a selected no-staking agent', () => {
       const params = makeHookParams({
         isSelectedDoneForEpoch: false,
-        isSelectedNoStakingAgent: true,
+        isSelectedOnMinutesPerRun: true,
       });
       const { result, rerender } = renderHook(
         (props) => useAutoRunSignals(props),

@@ -1,4 +1,3 @@
-import { ethers } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
@@ -15,13 +14,10 @@ import {
   StakingRewardsInfo,
 } from '@/types';
 import { isValidServiceId } from '@/utils';
+import { getNowInSeconds } from '@/utils/time';
 
-import {
-  ONE_YEAR,
-  StakedAgentService,
-} from './shared-services/StakedAgentService';
-
-const getNowInSeconds = () => Math.floor(Date.now() / 1000);
+import { PredictTraderService } from './PredictTrader';
+import { StakedAgentService } from './shared-services/StakedAgentService';
 
 /**
  * Index of the Marketplace request count in both the activity checker's
@@ -131,109 +127,30 @@ export abstract class ConnectService extends StakedAgentService {
     } satisfies StakingRewardsInfo;
   };
 
+  // Connect's contracts are standard staking proxies, read the same way as
+  // Omenstrat's on the instance's own chain.
   static getAvailableRewardsForEpoch = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId = EvmChainIdMap.Gnosis,
-  ): Promise<bigint | undefined> => {
-    const stakingTokenProxy =
-      STAKING_PROGRAMS[chainId]?.[stakingProgramId]?.contract;
-    if (!stakingTokenProxy) return;
-
-    const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = await PROVIDERS[
-      chainId
-    ].multicallProvider.all([
-      stakingTokenProxy.rewardsPerSecond(),
-      stakingTokenProxy.livenessPeriod(),
-      stakingTokenProxy.tsCheckpoint(),
-    ]);
-
-    return BigInt(
-      Math.max(
-        rewardsPerSecond * livenessPeriod,
-        rewardsPerSecond * (getNowInSeconds() - tsCheckpoint),
-      ),
-    );
-  };
+  ): Promise<bigint | undefined> =>
+    PredictTraderService.getAvailableRewardsForEpoch(stakingProgramId, chainId);
 
   static getServiceStakingDetails = async (
     serviceNftTokenId: number,
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId = EvmChainIdMap.Gnosis,
-  ): Promise<ServiceStakingDetails> => {
-    const { contract: stakingTokenProxy } =
-      STAKING_PROGRAMS[chainId][stakingProgramId];
-
-    const [serviceInfo, serviceStakingState] = await PROVIDERS[
-      chainId
-    ].multicallProvider.all([
-      stakingTokenProxy.getServiceInfo(serviceNftTokenId),
-      stakingTokenProxy.getStakingState(serviceNftTokenId),
-    ]);
-
-    return {
-      serviceStakingStartTime: serviceInfo.tsStart.toNumber(),
-      serviceStakingState,
-    };
-  };
+  ): Promise<ServiceStakingDetails> =>
+    PredictTraderService.getServiceStakingDetails(
+      serviceNftTokenId,
+      stakingProgramId,
+      chainId,
+    );
 
   static getStakingContractDetails = async (
     stakingProgramId: StakingProgramId,
     chainId: EvmChainId,
-  ): Promise<StakingContractDetails | undefined> => {
-    const stakingTokenProxy =
-      STAKING_PROGRAMS[chainId]?.[stakingProgramId]?.contract;
-    if (!stakingTokenProxy) return;
-
-    const [
-      availableRewardsInBN,
-      maxNumServicesInBN,
-      getServiceIdsInBN,
-      minStakingDurationInBN,
-      minStakingDeposit,
-      rewardsPerSecond,
-      numAgentInstances,
-      livenessPeriod,
-      epochCounter,
-    ] = await PROVIDERS[chainId].multicallProvider.all([
-      stakingTokenProxy.availableRewards(),
-      stakingTokenProxy.maxNumServices(),
-      stakingTokenProxy.getServiceIds(),
-      stakingTokenProxy.minStakingDuration(),
-      stakingTokenProxy.minStakingDeposit(),
-      stakingTokenProxy.rewardsPerSecond(),
-      stakingTokenProxy.numAgentInstances(),
-      stakingTokenProxy.livenessPeriod(),
-      stakingTokenProxy.epochCounter(),
-    ]);
-
-    let apy = 0;
-    if (rewardsPerSecond.gt(0) && minStakingDeposit.gt(0)) {
-      apy =
-        Number(rewardsPerSecond.mul(ONE_YEAR).mul(100).div(minStakingDeposit)) /
-        (1 + numAgentInstances.toNumber());
-    }
-
-    return {
-      availableRewards: parseFloat(
-        ethers.utils.formatUnits(availableRewardsInBN, 18),
-      ),
-      maxNumServices: maxNumServicesInBN.toNumber(),
-      serviceIds: getServiceIdsInBN.map((id: bigint) => Number(id)),
-      minimumStakingDuration: minStakingDurationInBN.toNumber(),
-      minStakingDeposit: parseFloat(formatEther(minStakingDeposit)),
-      apy,
-      olasStakeRequired: Number(
-        formatEther(
-          minStakingDeposit.add(minStakingDeposit.mul(numAgentInstances)),
-        ),
-      ),
-      rewardsPerWorkPeriod:
-        Number(formatEther(rewardsPerSecond as bigint)) *
-        livenessPeriod.toNumber(),
-      epochCounter: epochCounter.toNumber(),
-      livenessPeriod: livenessPeriod.toNumber(),
-    };
-  };
+  ): Promise<StakingContractDetails | undefined> =>
+    PredictTraderService.getStakingContractDetails(stakingProgramId, chainId);
 
   /**
    * `POST /session` (launching the local Claude Code session) is NOT here: the

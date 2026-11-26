@@ -68,4 +68,14 @@ describe('StakingContractCard', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('Unstaked')).toBeNull();
   });
+
+  it('shows no "undefined" while the contract details load', () => {
+    (useStakingContractContext as jest.Mock).mockReturnValue({
+      allStakingContractDetailsRecord: {},
+    });
+    render(<StakingContractCard stakingProgramId="connect_i" />);
+
+    expect(screen.queryByText(/undefined/)).toBeNull();
+    expect(screen.getByText('~ OLAS – activity reward')).toBeInTheDocument();
+  });
 });

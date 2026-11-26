@@ -1,14 +1,12 @@
 import { useCallback, useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { StakingProgramId } from '@/constants';
+import { NO_STAKING_PROGRAM_ID } from '@/constants';
 import { useIsPolySafeService, useServices, useStakingProgram } from '@/hooks';
 import {
   getCompatibleStakingProgramIds,
   hasUnstakedOption,
 } from '@/utils/stakingProgram';
-
-const NO_STAKING: StakingProgramId = 'no_staking';
 
 export const useStakingContracts = () => {
   const { selectedAgentConfig, selectedAgentType, selectedService } =
@@ -49,8 +47,6 @@ export const useStakingContracts = () => {
 
   // Memoize so the array ref is stable across renders — downstream `useMemo`s
   // and effects list `orderedStakingProgramIds` in their deps.
-  // Staking is optional for this agent here (Connect on Gnosis or Robinhood):
-  // its lists start with the Unstaked option, `no_staking`.
   const withUnstakedOption = hasUnstakedOption(
     selectedAgentConfig,
     evmHomeChainId,
@@ -64,7 +60,9 @@ export const useStakingContracts = () => {
       isPolySafeService,
       currentStakingProgramId,
     });
-    return withUnstakedOption ? [NO_STAKING, ...programIds] : programIds;
+    return withUnstakedOption
+      ? [NO_STAKING_PROGRAM_ID, ...programIds]
+      : programIds;
   }, [
     isStakingContractsLoaded,
     isStakingContractsError,

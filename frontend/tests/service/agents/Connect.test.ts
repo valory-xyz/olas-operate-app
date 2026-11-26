@@ -133,6 +133,17 @@ describe('ConnectService.getAgentStakingRewardsInfo', () => {
     expect(result!.activityThisEpoch).toBe(1);
   });
 
+  it('reports the accrued reward, the minimum stake and the epoch rewards', async () => {
+    respond({ requestsSinceCheckpoint: 1 });
+
+    const result = await callWith();
+
+    // 1 OLAS accrued; 2 x the 2500 OLAS deposit; 10 wei/s over a day
+    expect(result!.accruedServiceStakingRewards).toBe(1);
+    expect(result!.minimumStakedAmount).toBe(5000);
+    expect(result!.availableRewardsForEpoch).toBe(864000);
+  });
+
   it('does not earn it without a request', async () => {
     respond({ requestsSinceCheckpoint: 0 });
 
@@ -217,7 +228,10 @@ describe('ConnectService contract reads', () => {
     expect(result).toMatchObject({
       availableRewards: 5,
       maxNumServices: 44,
-      serviceIds: [3, 9],
+      serviceIds: [BigInt(3), BigInt(9)],
+      // 0.001 OLAS/s over a year on a 2500 OLAS deposit, shared by 1 + 1 agent
+      apy: 630.5,
+      rewardsPerWorkPeriod: 86.4,
       minimumStakingDuration: 259200,
       minStakingDeposit: 2500,
       olasStakeRequired: 5000,

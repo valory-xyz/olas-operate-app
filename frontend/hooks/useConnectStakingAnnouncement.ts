@@ -1,24 +1,16 @@
 import { useCallback, useMemo } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
-import {
-  AgentMap,
-  EvmChainIdMap,
-  MiddlewareDeploymentStatusMap,
-  PAGES,
-  SETUP_SCREEN,
-} from '@/constants';
+import { AgentMap, PAGES, SETUP_SCREEN } from '@/constants';
 import { asEvmChainId, matchesAgentConfig } from '@/utils';
 
+import { useConnectSession } from './useConnectSession';
 import { useElectronApi } from './useElectronApi';
 import { useOnboardingSurvey } from './useOnboardingSurvey';
 import { usePageState } from './usePageState';
 import { useServices } from './useServices';
 import { useSetup } from './useSetup';
 import { useStore } from './useStore';
-
-/** Where "Stake your Connect Agent" leads: Gnosis first, then Robinhood Chain. */
-const STAKING_CHAIN_ORDER = [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood];
 
 /**
  * The one-time "Staking for Connect agents" announcement: shown to every user
@@ -32,37 +24,24 @@ export const useConnectStakingAnnouncement = () => {
   const { pageState, goto: gotoPage } = usePageState();
   const { goto: gotoSetup } = useSetup();
   const { isModalOpen: isSurveyOpen } = useOnboardingSurvey();
-  const {
-    services,
-    selectedService,
-    selectedAgentType,
-    updateSelectedServiceConfigId,
-  } = useServices();
+  const { services, updateSelectedServiceConfigId } = useServices();
+  const { showFirstRunModal } = useConnectSession();
 
   const isStoreHydrated = storeState !== undefined;
   const isSeen = storeState?.connectStakingAnnouncementSeen === true;
-
-  // Connect's first-run modal shows on the first run of a selected instance
-  // until its flow is completed.
-  const isConnectFirstRunPending =
-    selectedAgentType === AgentMap.Connect &&
-    selectedService?.deploymentStatus ===
-      MiddlewareDeploymentStatusMap.DEPLOYED &&
-    storeState?.connect?.firstRunCompleted?.[
-      selectedService.service_config_id
-    ] !== true;
 
   const isOpen =
     isStoreHydrated &&
     !isSeen &&
     pageState === PAGES.Main &&
     !isSurveyOpen &&
-    !isConnectFirstRunPending;
+    !showFirstRunModal;
 
-  // The Connect instance whose contract list the button opens, if any.
+  // The Connect instance whose contract list the button opens, if any: in
+  // `stakingChains` order, Gnosis first.
   const stakeableConnectServiceConfigId = useMemo(() => {
     const connectConfig = AGENT_CONFIG[AgentMap.Connect];
-    for (const chainId of STAKING_CHAIN_ORDER) {
+    for (const chainId of connectConfig.stakingChains ?? []) {
       const service = (services ?? []).find(
         (candidate) =>
           matchesAgentConfig(candidate, connectConfig) &&
