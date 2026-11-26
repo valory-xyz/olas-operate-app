@@ -137,7 +137,11 @@ export type AgentConfig = {
    * on Gnosis, which also defines USDC in its token config.
    */
   erc20Tokens?: TokenSymbol[] | Partial<Record<EvmChainId, TokenSymbol[]>>;
-  /** Whether the agent has on-chain staking (shows the main-page Staking section). */
+  /**
+   * Whether the agent always stakes. An agent whose staking is optional
+   * (Connect) is `false` here and lists its chains in `stakingChains`, so read
+   * `isStakingAvailable` to ask whether an instance can stake.
+   */
   hasStaking: boolean;
   /** Whether the agent has performance metrics (shows the main-page Performance section). */
   hasPerformance: boolean;

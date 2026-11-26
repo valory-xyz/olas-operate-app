@@ -134,6 +134,21 @@ describe('AGENT_CONFIG Connect staking', () => {
     );
   });
 
+  describe.each(
+    Object.entries(AGENT_CONFIG).filter(([, config]) => config.stakingChains),
+  )('%s stakingChains', (_, config) => {
+    it('lists only chains the agent supports', () => {
+      const supported = config.supportedChains ?? [config.evmHomeChainId];
+      for (const chainId of config.stakingChains ?? []) {
+        expect(supported).toContain(chainId);
+      }
+    });
+
+    it('is set only on an agent that defaults to no_staking', () => {
+      expect(config.defaultStakingProgramId).toBe('no_staking');
+    });
+  });
+
   it('runs only Connect on minutes per run', () => {
     const agents = Object.entries(AGENT_CONFIG)
       .filter(([, config]) => config.runsOnMinutesPerRun)
