@@ -61,17 +61,23 @@ describe('useAreOmenstratContractsFull', () => {
   });
 
   it('is false when config offers no Omenstrat contract at all', () => {
-    // [].every(...) is true: without the guard everyone would be sent to Connect
-    const replaced = jest.replaceProperty(
-      STAKING_PROGRAMS,
-      EvmChainIdMap.Gnosis,
-      {},
-    );
-    try {
-      expect(setup({})).toBe(false);
-    } finally {
-      replaced.restore();
-    }
+    // [].every(...) is true: without the guard everyone would be sent to Connect.
+    // The list is read once, at import, so load the hook against empty config.
+    jest.isolateModules(() => {
+      jest.doMock('../../../../config/stakingPrograms', () => ({
+        ...jest.requireActual('../../../../config/stakingPrograms'),
+        STAKING_PROGRAMS: { [EvmChainIdMap.Gnosis]: {} },
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const isolated = require('../../../../components/SelectStakingPage/hooks/useAreOmenstratContractsFull');
+      (useServices as jest.Mock).mockReturnValue({
+        selectedAgentType: AgentMap.PredictTrader,
+      });
+      (useStakingContractContext as jest.Mock).mockReturnValue({
+        allStakingContractDetailsRecord: {},
+      });
+      expect(isolated.useAreOmenstratContractsFull()).toBe(false);
+    });
   });
 
   it("is false on any other agent's list", () => {

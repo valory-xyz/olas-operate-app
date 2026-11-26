@@ -86,7 +86,7 @@ export const isInStakingMode = (
   service: Parameters<typeof getServiceStakingProgramId>[0],
 ): boolean | undefined => {
   if (!isStakingAvailable(agentConfig, chainId)) return false;
-  if (!hasUnstakedOption(agentConfig, chainId)) return true;
+  if (!isNoStakingProgram(agentConfig.defaultStakingProgramId)) return true;
   const stakingProgramId = getServiceStakingProgramId(service);
   if (isNil(stakingProgramId)) return undefined;
   return !isNoStakingProgram(stakingProgramId);

@@ -1,5 +1,4 @@
 import { isNil } from 'lodash';
-import { useMemo } from 'react';
 
 import { STAKING_PROGRAMS, StakingProgramMap } from '@/config/stakingPrograms';
 import { AgentMap, EvmChainIdMap, StakingProgramId } from '@/constants';
@@ -22,6 +21,10 @@ export const getOmenstratProgramIds = (
     )
     .map(([id]) => id as StakingProgramId);
 
+const OMENSTRAT_PROGRAM_IDS = getOmenstratProgramIds(
+  STAKING_PROGRAMS[EvmChainIdMap.Gnosis],
+);
+
 /**
  * Whether Omenstrat's contract list should point at Connect: every Omenstrat
  * contract has no free slot. A contract whose details have not loaded counts
@@ -30,15 +33,11 @@ export const getOmenstratProgramIds = (
 export const useAreOmenstratContractsFull = () => {
   const { selectedAgentType } = useServices();
   const { allStakingContractDetailsRecord } = useStakingContractContext();
-  const programIds = useMemo(
-    () => getOmenstratProgramIds(STAKING_PROGRAMS[EvmChainIdMap.Gnosis]),
-    [],
-  );
 
   if (selectedAgentType !== AgentMap.PredictTrader) return false;
-  if (programIds.length === 0) return false;
+  if (OMENSTRAT_PROGRAM_IDS.length === 0) return false;
 
-  return programIds.every(
+  return OMENSTRAT_PROGRAM_IDS.every(
     (programId) =>
       hasFreeServiceSlot(allStakingContractDetailsRecord?.[programId]) ===
       false,

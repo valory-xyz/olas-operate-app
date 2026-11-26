@@ -45,19 +45,10 @@ export const SwitchingContractModal = ({
   const isUnstaking = isNoStakingProgram(stakingProgramIdToMigrateTo);
 
   const modalProps = useMemo(() => {
-    if (status === 'IN_PROGRESS' && isUnstaking) {
-      return {
-        title: 'Unstaking in Progress',
-        description:
-          'Your agent is being unstaked. It usually takes up to 5 min. Please keep the app open until the process is complete.',
-      };
-    }
-
     if (status === 'IN_PROGRESS') {
       return {
-        title: 'Switching in Progress',
-        description:
-          'Your agent is switching contracts. It usually takes up to 5 min. Please keep the app open until the process is complete.',
+        title: isUnstaking ? 'Unstaking in Progress' : 'Switching in Progress',
+        description: `Your agent is ${isUnstaking ? 'being unstaked' : 'switching contracts'}. It usually takes up to 5 min. Please keep the app open until the process is complete.`,
       };
     }
 
