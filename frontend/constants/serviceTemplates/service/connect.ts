@@ -142,8 +142,8 @@ export const connectFundRequirementsFor = (chain: MiddlewareChain): string => {
  * Connect service template.
  *
  * One `configurations` block per supported chain (Polygon / Gnosis / Robinhood),
- * each created with `staking_program_id: 'no_staking'`; on Gnosis and Robinhood
- * the user may then stake it (`AgentConfig.stakingChains`). The same `name` is shared across chains;
+ * each created with `staking_program_id: 'no_staking'`; on the chains in
+ * `AgentConfig.stakingChains` the user may then stake it. The same `name` is shared across chains;
  * the chain is selected at setup time (see `SelectChain`).
  */
 export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {

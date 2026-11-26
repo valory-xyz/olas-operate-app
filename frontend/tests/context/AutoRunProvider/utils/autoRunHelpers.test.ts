@@ -1383,7 +1383,7 @@ describe('refreshRewardsEligibility', () => {
     });
   });
 
-  describe('no-staking agent (Connect)', () => {
+  describe('agent on minutes per run (Connect, staked or not)', () => {
     const CONNECT_ID = 'sc-connect';
     const startRequestedAtSeconds = 1_800_000_000;
     const connectMeta = {
@@ -2128,6 +2128,16 @@ describe('fetchDeployabilityForAgent', () => {
 
       expect(result).toEqual({ canRun: true });
       expect(mockGetServiceStakingDetails).not.toHaveBeenCalled();
+
+      // control: the same agent off minutes per run is held by that gate
+      const gated = await fetchDeployabilityForAgent(
+        {
+          ...meta,
+          agentConfig: { ...meta.agentConfig, runsOnMinutesPerRun: false },
+        } as AgentMeta,
+        makeCtx(),
+      );
+      expect(gated.canRun).toBe(false);
     },
   );
 

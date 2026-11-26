@@ -181,7 +181,7 @@ describe('useRewardsHistory', () => {
     });
 
     it('skips the query on a chain with no rewards subgraph', () => {
-      // Robinhood has no staking programmes and so no staking subgraph.
+      // Robinhood has no staking subgraph.
       // `skipToken` rather than `enabled`, because the hook refetches on the
       // service NFT id and `refetch()` ignores `enabled` — without this the
       // query would run, retry and settle in `isError`.

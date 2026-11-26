@@ -8,10 +8,7 @@ import { useCanManageStaking } from './Staking';
 
 const { Text, Title } = Typography;
 
-/**
- * Staking section of an agent that may stake but is not staked: Manage
- * Staking opens the contract list, where Unstaked is selected.
- */
+/** Staking section of an agent that may stake but is not staked. */
 export const NotStaked = () => {
   const { goto } = usePageState();
   const canManageStaking = useCanManageStaking();

@@ -1,6 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
+import { AGENT_CONFIG } from '../../config/agents';
+import { AgentMap } from '../../constants/agent';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useBalanceContext } from '../../hooks/useBalanceContext';
 import { useDeployability } from '../../hooks/useDeployability';
@@ -283,52 +285,42 @@ describe('useServiceDeployment', () => {
   });
 
   describe('isLoading — Connect, which can stake only on some chains', () => {
-    it.each([
-      ['Gnosis', 100, 'gnosis', true],
-      ['Polygon', 137, 'polygon', false],
-    ])(
-      'on %s, waits for the staking details: %s',
-      (_, evmHomeChainId, middlewareHomeChainId, expected) => {
-        mockUseServices.mockReturnValue({
-          ...mockUseServices(),
-          selectedAgentConfig: {
-            evmHomeChainId,
-            middlewareHomeChainId,
-            hasStaking: false,
-            stakingChains: [100, 4663],
-          },
-          selectedAgentType: 'connect',
-        } as unknown as ReturnType<typeof useServices>);
-        mockUseStakingContractContext.mockReturnValue({
-          ...mockUseStakingContractContext(),
-          isAllStakingContractDetailsRecordLoaded: false,
-        } as unknown as ReturnType<typeof useStakingContractContext>);
-        const { result } = renderHook(() => useServiceDeployment());
-        expect(result.current.isLoading).toBe(expected);
-      },
-    );
-
-    it('does not wait for the staking details while the instance is unstaked', () => {
+    /** Connect's real config on `chain`, its staking details not loaded. */
+    const setupConnectOn = (
+      evmHomeChainId: number,
+      middlewareHomeChainId: string,
+      selectedStakingProgramId: string,
+    ) => {
       mockUseServices.mockReturnValue({
         ...mockUseServices(),
         selectedAgentConfig: {
-          evmHomeChainId: 100,
-          middlewareHomeChainId: 'gnosis',
-          hasStaking: false,
-          stakingChains: [100, 4663],
+          ...AGENT_CONFIG[AgentMap.Connect],
+          evmHomeChainId,
+          middlewareHomeChainId,
         },
-        selectedAgentType: 'connect',
+        selectedAgentType: AgentMap.Connect,
       } as unknown as ReturnType<typeof useServices>);
       mockUseStakingProgram.mockReturnValue({
-        selectedStakingProgramId: 'no_staking',
+        selectedStakingProgramId,
       } as unknown as ReturnType<typeof useStakingProgram>);
       mockUseStakingContractContext.mockReturnValue({
         ...mockUseStakingContractContext(),
         isAllStakingContractDetailsRecordLoaded: false,
       } as unknown as ReturnType<typeof useStakingContractContext>);
-      const { result } = renderHook(() => useServiceDeployment());
-      expect(result.current.isLoading).toBe(false);
-    });
+    };
+
+    it.each([
+      ['staked on Gnosis', 100, 'gnosis', 'connect_i', true],
+      ['unstaked on Gnosis', 100, 'gnosis', 'no_staking', false],
+      ['on Polygon', 137, 'polygon', 'no_staking', false],
+    ])(
+      'Connect %s: waits for the staking details as expected',
+      (_, evmHomeChainId, middlewareHomeChainId, programId, expected) => {
+        setupConnectOn(evmHomeChainId, middlewareHomeChainId, programId);
+        const { result } = renderHook(() => useServiceDeployment());
+        expect(result.current.isLoading).toBe(expected);
+      },
+    );
   });
 
   describe('isDeployable', () => {

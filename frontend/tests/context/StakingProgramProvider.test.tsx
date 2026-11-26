@@ -39,6 +39,7 @@ const mockUseActiveStakingProgramId = jest.fn<
 const mockUseServices = jest.fn<
   {
     selectedService?: Service;
+    services?: Service[];
     selectedAgentConfig: {
       defaultStakingProgramId: StakingProgramId;
     };
@@ -257,6 +258,32 @@ describe('StakingProgramProvider', () => {
       await waitFor(() => {
         expect(result.current.stakingProgramIdToMigrateTo).toBeNull();
       });
+    });
+  });
+
+  describe('stakingProgramIdByServiceConfigId', () => {
+    it("maps each service to its home chain's stored program, or null", () => {
+      const stored = makeMiddlewareService('gnosis', {
+        service_config_id: 'sc-stored',
+        chain_configs: makeChainConfig('gnosis', {
+          staking_program_id: SERVICE_PROGRAM,
+        }),
+      }) as Service;
+      const none = makeMiddlewareService('gnosis', {
+        service_config_id: 'sc-none',
+        chain_configs: {},
+      }) as Service;
+      setupMocks();
+      mockUseServices.mockReturnValue({
+        ...mockUseServices(),
+        services: [stored, none],
+      });
+
+      const { result } = renderStakingProgramContext();
+      const map = result.current.stakingProgramIdByServiceConfigId;
+      expect(map.get('sc-stored')).toBe(SERVICE_PROGRAM);
+      expect(map.get('sc-none')).toBeNull();
+      expect(map.size).toBe(2);
     });
   });
 

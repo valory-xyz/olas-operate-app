@@ -147,6 +147,12 @@ describe('AGENT_CONFIG Connect staking', () => {
     it('is set only on an agent that defaults to no_staking', () => {
       expect(config.defaultStakingProgramId).toBe('no_staking');
     });
+
+    it('is set only on an agent whose staking is not required', () => {
+      // isStakingAvailable reads stakingChains; useNotifyOnActivityGoal reads
+      // hasStaking, so the two must not disagree
+      expect(config.hasStaking).toBe(false);
+    });
   });
 
   it('runs only Connect on minutes per run', () => {

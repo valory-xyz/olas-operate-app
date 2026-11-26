@@ -365,7 +365,7 @@ describe('useAutoRunSignals', () => {
       },
     );
 
-    it('does not overwrite the snapshot of a selected no-staking agent', () => {
+    it('does not overwrite the snapshot of a selected agent on minutes per run', () => {
       const params = makeHookParams({
         isSelectedDoneForEpoch: false,
         isSelectedOnMinutesPerRun: true,
