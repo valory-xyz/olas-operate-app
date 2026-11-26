@@ -285,7 +285,7 @@ describe('useServiceDeployment', () => {
   });
 
   describe('isLoading — Connect, which can stake only on some chains', () => {
-    /** Connect's real config on `chain`, its staking details not loaded. */
+    /** Connect's real config on a chain and program, its staking details not loaded. */
     const setupConnectOn = (
       evmHomeChainId: number,
       middlewareHomeChainId: string,

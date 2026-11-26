@@ -787,16 +787,11 @@ const runDeployabilityChecks = async (
         serviceStakingState === StakingState.Staked;
 
       const {
-        serviceIds,
-        maxNumServices,
         minimumStakingDuration,
         availableRewards: contractAvailableRewards,
       } = contractDetails ?? {};
       availableRewards = contractAvailableRewards;
-      const hasEnoughServiceSlots = hasFreeServiceSlot({
-        serviceIds,
-        maxNumServices,
-      });
+      const hasEnoughServiceSlots = hasFreeServiceSlot(contractDetails);
 
       const isEligibleAfterEviction =
         !isNil(serviceStakingStartTime) &&

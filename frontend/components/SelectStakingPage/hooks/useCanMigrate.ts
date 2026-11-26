@@ -8,6 +8,7 @@ import {
   useStakingContractContext,
 } from '@/hooks';
 import { isNoStakingProgram, isValidServiceId } from '@/utils';
+import { hasFreeServiceSlot } from '@/utils/stakingProgram';
 
 type UseCanMigrateProps = {
   stakingProgramId: StakingProgramId;
@@ -36,8 +37,6 @@ export const useCanMigrate = ({
 
   const { buttonText, canMigrate } = useMemo(() => {
     const contractDetails = allStakingContractDetailsRecord?.[stakingProgramId];
-    const maxSlots = Number(contractDetails?.maxNumServices ?? 0);
-    const slotsTaken = Number(contractDetails?.serviceIds?.length ?? 0);
 
     const isServiceRunning = isActiveDeploymentStatus(serviceStatus);
 
@@ -60,7 +59,9 @@ export const useCanMigrate = ({
           canMigrate: false,
         };
       // Unstaked has no contract, so it never runs out of slots
-      case !isNoStakingProgram(stakingProgramId) && slotsTaken >= maxSlots:
+      // unknown details count as no slots
+      case !isNoStakingProgram(stakingProgramId) &&
+        hasFreeServiceSlot(contractDetails) !== true:
         return {
           buttonText: MigrateButtonText.NoSlotsAvailable,
           canMigrate: false,

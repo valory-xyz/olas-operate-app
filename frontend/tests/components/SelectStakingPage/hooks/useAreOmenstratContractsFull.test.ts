@@ -15,8 +15,8 @@ jest.mock('../../../../hooks', () => ({
   useStakingContractContext: jest.fn(),
 }));
 
-// What Gnosis offers new PredictTraders today; #2244 retires these for VIII-X,
-// and this list must move with it.
+// What Gnosis offers new PredictTraders; update when the offered Omenstrat
+// contracts change.
 const OMENSTRAT_IDS = [
   STAKING_PROGRAM_IDS.OmenstratI,
   STAKING_PROGRAM_IDS.OmenstratII,
@@ -58,6 +58,20 @@ describe('useAreOmenstratContractsFull', () => {
     delete record[STAKING_PROGRAM_IDS.OmenstratIV];
     expect(setup(record)).toBe(false);
     expect(setup(undefined)).toBe(false);
+  });
+
+  it('is false when config offers no Omenstrat contract at all', () => {
+    // [].every(...) is true: without the guard everyone would be sent to Connect
+    const replaced = jest.replaceProperty(
+      STAKING_PROGRAMS,
+      EvmChainIdMap.Gnosis,
+      {},
+    );
+    try {
+      expect(setup({})).toBe(false);
+    } finally {
+      replaced.restore();
+    }
   });
 
   it("is false on any other agent's list", () => {

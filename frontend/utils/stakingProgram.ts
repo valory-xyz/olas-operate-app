@@ -28,8 +28,8 @@ export const deriveStakingProgramId = (address: Address): string => {
 };
 
 /**
- * Whether a service runs without staking (Connect). Such agents have no
- * staking contract or epoch, so staking reads and the staking KPI do not apply.
+ * Whether the program id is the Unstaked choice (`no_staking`): no staking
+ * contract or epoch applies, so staking reads and the staking KPI do not.
  */
 export const isNoStakingProgram = (
   stakingProgramId: Nullable<StakingProgramId> | undefined,
