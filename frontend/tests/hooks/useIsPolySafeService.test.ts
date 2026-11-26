@@ -345,7 +345,7 @@ describe('useIsPolySafeService', () => {
         () => expect(result.current.isMultisigTypeError).toBe(true),
         { timeout: 4000 },
       );
-      expect(result.current.safeType).toBe('error');
+      expect(result.current.isMultisigTypeError).toBe(true);
       expect(result.current.isWithdrawalOnly).toBeUndefined();
     });
 
@@ -354,7 +354,7 @@ describe('useIsPolySafeService', () => {
       setupMocks({ isRetired: true });
 
       const { result } = renderIsPolySafe();
-      expect(result.current.safeType).toBe('loading');
+      expect(result.current.isMultisigTypeLoaded).toBe(false);
       expect(result.current.isWithdrawalOnly).toBeUndefined();
     });
 

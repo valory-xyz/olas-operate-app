@@ -69,10 +69,7 @@ export const AgentDisabledAlert = () => {
     evictionExpiresAt,
     hasEnoughServiceSlots,
     isServiceStaked,
-    isInMinimumStakingPeriod,
-    hasStakingDetails,
-    isServiceOutOfContract,
-    isStakingDetailsError,
+    stakingDetailsState,
     refetchSelectedStakingContractDetails,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
@@ -190,27 +187,19 @@ export const AgentDisabledAlert = () => {
       const status = getRetiredProgramStatus({
         isWithdrawalOnly,
         isSafeTypeError: isMultisigTypeError,
-        hasStakingDetails,
-        isStakingDetailsError,
-        isInMinimumStakingPeriod,
-        isServiceOutOfContract,
+        stakingDetails: stakingDetailsState,
       });
       const state = ((): RetiredContractAlertState => {
-        switch (status) {
-          case 'cooldown':
-            return { kind: 'cooldown', endsAt: evictionExpiresAt };
+        switch (status.kind) {
           case 'safeTypeUnknown':
-            return {
-              kind: 'safeTypeUnknown',
-              onRetry: () => refetchMultisigType(),
-            };
+            return { kind: status.kind, onRetry: () => refetchMultisigType() };
           case 'stakingDetailsUnknown':
             return {
-              kind: 'stakingDetailsUnknown',
+              kind: status.kind,
               onRetry: () => refetchSelectedStakingContractDetails(),
             };
           default:
-            return { kind: status };
+            return status;
         }
       })();
       return {
@@ -301,18 +290,14 @@ export const AgentDisabledAlert = () => {
     isAgentGeoRestricted,
     isAnotherAgentRunning,
     isEligibleForStaking,
-    evictionExpiresAt,
     isHomeChainSafeMissing,
     isChecking,
     isInitialFunded,
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
-    hasStakingDetails,
-    isServiceOutOfContract,
-    isStakingDetailsError,
+    stakingDetailsState,
     refetchSelectedStakingContractDetails,
-    isInMinimumStakingPeriod,
     isOnRetiredProgram,
     isWithdrawalOnly,
     isMultisigTypeError,

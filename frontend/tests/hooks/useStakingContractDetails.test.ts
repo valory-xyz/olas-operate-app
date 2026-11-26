@@ -545,20 +545,30 @@ describe('useActiveStakingContractDetails', () => {
       ['evicted', StakingState.Evicted],
     ])('is in the period while %s inside it', (_, state) => {
       const result = render(state, 10);
-      expect(result.isServiceInContract).toBe(true);
       expect(result.isInMinimumStakingPeriod).toBe(true);
+      expect(result.stakingDetailsState).toMatchObject({
+        state: 'loaded',
+        isInMinimumStakingPeriod: true,
+        isServiceOutOfContract: false,
+      });
     });
 
     it('is out of the period once it is over, with the end date still set', () => {
       const result = render(StakingState.Staked, DEFAULT_LIVENESS_PERIOD_S);
       expect(result.evictionExpiresAt).toBe(START + DEFAULT_LIVENESS_PERIOD_S);
-      expect(result.isServiceInContract).toBe(true);
+      expect(result.isServiceOutOfContract).toBe(false);
       expect(result.isInMinimumStakingPeriod).toBe(false);
+      expect(result.stakingDetailsState).toEqual({
+        state: 'loaded',
+        isInMinimumStakingPeriod: false,
+        isServiceOutOfContract: false,
+        cooldownEndsAt: START + DEFAULT_LIVENESS_PERIOD_S,
+      });
     });
 
     it('is neither once unstaked, even inside the period', () => {
       const result = render(StakingState.NotStaked, 10);
-      expect(result.isServiceInContract).toBe(false);
+      expect(result.isServiceOutOfContract).toBe(true);
       expect(result.isInMinimumStakingPeriod).toBe(false);
     });
   });
@@ -585,8 +595,8 @@ describe('useActiveStakingContractDetails', () => {
       const { result } = renderHook(() => useActiveStakingContractDetails(), {
         wrapper,
       });
-      expect(result.current.isServiceInContract).toBe(true);
       expect(result.current.isInMinimumStakingPeriod).toBe(false);
+      expect(result.current.stakingDetailsState).toEqual({ state: 'loading' });
     });
 
     it('passes on the read error', () => {
@@ -597,6 +607,7 @@ describe('useActiveStakingContractDetails', () => {
         wrapper,
       });
       expect(result.current.isStakingDetailsError).toBe(true);
+      expect(result.current.stakingDetailsState).toEqual({ state: 'error' });
     });
   });
 
@@ -606,7 +617,6 @@ describe('useActiveStakingContractDetails', () => {
       const { result } = renderHook(() => useActiveStakingContractDetails(), {
         wrapper,
       });
-      expect(result.current.isServiceInContract).toBe(false);
       expect(result.current.hasStakingDetails).toBe(false);
       expect(result.current.isServiceOutOfContract).toBe(false);
     });

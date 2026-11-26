@@ -5,7 +5,10 @@ import { StakingProgramId } from '@/constants';
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { Maybe, StakingState } from '@/types';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
+import {
+  isNoStakingProgram,
+  RetiredProgramStakingDetails,
+} from '@/utils/stakingProgram';
 
 export const useStakingContractContext = () =>
   useContext(StakingContractDetailsContext);
@@ -98,6 +101,21 @@ export const useActiveStakingContractDetails = () => {
   const evictionExpiresAt =
     (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0);
 
+  /** The same facts for `getRetiredProgramStatus`, which can't misread them. */
+  const stakingDetailsState: RetiredProgramStakingDetails = (() => {
+    if (hasStakingDetails) {
+      return {
+        state: 'loaded',
+        isInMinimumStakingPeriod,
+        isServiceOutOfContract,
+        cooldownEndsAt: evictionExpiresAt,
+      };
+    }
+    return isSelectedStakingContractDetailsError
+      ? { state: 'error' }
+      : { state: 'loading' };
+  })();
+
   const isEligibleForStaking =
     !isNil(hasEnoughRewardsAndSlots) &&
     (isAgentEvicted ? isServiceStakedForMinimumDuration : true);
@@ -107,11 +125,11 @@ export const useActiveStakingContractDetails = () => {
     isEligibleForStaking,
     isServiceStakedForMinimumDuration,
     isServiceStaked,
-    isServiceInContract,
     isInMinimumStakingPeriod,
     hasStakingDetails,
     isServiceOutOfContract,
     isStakingDetailsError: isSelectedStakingContractDetailsError,
+    stakingDetailsState,
     refetchSelectedStakingContractDetails,
     evictionExpiresAt,
     isSelectedStakingContractDetailsLoading,

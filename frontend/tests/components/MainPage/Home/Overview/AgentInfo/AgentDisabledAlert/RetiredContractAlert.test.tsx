@@ -123,7 +123,7 @@ describe('RetiredContractAlert', () => {
     render(
       <RetiredContractAlert
         stakingProgramName="Polystrat III"
-        state={{ kind: 'loading' }}
+        state={{ kind: 'safeTypeLoading' }}
       />,
     );
 

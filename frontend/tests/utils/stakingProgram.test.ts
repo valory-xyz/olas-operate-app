@@ -6,13 +6,14 @@ import {
 } from '../../constants/stakingProgram';
 import {
   chainHasPolySafePrograms,
+  computeIsWithdrawalOnly,
   deriveStakingProgramId,
   EVICTION_RUN_START_MARGIN_SECONDS,
   getCompatibleStakingProgramIds,
   getRetiredProgramStatus,
   isNoStakingProgram,
   isStakingProgramCompatibleWithMultisig,
-  isWithdrawalOnly,
+  RetiredProgramStakingDetails,
   runsInsideEvictionWindow,
 } from '../../utils/stakingProgram';
 import { makeStakingProgramConfig } from '../helpers/factories';
@@ -248,7 +249,7 @@ describe('runsInsideEvictionWindow', () => {
   });
 });
 
-describe('isWithdrawalOnly', () => {
+describe('computeIsWithdrawalOnly', () => {
   it.each([
     [true, true, true],
     [true, false, false],
@@ -257,55 +258,80 @@ describe('isWithdrawalOnly', () => {
   ])(
     'retired=%s, PolySafe=%s -> %s',
     (isRetired, isPolySafeService, expected) => {
-      expect(isWithdrawalOnly({ isRetired, isPolySafeService })).toBe(expected);
+      expect(computeIsWithdrawalOnly({ isRetired, isPolySafeService })).toBe(
+        expected,
+      );
     },
   );
 });
 
 describe('getRetiredProgramStatus', () => {
-  const known = {
-    isWithdrawalOnly: false as boolean | undefined,
-    isSafeTypeError: false,
-    hasStakingDetails: true,
-    isStakingDetailsError: false,
+  const loaded = (
+    overrides: Partial<{
+      isInMinimumStakingPeriod: boolean;
+      isServiceOutOfContract: boolean;
+    }> = {},
+  ): RetiredProgramStakingDetails => ({
+    state: 'loaded',
     isInMinimumStakingPeriod: false,
     isServiceOutOfContract: true,
-  };
+    cooldownEndsAt: 1_800_000_000,
+    ...overrides,
+  });
 
   it.each([
-    ['switch', {}],
-    ['awaitingUnstake', { isServiceOutOfContract: false }],
+    ['switch', false, false, loaded()],
     [
-      'cooldown',
-      { isInMinimumStakingPeriod: true, isServiceOutOfContract: false },
+      'awaitingUnstake',
+      false,
+      false,
+      loaded({ isServiceOutOfContract: false }),
     ],
-    [
-      'withdrawalOnly',
-      { isWithdrawalOnly: true, isInMinimumStakingPeriod: true },
-    ],
+    ['withdrawalOnly', true, false, loaded({ isInMinimumStakingPeriod: true })],
     // Unknown Safe type: never the switch, which a PolySafe can't do.
-    ['loading', { isWithdrawalOnly: undefined }],
-    ['safeTypeUnknown', { isWithdrawalOnly: undefined, isSafeTypeError: true }],
-    // Cooldown is known regardless of the Safe type.
-    [
-      'cooldown',
-      {
+    ['safeTypeLoading', undefined, false, loaded()],
+    ['safeTypeUnknown', undefined, true, loaded()],
+    // Unknown staking details: never the switch, which could be in a cooldown.
+    ['stakingDetailsLoading', false, false, { state: 'loading' }],
+    ['stakingDetailsUnknown', false, false, { state: 'error' }],
+    // Both unknown: the Safe type is resolved first, so its Retry is offered.
+    ['safeTypeUnknown', undefined, true, { state: 'error' }],
+    ['safeTypeLoading', undefined, false, { state: 'error' }],
+  ] as const)(
+    '%s for withdrawalOnly=%s, safeTypeError=%s, details %o',
+    (expected, isWithdrawalOnly, isSafeTypeError, stakingDetails) => {
+      expect(
+        getRetiredProgramStatus({
+          isWithdrawalOnly,
+          isSafeTypeError,
+          stakingDetails,
+        }).kind,
+      ).toBe(expected);
+    },
+  );
+
+  it('carries the cooldown end, known regardless of the Safe type', () => {
+    expect(
+      getRetiredProgramStatus({
         isWithdrawalOnly: undefined,
         isSafeTypeError: true,
-        isInMinimumStakingPeriod: true,
-      },
-    ],
-    // Unknown staking details: never the switch, which could be in a cooldown.
-    ['loading', { hasStakingDetails: false, isServiceOutOfContract: false }],
-    [
-      'stakingDetailsUnknown',
-      {
-        hasStakingDetails: false,
-        isStakingDetailsError: true,
-        isServiceOutOfContract: false,
-      },
-    ],
-  ] as const)('%s for %o', (expected, overrides) => {
-    expect(getRetiredProgramStatus({ ...known, ...overrides })).toBe(expected);
+        stakingDetails: loaded({ isInMinimumStakingPeriod: true }),
+      }),
+    ).toEqual({ kind: 'cooldown', endsAt: 1_800_000_000 });
+  });
+
+  it('never reports a cooldown without loaded details', () => {
+    for (const stakingDetails of [
+      { state: 'loading' },
+      { state: 'error' },
+    ] as const) {
+      expect(
+        getRetiredProgramStatus({
+          isWithdrawalOnly: false,
+          isSafeTypeError: false,
+          stakingDetails,
+        }).kind,
+      ).not.toBe('cooldown');
+    }
   });
 });

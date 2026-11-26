@@ -13,7 +13,10 @@ import { useServices } from '../../hooks/useServices';
 import { useSharedContext } from '../../hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '../../hooks/useStakingContractDetails';
 import { useStakingProgram } from '../../hooks/useStakingProgram';
-import { EVICTION_RUN_START_MARGIN_SECONDS } from '../../utils/stakingProgram';
+import {
+  EVICTION_RUN_START_MARGIN_SECONDS,
+  RetiredProgramStakingDetails,
+} from '../../utils/stakingProgram';
 import { DEFAULT_SERVICE_CONFIG_ID } from '../helpers/factories';
 
 // --- mocks ---
@@ -101,6 +104,12 @@ const defaultBalanceContext = {
   isBalancesAndFundingRequirementsLoadingForAllServices: false,
 };
 const defaultStakingDetails = {
+  stakingDetailsState: {
+    state: 'loaded',
+    isInMinimumStakingPeriod: false,
+    isServiceOutOfContract: true,
+    cooldownEndsAt: 0,
+  } as RetiredProgramStakingDetails,
   isAgentEvicted: false,
   isEligibleForStaking: true,
   evictionExpiresAt: 0,

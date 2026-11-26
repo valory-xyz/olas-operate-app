@@ -3,25 +3,20 @@ import { Button, Typography } from 'antd';
 import { Alert } from '@/components/ui';
 import { PAGES, RETIRED_STAKING_PROGRAM_COPY } from '@/constants';
 import { usePageState } from '@/hooks';
+import { RetiredProgramStatus } from '@/utils/stakingProgram';
 import { formatToShortDateTime } from '@/utils/time';
 
 const { Text } = Typography;
 
+type RetryableKind = 'safeTypeUnknown' | 'stakingDetailsUnknown';
+
 /**
- * The one variant of the alert to show, built by `AgentDisabledAlert` from
- * `getRetiredProgramStatus`.
+ * The variant to show: a `RetiredProgramStatus`, with a retry for the two
+ * unknown states. Derived, so a new status fails to compile until handled.
  */
 export type RetiredContractAlertState =
-  | { kind: 'withdrawalOnly' }
-  /** `endsAt` in seconds. */
-  | { kind: 'cooldown'; endsAt: number }
-  | { kind: 'safeTypeUnknown'; onRetry: () => void }
-  | { kind: 'stakingDetailsUnknown'; onRetry: () => void }
-  /** The title only, until the Safe type and staking details are known. */
-  | { kind: 'loading' }
-  /** The switch copy, without the button the middleware would refuse. */
-  | { kind: 'awaitingUnstake' }
-  | { kind: 'switch' };
+  | Exclude<RetiredProgramStatus, { kind: RetryableKind }>
+  | { kind: RetryableKind; onRetry: () => void };
 
 type RetiredContractAlertProps = {
   /** Undefined once the program can no longer be named (stored as `no_staking`). */
@@ -91,7 +86,9 @@ export const RetiredContractAlert = ({
             onRetry={state.onRetry}
           />
         );
-      case 'loading':
+      case 'safeTypeLoading':
+      case 'stakingDetailsLoading':
+        // The title only, until both are known.
         return null;
       case 'awaitingUnstake':
       case 'switch': {

@@ -216,6 +216,23 @@ const setup = ({
   prestartCheck?: PrestartCheck;
   isChecking?: boolean;
 } = {}) => {
+  const details = {
+    hasStakingDetails: true,
+    isStakingDetailsError: false,
+    isInMinimumStakingPeriod: false,
+    isServiceOutOfContract: false,
+    evictionExpiresAt: 1_700_000_000,
+    ...staking,
+  };
+  // As the hook builds it from the same facts.
+  const stakingDetailsState = details.hasStakingDetails
+    ? {
+        state: 'loaded',
+        isInMinimumStakingPeriod: details.isInMinimumStakingPeriod,
+        isServiceOutOfContract: details.isServiceOutOfContract,
+        cooldownEndsAt: details.evictionExpiresAt,
+      }
+    : { state: details.isStakingDetailsError ? 'error' : 'loading' };
   (useActiveStakingContractDetails as jest.Mock).mockReturnValue({
     isSelectedStakingContractDetailsLoading: false,
     isAgentEvicted: false,
@@ -229,6 +246,7 @@ const setup = ({
     refetchSelectedStakingContractDetails: mockRefetchStakingDetails,
     evictionExpiresAt: 1_700_000_000,
     ...staking,
+    stakingDetailsState,
     selectedStakingContractDetails: {
       availableRewards: staking.availableRewards ?? 10,
     },
@@ -668,7 +686,7 @@ describe('AgentDisabledAlert', () => {
         },
       });
 
-      expect(retiredAlert('loading')).toBeInTheDocument();
+      expect(retiredAlert('stakingDetailsLoading')).toBeInTheDocument();
     });
 
     it("offers a retry of the staking details when they couldn't be read", () => {
@@ -697,7 +715,7 @@ describe('AgentDisabledAlert', () => {
       });
 
       // Not the switch copy: a PolySafe agent can never switch.
-      expect(retiredAlert('loading')).toBeInTheDocument();
+      expect(retiredAlert('safeTypeLoading')).toBeInTheDocument();
       expect(screen.queryByText('retry')).not.toBeInTheDocument();
     });
 

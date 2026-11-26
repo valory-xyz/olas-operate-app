@@ -21,7 +21,7 @@ import { asEvmChainId } from '@/utils/middlewareHelpers';
 import { isInWithdrawalOnlyMode } from '@/utils/service';
 import {
   chainHasPolySafePrograms,
-  isWithdrawalOnly,
+  computeIsWithdrawalOnly,
 } from '@/utils/stakingProgram';
 
 import { useServices } from './useServices';
@@ -164,23 +164,27 @@ export const useIsPolySafeService = () => {
       selectedStakingProgramId,
     );
 
-  const isWithdrawalOnlyService = ((): boolean | undefined => {
+  const isPolySafeService = safeType === 'polySafe';
+  const isWithdrawalOnly = ((): boolean | undefined => {
     if (isAlreadyWithdrawalOnly) return true;
-    if (!isOnRetiredProgram) return false;
-    if (safeType === 'loading' || safeType === 'error') return undefined;
-    return isWithdrawalOnly({
-      isRetired: true,
-      isPolySafeService: safeType === 'polySafe',
+    if (
+      isOnRetiredProgram &&
+      (safeType === 'loading' || safeType === 'error')
+    ) {
+      return undefined;
+    }
+    return computeIsWithdrawalOnly({
+      isRetired: isOnRetiredProgram,
+      isPolySafeService,
     });
   })();
 
   return {
-    safeType,
-    isPolySafeService: safeType === 'polySafe',
+    isPolySafeService,
     isMultisigTypeLoaded: safeType !== 'loading',
     isMultisigTypeError: safeType === 'error',
     isOnRetiredProgram,
-    isWithdrawalOnly: isWithdrawalOnlyService,
+    isWithdrawalOnly,
     refetch,
   };
 };

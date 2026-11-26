@@ -106,13 +106,8 @@ export const runsInsideEvictionWindow = ({
   !!canRunWhileEvicted &&
   evictionExpiresAt - nowSeconds > EVICTION_RUN_START_MARGIN_SECONDS;
 
-/**
- * Withdrawal-only mode: a PolySafe service on a retired program can't switch,
- * as no live program accepts a PolySafe. It only starts unstaked, to redeem
- * and withdraw. The one definition of the rule; callers differ only in how
- * they read the Safe type.
- */
-export const isWithdrawalOnly = ({
+/** A PolySafe can't switch off a retired program (no live one accepts it), so it only withdraws. */
+export const computeIsWithdrawalOnly = ({
   isRetired,
   isPolySafeService,
 }: {
@@ -120,50 +115,68 @@ export const isWithdrawalOnly = ({
   isPolySafeService: boolean;
 }) => isRetired && isPolySafeService;
 
-/** What the retired-contract alert can say about a service on a retired program. */
+/** What is known of a service's place in its staking contract. */
+export type RetiredProgramStakingDetails =
+  | { state: 'loading' }
+  | { state: 'error' }
+  | {
+      state: 'loaded';
+      /** In the contract and inside its minimum staking period. */
+      isInMinimumStakingPeriod: boolean;
+      /** Known to be out of the contract. */
+      isServiceOutOfContract: boolean;
+      /** End of the minimum staking period, in seconds. */
+      cooldownEndsAt: number;
+    };
+
+/** What can be said about a service on a retired program. */
 export type RetiredProgramStatus =
   /** PolySafe (or already set up so): it only redeems and withdraws. */
-  | 'withdrawalOnly'
-  /** In the contract, inside its minimum staking period. */
-  | 'cooldown'
-  /** The Safe type couldn't be read, so neither variant can be offered. */
-  | 'safeTypeUnknown'
+  | { kind: 'withdrawalOnly' }
+  /** In the contract, inside its minimum staking period; `endsAt` in seconds. */
+  | { kind: 'cooldown'; endsAt: number }
+  /** The Safe type couldn't be read, so neither withdraw nor switch can be offered. */
+  | { kind: 'safeTypeUnknown' }
+  | { kind: 'safeTypeLoading' }
   /** The staking details couldn't be read, so cooldown and switch are unknown. */
-  | 'stakingDetailsUnknown'
-  /** The Safe type or the staking details are still loading. */
-  | 'loading'
+  | { kind: 'stakingDetailsUnknown' }
+  | { kind: 'stakingDetailsLoading' }
   /** Past its period but still in the contract: the middleware has yet to unstake it. */
-  | 'awaitingUnstake'
+  | { kind: 'awaitingUnstake' }
   /** Unstaked, standard Safe: it can switch to a live program. */
-  | 'switch';
+  | { kind: 'switch' };
 
 /**
- * Classifies a service already known to be on a retired program. One order
- * for every caller, so a state can't read as "switch" while it is unknown.
+ * Classifies a service already known to be on a retired program, for the
+ * alert and the start gate, so a state can't read as "switch" while it is
+ * unknown. The Safe type is resolved before the staking details.
  */
 export const getRetiredProgramStatus = ({
-  isWithdrawalOnly: withdrawalOnly,
+  isWithdrawalOnly,
   isSafeTypeError,
-  hasStakingDetails,
-  isStakingDetailsError,
-  isInMinimumStakingPeriod,
-  isServiceOutOfContract,
+  stakingDetails,
 }: {
   /** `undefined` while the Safe type is loading or couldn't be read. */
   isWithdrawalOnly: boolean | undefined;
   isSafeTypeError: boolean;
-  hasStakingDetails: boolean;
-  isStakingDetailsError: boolean;
-  isInMinimumStakingPeriod: boolean;
-  isServiceOutOfContract: boolean;
+  stakingDetails: RetiredProgramStakingDetails;
 }): RetiredProgramStatus => {
-  if (withdrawalOnly === true) return 'withdrawalOnly';
-  if (isInMinimumStakingPeriod) return 'cooldown';
-  if (withdrawalOnly === undefined) {
-    return isSafeTypeError ? 'safeTypeUnknown' : 'loading';
+  if (isWithdrawalOnly === true) return { kind: 'withdrawalOnly' };
+  if (
+    stakingDetails.state === 'loaded' &&
+    stakingDetails.isInMinimumStakingPeriod
+  ) {
+    return { kind: 'cooldown', endsAt: stakingDetails.cooldownEndsAt };
   }
-  if (!hasStakingDetails) {
-    return isStakingDetailsError ? 'stakingDetailsUnknown' : 'loading';
+  if (isWithdrawalOnly === undefined) {
+    return { kind: isSafeTypeError ? 'safeTypeUnknown' : 'safeTypeLoading' };
   }
-  return isServiceOutOfContract ? 'switch' : 'awaitingUnstake';
+  if (stakingDetails.state === 'error')
+    return { kind: 'stakingDetailsUnknown' };
+  if (stakingDetails.state === 'loading') {
+    return { kind: 'stakingDetailsLoading' };
+  }
+  return {
+    kind: stakingDetails.isServiceOutOfContract ? 'switch' : 'awaitingUnstake',
+  };
 };

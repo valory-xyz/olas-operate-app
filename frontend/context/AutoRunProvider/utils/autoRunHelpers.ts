@@ -22,8 +22,8 @@ import {
 import { sleepAwareDelay } from '@/utils/delay';
 import { isInWithdrawalOnlyMode, isValidServiceId } from '@/utils/service';
 import {
+  computeIsWithdrawalOnly,
   isNoStakingProgram,
-  isWithdrawalOnly,
   runsInsideEvictionWindow,
 } from '@/utils/stakingProgram';
 import {
@@ -733,14 +733,18 @@ const getCurrentStakingProgramId = async (
 const getRetiredProgramSkipReason = async (
   agentMeta: AgentMeta,
   ctx: FetchDeployabilityContext,
+  isRetired: boolean,
 ) => {
   try {
     const isPolySafeService = await ctx.isPolySafeService(agentMeta);
-    return isWithdrawalOnly({ isRetired: true, isPolySafeService })
+    return computeIsWithdrawalOnly({ isRetired, isPolySafeService })
       ? RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY
       : RETIRED_STAKING_PROGRAM_COPY.SWITCH;
-  } catch {
-    // Logged where the Safe type is read; the instance is skipped either way.
+  } catch (error) {
+    // The read's own log is renderer-only; this one reaches the saved logs.
+    ctx.logMessage(
+      `fetchDeployabilityForAgent: Safe type read failed for ${agentMeta.serviceConfigId} (multisig ${agentMeta.multisig} on chain ${agentMeta.chainId}): ${error}`,
+    );
     return RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN;
   }
 };
@@ -788,10 +792,14 @@ const runDeployabilityChecks = async (
       isTransient: true,
     };
   }
-  if (isRetiredStakingProgram(agentMeta.chainId, currentStakingProgramId)) {
+  const isRetired = isRetiredStakingProgram(
+    agentMeta.chainId,
+    currentStakingProgramId,
+  );
+  if (isRetired) {
     return {
       canRun: false,
-      reason: await getRetiredProgramSkipReason(agentMeta, ctx),
+      reason: await getRetiredProgramSkipReason(agentMeta, ctx, isRetired),
     };
   }
 
