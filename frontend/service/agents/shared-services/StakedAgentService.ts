@@ -102,49 +102,64 @@ export abstract class StakedAgentService {
     };
   };
 
-  static getCurrentStakingProgramByServiceId = async (
+  /**
+   * The program the service is staked on, `null` when it is staked on none.
+   * Rejects when the read fails, so a caller can tell the two apart.
+   */
+  static readCurrentStakingProgramByServiceId = async (
     serviceNftTokenId: number,
     evmChainId: EvmChainId,
   ): Promise<Maybe<StakingProgramId>> => {
     if (!serviceNftTokenId || !evmChainId) return;
     if (serviceNftTokenId <= 0) return;
+    const { multicallProvider } = PROVIDERS[evmChainId];
+
+    // filter out staking programs that are not on the chain
+    const stakingProgramEntries = Object.entries(
+      STAKING_PROGRAMS[evmChainId],
+    ).filter((entry) => {
+      const [, program] = entry;
+      return program.chainId === evmChainId;
+    });
+
+    // create contract calls
+    const contractCalls = stakingProgramEntries.map((entry) => {
+      const [, stakingProgram] = entry;
+      return stakingProgram.contract.getStakingState(serviceNftTokenId);
+    });
+
+    // get multicall response
+    const multicallResponse = await multicallProvider.all(
+      Object.values(contractCalls),
+    );
+
+    // find the first staking program that is active
+    const activeStakingProgramIndex = multicallResponse.findIndex(Boolean);
+
+    // if no staking program is active, return null
+    if (activeStakingProgramIndex === -1) {
+      return null;
+    }
+
+    // return the staking program id
+    const activeStakingProgramId =
+      stakingProgramEntries[activeStakingProgramIndex]?.[0];
+
+    return activeStakingProgramId
+      ? (activeStakingProgramId as StakingProgramId)
+      : null;
+  };
+
+  /** As `readCurrentStakingProgramByServiceId`, but a failed read is logged and returns `null`. */
+  static getCurrentStakingProgramByServiceId = async (
+    serviceNftTokenId: number,
+    evmChainId: EvmChainId,
+  ): Promise<Maybe<StakingProgramId>> => {
     try {
-      const { multicallProvider } = PROVIDERS[evmChainId];
-
-      // filter out staking programs that are not on the chain
-      const stakingProgramEntries = Object.entries(
-        STAKING_PROGRAMS[evmChainId],
-      ).filter((entry) => {
-        const [, program] = entry;
-        return program.chainId === evmChainId;
-      });
-
-      // create contract calls
-      const contractCalls = stakingProgramEntries.map((entry) => {
-        const [, stakingProgram] = entry;
-        return stakingProgram.contract.getStakingState(serviceNftTokenId);
-      });
-
-      // get multicall response
-      const multicallResponse = await multicallProvider.all(
-        Object.values(contractCalls),
+      return await StakedAgentService.readCurrentStakingProgramByServiceId(
+        serviceNftTokenId,
+        evmChainId,
       );
-
-      // find the first staking program that is active
-      const activeStakingProgramIndex = multicallResponse.findIndex(Boolean);
-
-      // if no staking program is active, return null
-      if (activeStakingProgramIndex === -1) {
-        return null;
-      }
-
-      // return the staking program id
-      const activeStakingProgramId =
-        stakingProgramEntries[activeStakingProgramIndex]?.[0];
-
-      return activeStakingProgramId
-        ? (activeStakingProgramId as StakingProgramId)
-        : null;
     } catch (error) {
       console.error('Error while getting current staking program', error);
       return null;

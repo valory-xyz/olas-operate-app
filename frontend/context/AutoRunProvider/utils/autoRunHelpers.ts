@@ -706,9 +706,11 @@ type EvictionFacts = Pick<
 >;
 
 /**
- * The instance's current program, as the shared contract defines "on a
- * retired program": the on-chain one while staked, else the stored one. The
- * two differ when a switch PATCH went through but its start was refused.
+ * The instance's current program, by the rule `useIsPolySafeService`'s
+ * `isOnRetiredProgram` also follows: the on-chain one while staked, else the
+ * stored one. The two differ when a switch PATCH went through but its start
+ * was refused. Rejects when the on-chain read fails: falling back to the
+ * stored id then could start a service the middleware refuses.
  */
 const getCurrentStakingProgramId = async (
   agentMeta: AgentMeta,
@@ -720,7 +722,7 @@ const getCurrentStakingProgramId = async (
     return agentMeta.stakingProgramId;
   }
   const onChainProgramId =
-    await agentMeta.agentConfig.serviceApi.getCurrentStakingProgramByServiceId(
+    await agentMeta.agentConfig.serviceApi.readCurrentStakingProgramByServiceId(
       agentMeta.serviceNftTokenId,
       agentMeta.chainId,
     );
@@ -773,12 +775,20 @@ const runDeployabilityChecks = async (
       reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
     };
   }
-  if (
-    isRetiredStakingProgram(
-      agentMeta.chainId,
-      await getCurrentStakingProgramId(agentMeta),
-    )
-  ) {
+  let currentStakingProgramId: StakingProgramId;
+  try {
+    currentStakingProgramId = await getCurrentStakingProgramId(agentMeta);
+  } catch (error) {
+    ctx.logMessage(
+      `fetchDeployabilityForAgent: current staking program read failed for ${agentMeta.serviceConfigId}: ${error}`,
+    );
+    return {
+      canRun: false,
+      reason: 'Staking data unavailable',
+      isTransient: true,
+    };
+  }
+  if (isRetiredStakingProgram(agentMeta.chainId, currentStakingProgramId)) {
     return {
       canRun: false,
       reason: await getRetiredProgramSkipReason(agentMeta, ctx),

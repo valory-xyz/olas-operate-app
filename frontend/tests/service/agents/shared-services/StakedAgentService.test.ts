@@ -135,6 +135,34 @@ describe('StakedAgentService', () => {
     });
   });
 
+  describe('readCurrentStakingProgramByServiceId', () => {
+    it('rejects when the multicall fails, unlike getCurrentStakingProgramByServiceId', async () => {
+      mockGetStakingStateA.mockReturnValue('call_a');
+      mockGetStakingStateB.mockReturnValue('call_b');
+      mockMulticallAll.mockRejectedValue(new Error('RPC failure'));
+
+      await expect(
+        StakedAgentService.readCurrentStakingProgramByServiceId(
+          DEFAULT_SERVICE_NFT_TOKEN_ID,
+          MOCK_CHAIN_ID,
+        ),
+      ).rejects.toThrow('RPC failure');
+    });
+
+    it('returns null, not a rejection, when the service is staked nowhere', async () => {
+      mockGetStakingStateA.mockReturnValue('call_a');
+      mockGetStakingStateB.mockReturnValue('call_b');
+      mockMulticallAll.mockResolvedValue([0, 0]);
+
+      await expect(
+        StakedAgentService.readCurrentStakingProgramByServiceId(
+          DEFAULT_SERVICE_NFT_TOKEN_ID,
+          MOCK_CHAIN_ID,
+        ),
+      ).resolves.toBeNull();
+    });
+  });
+
   describe('getCurrentStakingProgramByServiceId', () => {
     it('returns undefined for serviceNftTokenId of 0', async () => {
       const result =

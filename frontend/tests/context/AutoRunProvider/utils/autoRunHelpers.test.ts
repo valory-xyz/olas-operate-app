@@ -2006,7 +2006,7 @@ describe('waitForEligibilityReadyHelper', () => {
 describe('fetchDeployabilityForAgent', () => {
   const mockGetStakingContractDetails = jest.fn();
   const mockGetServiceStakingDetails = jest.fn();
-  const mockGetCurrentStakingProgramByServiceId = jest.fn();
+  const mockReadCurrentStakingProgramByServiceId = jest.fn();
 
   const makeAgentMeta = (): AgentMeta => {
     const base = makeAutoRunAgentMeta(
@@ -2023,8 +2023,8 @@ describe('fetchDeployabilityForAgent', () => {
           ...base.agentConfig.serviceApi,
           getStakingContractDetails: mockGetStakingContractDetails,
           getServiceStakingDetails: mockGetServiceStakingDetails,
-          getCurrentStakingProgramByServiceId:
-            mockGetCurrentStakingProgramByServiceId,
+          readCurrentStakingProgramByServiceId:
+            mockReadCurrentStakingProgramByServiceId,
         },
       },
     } as unknown as AgentMeta;
@@ -2062,7 +2062,7 @@ describe('fetchDeployabilityForAgent', () => {
     mockGetStakingContractDetails.mockResolvedValue(contractDetails);
     mockGetServiceStakingDetails.mockResolvedValue(stakingDetails);
     // Not staked anywhere on-chain: the stored program decides.
-    mockGetCurrentStakingProgramByServiceId.mockResolvedValue(null);
+    mockReadCurrentStakingProgramByServiceId.mockResolvedValue(null);
   });
 
   it('returns canRun=true when all checks pass', async () => {
@@ -2089,14 +2089,14 @@ describe('fetchDeployabilityForAgent', () => {
   ])(
     'decides "retired" from the on-chain program %s over the stored %s',
     async (onChainProgramId, storedProgramId, canRun, reason) => {
-      mockGetCurrentStakingProgramByServiceId.mockResolvedValue(
+      mockReadCurrentStakingProgramByServiceId.mockResolvedValue(
         onChainProgramId,
       );
       const meta = { ...makeAgentMeta(), stakingProgramId: storedProgramId };
 
       const result = await fetchDeployabilityForAgent(meta, makeCtx());
 
-      expect(mockGetCurrentStakingProgramByServiceId).toHaveBeenCalledWith(
+      expect(mockReadCurrentStakingProgramByServiceId).toHaveBeenCalledWith(
         meta.serviceNftTokenId,
         meta.chainId,
       );
@@ -2104,6 +2104,26 @@ describe('fetchDeployabilityForAgent', () => {
       expect(result.reason).toBe(reason);
     },
   );
+
+  it("defers, without falling back to the stored id, when the on-chain program can't be read", async () => {
+    // The stored id is live, but the service may still be staked on a retired one.
+    mockReadCurrentStakingProgramByServiceId.mockRejectedValue(
+      new Error('multicall failed'),
+    );
+    const ctx = makeCtx();
+
+    const result = await fetchDeployabilityForAgent(makeAgentMeta(), ctx);
+
+    expect(result).toEqual({
+      canRun: false,
+      reason: 'Staking data unavailable',
+      isTransient: true,
+    });
+    expect(ctx.logMessage).toHaveBeenCalledWith(
+      expect.stringContaining('current staking program read failed'),
+    );
+    expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
+  });
 
   it('skips an agent on a retired program with the alert copy, before any read', async () => {
     const meta = {
