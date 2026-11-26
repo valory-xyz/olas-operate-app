@@ -23,6 +23,8 @@ type LastSeenGoal = {
 export const useNotifyOnActivityGoal = () => {
   const { showNotification } = useElectronApi();
   const { runningAgentType, runningServiceConfigId } = useAgentRunning();
+  // `hasStaking`, not `isStakingAvailable`, on purpose: a Connect's goal is
+  // its minutes per run, and Auto-run's hand-over sends its notification.
   const isStakingAgent =
     !!runningAgentType && AGENT_CONFIG[runningAgentType]?.hasStaking;
   const { activityGoal } = useActivityGoal(

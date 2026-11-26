@@ -2,7 +2,7 @@ import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
 import { useAgentFundingRequests, useServices } from '@/hooks';
-import { isServiceStaked } from '@/utils/stakingProgram';
+import { isInStakingMode } from '@/utils/stakingProgram';
 
 const { Text } = Typography;
 
@@ -15,9 +15,9 @@ export const AgentLowBalanceAlert = ({ onFund }: AgentLowBalanceAlertProps) => {
     useAgentFundingRequests();
   const { selectedAgentConfig, selectedService } = useServices();
   // Staking requirements apply only to a staked instance: an unstaked Connect
-  // has none, and the Overview decides the same way.
+  // has none.
   const hasStakingRequirements =
-    isServiceStaked(
+    isInStakingMode(
       selectedAgentConfig,
       selectedAgentConfig.evmHomeChainId,
       selectedService,

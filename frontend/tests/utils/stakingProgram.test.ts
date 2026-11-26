@@ -12,8 +12,8 @@ import {
   getServiceStakingProgramId,
   hasFreeServiceSlot,
   hasUnstakedOption,
+  isInStakingMode,
   isNoStakingProgram,
-  isServiceStaked,
   isStakingAvailable,
   isStakingProgramCompatibleWithMultisig,
   runsInsideEvictionWindow,
@@ -306,7 +306,7 @@ describe('getServiceStakingProgramId', () => {
   });
 });
 
-describe('isServiceStaked', () => {
+describe('isInStakingMode', () => {
   const CONNECT = {
     hasStaking: false,
     defaultStakingProgramId: 'no_staking' as const,
@@ -318,7 +318,7 @@ describe('isServiceStaked', () => {
       chain_configs: {
         gnosis: { chain_data: { user_params: { staking_program_id } } },
       },
-    }) as unknown as Parameters<typeof isServiceStaked>[2];
+    }) as unknown as Parameters<typeof isInStakingMode>[2];
 
   it.each([
     [
@@ -338,8 +338,8 @@ describe('isServiceStaked', () => {
     ['an optional agent, program unknown', CONNECT, null, undefined],
   ])('answers %s', (_, agentConfig, stakingProgramId, expected) => {
     expect(
-      isServiceStaked(
-        agentConfig as Parameters<typeof isServiceStaked>[0],
+      isInStakingMode(
+        agentConfig as Parameters<typeof isInStakingMode>[0],
         EvmChainIdMap.Gnosis,
         service(stakingProgramId),
       ),

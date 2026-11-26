@@ -2,7 +2,7 @@ import { isNil } from 'lodash';
 
 import { MainContentContainer } from '@/components/ui';
 import { useServices } from '@/hooks';
-import { isServiceStaked, isStakingAvailable } from '@/utils/stakingProgram';
+import { isInStakingMode, isStakingAvailable } from '@/utils/stakingProgram';
 
 import { AgentChat } from './AgentChat';
 import { AgentInfo } from './AgentInfo';
@@ -21,7 +21,7 @@ export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
     useServices();
   const { hasPerformance, hasAgentChat, evmHomeChainId } = selectedAgentConfig;
   const canStake = isStakingAvailable(selectedAgentConfig, evmHomeChainId);
-  const isStaked = isServiceStaked(
+  const isStaked = isInStakingMode(
     selectedAgentConfig,
     evmHomeChainId,
     selectedService,

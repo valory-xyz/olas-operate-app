@@ -4,7 +4,11 @@ import type {
   StakingProgramConfig,
   StakingProgramMap,
 } from '@/config/stakingPrograms';
-import type { AgentType, EvmChainId, StakingProgramId } from '@/constants';
+import type { AgentType, EvmChainId } from '@/constants';
+import {
+  NO_STAKING_PROGRAM_ID,
+  type StakingProgramId,
+} from '@/constants/stakingProgram';
 import {
   Address,
   AgentConfig,
@@ -29,7 +33,7 @@ export const deriveStakingProgramId = (address: Address): string => {
  */
 export const isNoStakingProgram = (
   stakingProgramId: Nullable<StakingProgramId> | undefined,
-) => stakingProgramId === 'no_staking';
+) => stakingProgramId === NO_STAKING_PROGRAM_ID;
 
 /**
  * Whether an instance of the agent on `chainId` can stake. Agents with
@@ -73,7 +77,7 @@ export const getServiceStakingProgramId = (
  * stored program, not the subgraph's cached latest contract, which can outlive
  * an unstake. `undefined` while that program is unknown.
  */
-export const isServiceStaked = (
+export const isInStakingMode = (
   agentConfig: Pick<
     AgentConfig,
     'hasStaking' | 'stakingChains' | 'defaultStakingProgramId'

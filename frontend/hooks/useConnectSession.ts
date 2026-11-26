@@ -41,9 +41,7 @@ const CONNECT_LAUNCH_SUPPRESSED_QUERY_KEY = 'connectLaunchSuppressed';
 export const isConnectFirstRunComplete = (
   storeState: PearlStore | undefined,
   serviceConfigId: string | undefined,
-) =>
-  storeState !== undefined &&
-  storeState.connect?.firstRunCompleted?.[serviceConfigId ?? ''] === true;
+) => storeState?.connect?.firstRunCompleted?.[serviceConfigId ?? ''] === true;
 
 const toErrorKind = (
   res: ConnectSessionResult,

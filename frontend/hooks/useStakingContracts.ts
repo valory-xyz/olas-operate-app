@@ -37,7 +37,7 @@ export const useStakingContracts = () => {
   // default as the joined/selected contract fabricates a stake the user never
   // made (OPE-1841). Prefer the on-chain (subgraph) value, then the
   // service-stored choice; otherwise admit we don't know. Where staking is
-  // optional the stored choice decides, as `isServiceStaked` does: the
+  // optional the stored choice decides, as `isInStakingMode` does: the
   // subgraph's cached contract can outlive an unstake.
   const currentStakingProgramId = withUnstakedOption
     ? serviceStakingProgramId
