@@ -2257,10 +2257,15 @@ describe('fetchDeployabilityForAgent', () => {
     mockGetServiceStakingDetails.mockRejectedValue(
       new Error('Connect agent does not support staking (no_staking).'),
     );
+    // Would defer it as 'Staking data unavailable' if it were read.
+    mockReadCurrentStakingProgramByServiceId.mockRejectedValue(
+      new Error('multicall failed'),
+    );
 
     const result = await fetchDeployabilityForAgent(meta, makeCtx());
 
     expect(result).toEqual({ canRun: true });
+    expect(mockReadCurrentStakingProgramByServiceId).not.toHaveBeenCalled();
     expect(mockGetServiceStakingDetails).not.toHaveBeenCalled();
     expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
   });

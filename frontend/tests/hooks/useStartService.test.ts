@@ -189,6 +189,40 @@ describe('useStartService', () => {
       ]);
     });
 
+    it('does not start when the withdrawal-only PATCH fails', async () => {
+      mockEnableWithdrawalOnlyMode.mockRejectedValue(
+        new Error("Couldn't enable withdrawal-only mode"),
+      );
+
+      const { result } = renderStartService();
+      await expect(
+        result.current.startService({
+          ...baseInput,
+          service: existingService,
+          withdrawalOnly: true,
+        }),
+      ).rejects.toThrow("Couldn't enable withdrawal-only mode");
+
+      // Neither a staked start nor its prestart check.
+      expect(mockGetPrestartCheck).not.toHaveBeenCalled();
+      expect(mockStartService).not.toHaveBeenCalled();
+    });
+
+    it('refuses withdrawal-only without an existing service', async () => {
+      const { result } = renderStartService();
+      await expect(
+        result.current.startService({
+          ...baseInput,
+          service: null,
+          createServiceIfMissing: true,
+          withdrawalOnly: true,
+        }),
+      ).rejects.toThrow('needs an existing');
+
+      expect(mockCreateSafeIfNeeded).not.toHaveBeenCalled();
+      expect(mockStartService).not.toHaveBeenCalled();
+    });
+
     it('leaves staking alone by default', async () => {
       const { result } = renderStartService();
       await result.current.startService({

@@ -296,20 +296,26 @@ export const enableWithdrawalOnlyMode = async (
   agentType: AgentType,
 ) => {
   if (isInWithdrawalOnlyMode(service)) return;
-  await ServicesService.updateService({
-    serviceConfigId: service.service_config_id,
-    partialServiceTemplate: {
-      configurations: {
-        [service.home_chain]: { staking_program_id: NO_STAKING_PROGRAM_ID },
-      },
-      env_variables: {
-        DISABLE_TRADING: {
-          ...getDisableTradingTemplateEntry(agentType),
-          value: 'true',
+  const disableTrading = getDisableTradingTemplateEntry(agentType);
+  try {
+    await ServicesService.updateService({
+      serviceConfigId: service.service_config_id,
+      partialServiceTemplate: {
+        configurations: {
+          [service.home_chain]: { staking_program_id: NO_STAKING_PROGRAM_ID },
+        },
+        env_variables: {
+          DISABLE_TRADING: { ...disableTrading, value: 'true' },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    // Otherwise indistinguishable from the template sync's PATCH failure.
+    throw new Error(
+      `Couldn't enable withdrawal-only mode for ${service.service_config_id}: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
 };
 
 export const onDummyServiceCreation = async (

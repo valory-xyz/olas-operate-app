@@ -272,6 +272,22 @@ describe('enableWithdrawalOnlyMode', () => {
     expect(mockUpdateService).not.toHaveBeenCalled();
   });
 
+  it('names the service when the PATCH fails, keeping the cause', async () => {
+    const cause = new Error('Failed to update service');
+    mockUpdateService.mockRejectedValueOnce(cause);
+
+    const error = await enableWithdrawalOnlyMode(
+      createPolystratService(),
+      AgentMap.Polystrat,
+    ).catch((e: Error) => e);
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe(
+      `Couldn't enable withdrawal-only mode for ${SERVICE_CONFIG_ID}: Failed to update service`,
+    );
+    expect((error as Error).cause).toBe(cause);
+  });
+
   it('refuses an agent whose template has no DISABLE_TRADING', async () => {
     await expect(
       enableWithdrawalOnlyMode(createService(), AgentMap.AgentsFun),

@@ -73,6 +73,14 @@ export const useStartService = () => {
       createSafeIfNeeded,
       withdrawalOnly = false,
     }: StartServiceInput) => {
+      // Withdrawal-only applies to an existing service; the create path below
+      // would stake a new one on `stakingProgramId`, with trading on.
+      if (withdrawalOnly && !service) {
+        throw new Error(
+          `Withdrawal-only start needs an existing ${agentType} service`,
+        );
+      }
+
       // Ensure safe exists before starting or creating service, as it's a prerequisite for both.
       await createSafeIfNeeded();
 

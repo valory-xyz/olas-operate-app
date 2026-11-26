@@ -135,8 +135,8 @@ const useStakingContractDetailsByStakingProgram = ({
         );
       }
 
-      return Promise.all(promises).then(
-        ([stakingContractDetails, serviceStakingDetails]) => {
+      return Promise.all(promises)
+        .then(([stakingContractDetails, serviceStakingDetails]) => {
           // Throw when contract details resolve to undefined (e.g. missing
           // staking program / chain config) so React Query treats it as an
           // error and keeps previousData instead of overwriting with {}.
@@ -151,8 +151,16 @@ const useStakingContractDetailsByStakingProgram = ({
               ? (serviceStakingDetails as ServiceStakingDetails)
               : {}),
           };
-        },
-      );
+        })
+        .catch((error) => {
+          // A failure here blocks a retired-program switch, and the query
+          // error is not logged anywhere else.
+          console.error(
+            `Couldn't read the staking details of program ${stakingProgramId}, service ${serviceNftTokenId}, on chain ${evmHomeChainId}:`,
+            error,
+          );
+          throw error;
+        });
     },
     // 'no_staking' has no on-chain contract — disable the query so the
     // serviceApi.getStakingContractDetails call (which throws when it

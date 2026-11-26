@@ -131,6 +131,7 @@ const setupMocks = ({
   useQueryReturn?: {
     data: unknown;
     isLoading: boolean;
+    isError?: boolean;
     refetch: jest.Mock;
   };
   useQueriesReturn?: Array<{
@@ -319,6 +320,34 @@ describe('StakingContractDetailsProvider', () => {
       expect(result.current.isSelectedStakingContractDetailsLoading).toBe(
         false,
       );
+    });
+  });
+
+  describe('isSelectedStakingContractDetailsError', () => {
+    it('is true when the read failed with no details to show', () => {
+      setupMocks({
+        useQueryReturn: {
+          data: undefined,
+          isLoading: false,
+          isError: true,
+          refetch: mockRefetch,
+        },
+      });
+      const { result } = renderProvider();
+      expect(result.current.isSelectedStakingContractDetailsError).toBe(true);
+    });
+
+    it('is false when a refetch failed but earlier details remain', () => {
+      setupMocks({
+        useQueryReturn: {
+          data: STAKING_CONTRACT_DETAILS,
+          isLoading: false,
+          isError: true,
+          refetch: mockRefetch,
+        },
+      });
+      const { result } = renderProvider();
+      expect(result.current.isSelectedStakingContractDetailsError).toBe(false);
     });
   });
 
@@ -593,6 +622,26 @@ describe('StakingContractDetailsProvider', () => {
         await expect(capturedUseQueryConfig!.queryFn()).rejects.toThrow(
           'contract fetch failed',
         );
+      });
+
+      it('logs a failed read with the program, service and chain', async () => {
+        const consoleError = jest
+          .spyOn(console, 'error')
+          .mockImplementation(() => {});
+        const error = new Error('contract fetch failed');
+        mockGetStakingContractDetails.mockRejectedValue(error);
+
+        setupMocks({ serviceNftTokenId: DEFAULT_SERVICE_NFT_TOKEN_ID });
+        renderProvider();
+
+        await expect(capturedUseQueryConfig!.queryFn()).rejects.toBe(error);
+        expect(consoleError).toHaveBeenCalledWith(
+          expect.stringContaining(
+            `program ${DEFAULT_STAKING_PROGRAM_ID}, service ${DEFAULT_SERVICE_NFT_TOKEN_ID}`,
+          ),
+          error,
+        );
+        consoleError.mockRestore();
       });
 
       it('throws when contract details resolve to undefined so React Query retains previousData', async () => {

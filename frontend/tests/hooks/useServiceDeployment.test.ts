@@ -405,6 +405,25 @@ describe('useServiceDeployment', () => {
       },
     );
 
+    it('starts withdrawal-only when the Safe type resolves after mount', async () => {
+      (useIsPolySafeService as jest.Mock).mockReturnValue({
+        isWithdrawalOnly: undefined,
+      });
+      const { result, rerender } = renderHook(() => useServiceDeployment());
+
+      (useIsPolySafeService as jest.Mock).mockReturnValue({
+        isWithdrawalOnly: true,
+      });
+      rerender();
+      await act(async () => {
+        await result.current.handleStart();
+      });
+
+      expect(mockStartServiceFn).toHaveBeenCalledWith(
+        expect.objectContaining({ withdrawalOnly: true }),
+      );
+    });
+
     it('updates states sequentially after successful start', async () => {
       const callOrder: string[] = [];
       mockRefetchServices.mockImplementation(() => {
