@@ -148,7 +148,7 @@ export abstract class ModiusService extends StakedAgentService {
 
     const multicallResponse = await multicallProvider.all(contractCalls);
     const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const nowInSeconds = getNowInSeconds();
 
     return BigInt(
       Math.max(
