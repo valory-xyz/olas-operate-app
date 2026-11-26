@@ -226,22 +226,51 @@ export const updateServiceIfNeeded = async (
     await ServicesService.putService({
       serviceConfigId: service.service_config_id,
       partialServiceTemplate: {
-        env_variables: serviceTemplate.env_variables,
+        env_variables: keepUserEnvValues(
+          serviceTemplate.env_variables,
+          service.env_variables,
+        ),
       },
     });
   }
 };
 
 /**
- * Polystrat's `DISABLE_TRADING` template entry. Looked up on call through
- * `SERVICE_TEMPLATES`: importing the template module here, or reading it at
+ * The template's env set, with the service's own values kept for USER
+ * variables: a PUT replaces the whole set, and must not reset what the user
+ * (or withdrawal-only mode, for `DISABLE_TRADING`) chose.
+ */
+const keepUserEnvValues = (
+  templateEnv: ServiceTemplate['env_variables'],
+  serviceEnv: Service['env_variables'],
+): ServiceTemplate['env_variables'] =>
+  Object.fromEntries(
+    Object.entries(templateEnv).map(([key, templateVariable]) => {
+      const serviceVariable = serviceEnv[key];
+      if (
+        templateVariable.provision_type !== EnvProvisionMap.USER ||
+        !serviceVariable
+      ) {
+        return [key, templateVariable];
+      }
+      return [key, { ...templateVariable, value: serviceVariable.value }];
+    }),
+  );
+
+/**
+ * The agent's `DISABLE_TRADING` template entry. Looked up on call through
+ * `SERVICE_TEMPLATES`: importing a template module here, or reading it at
  * module load, enters the service-template import cycle from the wrong end.
  */
-const getDisableTradingTemplateEntry = () => {
+const getDisableTradingTemplateEntry = (agentType: AgentType) => {
   const entry = SERVICE_TEMPLATES.find(
-    ({ agentType }) => agentType === AgentMap.Polystrat,
+    (template) => template.agentType === agentType,
   )?.env_variables.DISABLE_TRADING;
-  if (!entry) throw new Error('Polystrat template has no DISABLE_TRADING');
+  if (!entry) {
+    throw new Error(
+      `${agentType} has no DISABLE_TRADING: no withdrawal-only mode`,
+    );
+  }
   return entry;
 };
 
@@ -263,7 +292,10 @@ export const isInWithdrawalOnlyMode = (service: Service) =>
  * Skipped when nothing would change: every PATCH re-downloads the service
  * package from IPFS.
  */
-export const enableWithdrawalOnlyMode = async (service: Service) => {
+export const enableWithdrawalOnlyMode = async (
+  service: Service,
+  agentType: AgentType,
+) => {
   if (isInWithdrawalOnlyMode(service)) return;
   await ServicesService.updateService({
     serviceConfigId: service.service_config_id,
@@ -272,7 +304,10 @@ export const enableWithdrawalOnlyMode = async (service: Service) => {
         [service.home_chain]: { staking_program_id: NO_STAKING_PROGRAM_ID },
       },
       env_variables: {
-        DISABLE_TRADING: { ...getDisableTradingTemplateEntry(), value: 'true' },
+        DISABLE_TRADING: {
+          ...getDisableTradingTemplateEntry(agentType),
+          value: 'true',
+        },
       },
     },
   });

@@ -238,7 +238,10 @@ describe('isInWithdrawalOnlyMode', () => {
 
 describe('enableWithdrawalOnlyMode', () => {
   it('PATCHes staking_program_id=no_staking, from which the middleware derives use_staking=false, and DISABLE_TRADING=true', async () => {
-    await enableWithdrawalOnlyMode(createPolystratService());
+    await enableWithdrawalOnlyMode(
+      createPolystratService(),
+      AgentMap.Polystrat,
+    );
 
     expect(mockUpdateService).toHaveBeenCalledWith({
       serviceConfigId: SERVICE_CONFIG_ID,
@@ -263,9 +266,47 @@ describe('enableWithdrawalOnlyMode', () => {
         stakingProgramId: 'no_staking',
         disableTrading: 'true',
       }),
+      AgentMap.Polystrat,
     );
 
     expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+
+  it('refuses an agent whose template has no DISABLE_TRADING', async () => {
+    await expect(
+      enableWithdrawalOnlyMode(createService(), AgentMap.AgentsFun),
+    ).rejects.toThrow('memeooorr has no DISABLE_TRADING');
+    expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+});
+
+describe('template sync, then withdrawal-only mode', () => {
+  it('keeps DISABLE_TRADING=true through a PUT replacement of the env set', async () => {
+    const base = createPolystratService({
+      stakingProgramId: 'no_staking',
+      disableTrading: 'true',
+    });
+    // A key the template dropped forces the PUT branch.
+    const service = {
+      ...base,
+      env_variables: {
+        ...base.env_variables,
+        REMOVED_VARIABLE: { value: 'legacy' },
+      },
+    } as unknown as Service;
+
+    await updateServiceIfNeeded(service, AgentMap.Polystrat);
+    await enableWithdrawalOnlyMode(service, AgentMap.Polystrat);
+
+    expect(mockPutService).toHaveBeenCalledTimes(1);
+    const [{ partialServiceTemplate }] = mockPutService.mock.calls[0];
+    expect(partialServiceTemplate.env_variables.DISABLE_TRADING).toEqual({
+      ...PREDICT_POLYMARKET_SERVICE_TEMPLATE.env_variables.DISABLE_TRADING,
+      value: 'true',
+    });
+    expect(
+      partialServiceTemplate.env_variables.REMOVED_VARIABLE,
+    ).toBeUndefined();
   });
 });
 
@@ -477,12 +518,12 @@ describe('updateServiceIfNeeded', () => {
     expect(mockUpdateService).not.toHaveBeenCalled();
   });
 
-  it('replaces env_variables via PUT when the service has stale keys not in template', async () => {
+  it('replaces env_variables via PUT when the service has stale keys not in template, keeping USER values', async () => {
     const service = createService({
       env_variables: {
         RESET_PAUSE_DURATION: { value: '300' },
         STORE_PATH: { value: 'persistent_data/' },
-        PERSONA: { value: '' },
+        PERSONA: { value: 'A curious agent' },
         REMOVED_VARIABLE: { value: 'legacy' },
       },
     });
@@ -506,10 +547,11 @@ describe('updateServiceIfNeeded', () => {
             value: 'persistent_data/',
             provision_type: 'computed',
           },
+          // A USER value is the service's, not the template's default.
           PERSONA: {
             name: 'Persona description',
             description: '',
-            value: '',
+            value: 'A curious agent',
             provision_type: 'user',
           },
         },

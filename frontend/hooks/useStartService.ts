@@ -79,8 +79,8 @@ export const useStartService = () => {
       // If service exists, ensure it's up to date and start it
       if (service) {
         await updateServiceIfNeeded(service, agentType);
-        // After the template sync, whose PUT would reset DISABLE_TRADING.
-        if (withdrawalOnly) await enableWithdrawalOnlyMode(service);
+        // After the template sync, so the withdrawal-only values are the last word.
+        if (withdrawalOnly) await enableWithdrawalOnlyMode(service, agentType);
         await runPrestartCheck(queryClient, service.service_config_id);
         await ServicesService.startService(service.service_config_id);
         return service;

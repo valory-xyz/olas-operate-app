@@ -179,6 +179,7 @@ describe('useStartService', () => {
 
       expect(mockEnableWithdrawalOnlyMode).toHaveBeenCalledWith(
         existingService,
+        baseInput.agentType,
       );
       expect(callOrder).toEqual([
         'updateService',
