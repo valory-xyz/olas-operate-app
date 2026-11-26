@@ -323,7 +323,7 @@ The pure logic lives in `getCompatibleStakingProgramIds()` (`frontend/utils/stak
 
 ### Multisig compatibility (OPE-1919)
 
-Staking contracts pin `service.multisig.codehash`. The original six Polygon contracts (Polygon Beta I–III, Polystrat I–III) only accept services deployed with a **PolySafe** multisig (`proxyHash() = POLY_SAFE_PROXY_CODEHASH`), while new Pearl versions deploy a standard Safe — so old and new Polystrat services need different contract sets. Polystrat IV/V/VI (same 100/1000/10000 OLAS tiers, same activity checker) accept a standard Safe and are the default for new services (`defaultStakingProgramId: PolystratIV`).
+Staking contracts pin `service.multisig.codehash`. The original six Polygon contracts (Polygon Beta I–III, Polystrat I–III) only accept services deployed with a **PolySafe** multisig (`proxyHash() = POLY_SAFE_PROXY_CODEHASH`), while new Pearl versions deploy a standard Safe — so old and new Polystrat services need different contract sets. Polystrat IV/V/VI accepted a standard Safe and are now retired. New standard-Safe services default to Polystrat VII (`defaultStakingProgramId: PolystratVII`; the VII/VIII/IX tiers need 100/1000/10000 OLAS).
 
 - `StakingProgramConfig.requiresPolySafe: true` marks a contract as PolySafe-only. Absent = standard Safe (every other chain). Marking them `deprecated` or `retired` hides them, so PolySafe services have no compatible contract. That is the intent for the retired ones: no live program accepts a PolySafe, so such services go withdrawal-only (see "Retired staking programs").
 - `useIsPolySafeService` (`frontend/hooks/useIsPolySafeService.ts`) detects the service's multisig type, in order:

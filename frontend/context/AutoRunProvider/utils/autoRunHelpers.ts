@@ -883,7 +883,7 @@ const runDeployabilityChecks = async (
     };
   }
 
-  // 4a. A service still staked on a retired program skips before the step-4 reads.
+  // 4a. A service whose current (on-chain, else stored) program is retired skips before the step-4 reads.
   let currentStakingProgramId: StakingProgramId;
   try {
     currentStakingProgramId = await getCurrentStakingProgramId(agentMeta);

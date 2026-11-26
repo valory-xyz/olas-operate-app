@@ -19,7 +19,7 @@ useServiceDeployment (manual start orchestration)
   │     ├── useBalanceAndRefillRequirementsContext (allowStart, hasBalances)
   │     ├── useActiveStakingContractDetails (eviction, eligibility, slots)
   │     ├── useRetiredProgramStatus (useIsPolySafeService's retiredSafeState + stakingDetailsState → getRetiredProgramStatus)
-  │     ├── getRetiredProgramStatus (with useActiveStakingContractDetails' stakingDetailsState)
+  │     ├── getRetiredProgramReason (the status's alert copy)
   │     ├── useIsInitiallyFunded
   │     ├── useIsAgentGeoRestricted
   │     ├── useAgentRunning (isAnotherAgentRunning)

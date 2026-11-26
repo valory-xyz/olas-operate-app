@@ -121,10 +121,11 @@ export type RetiredSafeState =
   | 'loading'
   | 'error';
 
+/** What is known of a service's multisig. */
+export type SafeType = 'loading' | 'error' | 'polySafe' | 'standard';
+
 /** The retired-program state for a known Safe type, or one that is loading or unreadable. */
-export const toRetiredSafeState = (
-  safeType: 'polySafe' | 'standard' | 'loading' | 'error',
-): RetiredSafeState => {
+export const toRetiredSafeState = (safeType: SafeType): RetiredSafeState => {
   if (safeType === 'polySafe') return 'withdrawalOnly';
   if (safeType === 'standard') return 'canSwitch';
   return safeType;

@@ -22,6 +22,7 @@ import { isInWithdrawalOnlyMode } from '@/utils/service';
 import {
   chainHasPolySafePrograms,
   RetiredSafeState,
+  SafeType,
   toRetiredSafeState,
 } from '@/utils/stakingProgram';
 
@@ -67,9 +68,6 @@ export const fetchIsPolySafeService = async (
   if (!multisig) return false;
   return queryClient.fetchQuery(polySafeMultisigQuery(evmChainId, multisig));
 };
-
-/** What is known of the selected service's multisig. */
-type SafeType = 'loading' | 'error' | 'polySafe' | 'standard';
 
 /**
  * Detects whether the selected service was deployed with a PolySafe multisig.

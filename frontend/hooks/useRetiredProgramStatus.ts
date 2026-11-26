@@ -54,14 +54,14 @@ export const useRetiredProgramStatus = () => {
 
   const safeTypeRetry = useMemo(
     () => ({
-      onRetry: refetchMultisigType,
+      onRetry: () => void refetchMultisigType(),
       isRetrying: isMultisigTypeFetching,
     }),
     [refetchMultisigType, isMultisigTypeFetching],
   );
   const stakingDetailsRetry = useMemo(
     () => ({
-      onRetry: refetchSelectedStakingContractDetails,
+      onRetry: () => void refetchSelectedStakingContractDetails(),
       isRetrying: isSelectedStakingContractDetailsFetching,
     }),
     [

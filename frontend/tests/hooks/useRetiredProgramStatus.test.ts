@@ -77,11 +77,19 @@ describe('useRetiredProgramStatus', () => {
   it('classifies a service on a retired program', () => {
     const { result } = setup();
     expect(result.current.status).toEqual({ kind: 'withdrawalOnly' });
-    expect(result.current.stakingDetailsRetry).toEqual({
-      onRetry: refetchStakingDetails,
-      isRetrying: true,
+    expect(result.current.stakingDetailsRetry.isRetrying).toBe(true);
+  });
+
+  it('refetches with no arguments, so a click event never reaches refetch', () => {
+    const { result } = setup();
+    (result.current.safeTypeRetry.onRetry as (e?: unknown) => void)({
+      type: 'click',
     });
-    expect(result.current.safeTypeRetry.onRetry).toBe(refetchMultisigType);
+    (result.current.stakingDetailsRetry.onRetry as (e?: unknown) => void)({
+      type: 'click',
+    });
+    expect(refetchMultisigType).toHaveBeenCalledWith();
+    expect(refetchStakingDetails).toHaveBeenCalledWith();
   });
 
   it('is null off a retired program', () => {
