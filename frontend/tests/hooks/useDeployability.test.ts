@@ -1,11 +1,13 @@
 import { act, renderHook } from '@testing-library/react';
 
+import { RETIRED_STAKING_PROGRAM_COPY } from '../../constants/stakingProgram';
 import { ELIGIBILITY_REASON } from '../../context/AutoRunProvider/constants';
 import { useAgentRunning } from '../../hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '../../hooks/useBalanceAndRefillRequirementsContext';
 import { useDeployability } from '../../hooks/useDeployability';
 import { useIsAgentGeoRestricted } from '../../hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '../../hooks/useIsInitiallyFunded';
+import { useIsPolySafeService } from '../../hooks/useIsPolySafeService';
 import { useOnlineStatusContext } from '../../hooks/useOnlineStatus';
 import { useServices } from '../../hooks/useServices';
 import { useSharedContext } from '../../hooks/useSharedContext';
@@ -43,6 +45,9 @@ jest.mock('../../hooks/useIsAgentGeoRestricted', () => ({
 jest.mock('../../hooks/useStakingProgram', () => ({
   useStakingProgram: jest.fn(),
 }));
+jest.mock('../../hooks/useIsPolySafeService', () => ({
+  useIsPolySafeService: jest.fn(),
+}));
 
 const mockUseOnlineStatusContext =
   useOnlineStatusContext as jest.MockedFunction<typeof useOnlineStatusContext>;
@@ -70,6 +75,9 @@ const mockUseIsAgentGeoRestricted =
   >;
 const mockUseStakingProgram = useStakingProgram as jest.MockedFunction<
   typeof useStakingProgram
+>;
+const mockUseIsPolySafeService = useIsPolySafeService as jest.MockedFunction<
+  typeof useIsPolySafeService
 >;
 
 // --- defaults ---
@@ -107,6 +115,11 @@ const defaultGeoRestricted = {
 };
 const defaultStakingProgram = {
   isActiveStakingProgramLoaded: true,
+  selectedStakingProgramMeta: null as { retired?: boolean } | null,
+};
+const defaultPolySafe = {
+  isPolySafeService: false,
+  isMultisigTypeLoaded: true,
 };
 
 const setupDefaults = (
@@ -120,6 +133,7 @@ const setupDefaults = (
     funded?: Partial<typeof defaultIsInitiallyFunded>;
     geo?: Partial<typeof defaultGeoRestricted>;
     stakingProgram?: Partial<typeof defaultStakingProgram>;
+    polySafe?: Partial<typeof defaultPolySafe>;
   } = {},
 ) => {
   mockUseOnlineStatusContext.mockReturnValue({
@@ -158,6 +172,10 @@ const setupDefaults = (
     ...defaultStakingProgram,
     ...overrides.stakingProgram,
   } as ReturnType<typeof useStakingProgram>);
+  mockUseIsPolySafeService.mockReturnValue({
+    ...defaultPolySafe,
+    ...overrides.polySafe,
+  } as ReturnType<typeof useIsPolySafeService>);
 };
 
 // --- tests ---
@@ -328,6 +346,48 @@ describe('useDeployability', () => {
       } as unknown as ReturnType<typeof useServices>);
       const { result } = renderHook(() => useDeployability());
       expect(result.current.reason).toBe('Phased out');
+    });
+  });
+
+  describe('retired staking program', () => {
+    const retired = { selectedStakingProgramMeta: { retired: true } };
+
+    it('blocks the start with the alert copy, ahead of evicted and low balance', () => {
+      setupDefaults({
+        stakingProgram: retired,
+        staking: { isAgentEvicted: true, isEligibleForStaking: false },
+        balance: {
+          allowStartAgentByServiceConfigId: jest.fn().mockReturnValue(false),
+        },
+      });
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(false);
+      expect(result.current.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.SWITCH);
+    });
+
+    it('lets a PolySafe service start, in withdrawal-only mode', () => {
+      setupDefaults({
+        stakingProgram: retired,
+        polySafe: { isPolySafeService: true },
+      });
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(true);
+    });
+
+    it('waits for the Safe type before deciding', () => {
+      setupDefaults({
+        stakingProgram: retired,
+        polySafe: { isMultisigTypeLoaded: false },
+      });
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(false);
+      expect(result.current.loadingReason).toBe('Safe type');
+    });
+
+    it('does not wait for the Safe type on a live program', () => {
+      setupDefaults({ polySafe: { isMultisigTypeLoaded: false } });
+      const { result } = renderHook(() => useDeployability());
+      expect(result.current.canRun).toBe(true);
     });
   });
 

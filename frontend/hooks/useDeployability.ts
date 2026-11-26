@@ -1,11 +1,13 @@
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
+import { RETIRED_STAKING_PROGRAM_COPY } from '@/constants';
 import { ELIGIBILITY_REASON } from '@/context/AutoRunProvider/constants';
 import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
+import { useIsPolySafeService } from '@/hooks/useIsPolySafeService';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
 import { useRunsInsideEvictionWindow } from '@/hooks/useRunsInsideEvictionWindow';
 import { useServices } from '@/hooks/useServices';
@@ -58,7 +60,10 @@ export const useDeployability = ({
     hasEnoughServiceSlots,
     isSelectedStakingContractDetailsLoading,
   } = useActiveStakingContractDetails();
-  const { isActiveStakingProgramLoaded } = useStakingProgram();
+  const { isActiveStakingProgramLoaded, selectedStakingProgramMeta } =
+    useStakingProgram();
+  const isRetired = !!selectedStakingProgramMeta?.retired;
+  const { isPolySafeService, isMultisigTypeLoaded } = useIsPolySafeService();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
@@ -99,6 +104,7 @@ export const useDeployability = ({
     )
       reasons.push('Staking');
     if (isGeoLoading) reasons.push('Geo');
+    if (isRetired && !isMultisigTypeLoaded) reasons.push('Safe type');
     if (safeEligibility?.isLoading) reasons.push('Safe');
     if (isInitialFunded === undefined) reasons.push('Setup');
     return reasons;
@@ -107,6 +113,8 @@ export const useDeployability = ({
     isBalancesAndFundingRequirementsEnabledForAllServices,
     isBalancesAndFundingRequirementsLoadingForAllServices,
     isGeoLoading,
+    isMultisigTypeLoaded,
+    isRetired,
     hasSelectedAgentBalances,
     isOnline,
     isInitialFunded,
@@ -143,6 +151,16 @@ export const useDeployability = ({
     // If the agent has been phased out, it can no longer be run
     if (selectedAgentConfig.isPhasedOut) {
       return { isLoading, canRun: false, reason: 'Phased out' };
+    }
+
+    // A PolySafe agent can't switch contracts; it still starts, unstaked, to
+    // redeem and withdraw.
+    if (isRetired && !isPolySafeService) {
+      return {
+        isLoading,
+        canRun: false,
+        reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+      };
     }
 
     // If service is under construction
@@ -207,6 +225,8 @@ export const useDeployability = ({
     isEligibleForStaking,
     isInitialFunded,
     isLoading,
+    isPolySafeService,
+    isRetired,
     isServiceStaked,
     runsEvicted,
     safeEligibility,

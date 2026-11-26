@@ -1,6 +1,10 @@
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap } from '../../../../constants/agent';
-import { STAKING_PROGRAM_IDS } from '../../../../constants/stakingProgram';
+import { EvmChainIdMap } from '../../../../constants/chains';
+import {
+  RETIRED_STAKING_PROGRAM_COPY,
+  STAKING_PROGRAM_IDS,
+} from '../../../../constants/stakingProgram';
 import {
   ACTIVITY_GOAL_STALL_SECONDS,
   AUTO_RUN_HEALTH_METRIC,
@@ -2007,6 +2011,8 @@ describe('fetchDeployabilityForAgent', () => {
     );
     return {
       ...base,
+      // A live program: the shared default fixture is a retired one.
+      stakingProgramId: STAKING_PROGRAM_IDS.OmenstratVIII,
       agentConfig: {
         ...base.agentConfig,
         serviceApi: {
@@ -2053,6 +2059,35 @@ describe('fetchDeployabilityForAgent', () => {
   it('returns canRun=true when all checks pass', async () => {
     const result = await fetchDeployabilityForAgent(makeAgentMeta(), makeCtx());
     expect(result).toEqual({ canRun: true, isAgentEvicted: false });
+  });
+
+  it('skips an agent on a retired program with the alert copy, before any read', async () => {
+    const meta = {
+      ...makeAgentMeta(),
+      stakingProgramId: STAKING_PROGRAM_IDS.OmenstratIII,
+    };
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result).toEqual({
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+    });
+    expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
+  });
+
+  it('skips a PolySafe agent on a retired program with the withdrawal-only copy', async () => {
+    const meta = {
+      ...makeAgentMeta(),
+      chainId: EvmChainIdMap.Polygon,
+      stakingProgramId: STAKING_PROGRAM_IDS.PolystratII,
+    };
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result.canRun).toBe(false);
+    expect(result.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY);
+    expect(result.isTransient).toBeUndefined();
   });
 
   it('never reads staking details for a no-staking agent', async () => {

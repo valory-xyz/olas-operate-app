@@ -2,7 +2,13 @@ import { BigNumber } from 'ethers';
 import { isNil } from 'lodash';
 import { MutableRefObject } from 'react';
 
-import { AgentType, EvmChainId, StakingProgramId } from '@/constants';
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import {
+  AgentType,
+  EvmChainId,
+  RETIRED_STAKING_PROGRAM_COPY,
+  StakingProgramId,
+} from '@/constants';
 import { ServicesService } from '@/service/Services';
 import { ActivityGoal, StakingRewardsInfo, StakingState } from '@/types';
 import {
@@ -716,6 +722,18 @@ const runDeployabilityChecks = async (
   // 2. Static agent-config flags (no API needed).
   if (agentMeta.agentConfig.isPhasedOut) {
     return { canRun: false, reason: 'Phased out' };
+  }
+
+  // Not in rotation, PolySafe agents included: those run only when started by hand.
+  const stakingProgram =
+    STAKING_PROGRAMS[agentMeta.chainId]?.[agentMeta.stakingProgramId];
+  if (stakingProgram?.retired) {
+    return {
+      canRun: false,
+      reason: stakingProgram.requiresPolySafe
+        ? RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY
+        : RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+    };
   }
 
   if (agentMeta.agentConfig.isUnderConstruction) {
