@@ -2145,6 +2145,7 @@ describe('fetchDeployabilityForAgent', () => {
     expect(result).toEqual({
       canRun: false,
       reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+      isAgentEvicted: false,
     });
     expect(mockGetServiceStakingDetails).toHaveBeenCalledWith(
       meta.serviceNftTokenId,
@@ -2197,6 +2198,31 @@ describe('fetchDeployabilityForAgent', () => {
     expect(ctx.logMessage).toHaveBeenCalledWith(
       expect.stringContaining('retired-program staking details read failed'),
     );
+  });
+
+  it('reports an eviction on a retired program as one to rotate away from, not restart', async () => {
+    // Past the period: a live program would report it eligible for a restart.
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.Evicted,
+      serviceStakingStartTime: Math.floor(Date.now() / 1000) - 90_000,
+    });
+    const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result.canRun).toBe(false);
+    expect(result.isTransient).toBeUndefined();
+    expect(result.isAgentEvicted).toBe(true);
+    expect(result.isEligibleAfterEviction).toBe(false);
+  });
+
+  it('reports no eviction for a retired program it is still staked on', async () => {
+    const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
+
+    const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+    expect(result.isAgentEvicted).toBe(false);
+    expect(result.isEligibleAfterEviction).toBeUndefined();
   });
 
   it('gives the cooldown copy to an agent evicted inside its period', async () => {
@@ -2332,6 +2358,7 @@ describe('fetchDeployabilityForAgent', () => {
       canRun: false,
       reason: RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
       isTransient: true,
+      isAgentEvicted: false,
     });
     expect(ctx.logMessage).toHaveBeenCalledWith(
       expect.stringContaining('Safe type read failed for'),

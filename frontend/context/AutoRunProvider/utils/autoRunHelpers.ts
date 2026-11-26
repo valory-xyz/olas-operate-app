@@ -765,9 +765,15 @@ const readServiceStakingFacts = async (
 const readRetiredProgramStakingDetails = async (
   agentMeta: AgentMeta,
   stakingProgramId: StakingProgramId,
-): Promise<RetiredProgramStakingDetails> => {
+): Promise<{
+  stakingDetails: RetiredProgramStakingDetails;
+  isAgentEvicted: boolean;
+}> => {
   if (!isValidServiceId(agentMeta.serviceNftTokenId)) {
-    return { state: 'loaded', placement: 'outOfContract' };
+    return {
+      stakingDetails: { state: 'loaded', placement: 'outOfContract' },
+      isAgentEvicted: false,
+    };
   }
   const facts = await readServiceStakingFacts(
     agentMeta,
@@ -779,11 +785,15 @@ const readRetiredProgramStakingDetails = async (
       `getStakingContractDetails returned undefined for program ${stakingProgramId}`,
     );
   }
-  return getLoadedRetiredProgramStakingDetails({
-    isServiceInContract: facts.isAgentEvicted || facts.isServiceStaked,
-    isServiceStakedForMinimumDuration: facts.isServiceStakedForMinimumDuration,
-    cooldownEndsAt: facts.evictionExpiresAt,
-  });
+  return {
+    stakingDetails: getLoadedRetiredProgramStakingDetails({
+      isServiceInContract: facts.isAgentEvicted || facts.isServiceStaked,
+      isServiceStakedForMinimumDuration:
+        facts.isServiceStakedForMinimumDuration,
+      cooldownEndsAt: facts.evictionExpiresAt,
+    }),
+    isAgentEvicted: facts.isAgentEvicted,
+  };
 };
 
 /** The retired-contract alert's copy for this instance, as the skip reason. */
@@ -791,6 +801,7 @@ const getRetiredProgramSkip = async (
   agentMeta: AgentMeta,
   ctx: FetchDeployabilityContext,
   stakingProgramId: StakingProgramId,
+  evictionFacts: EvictionFacts,
 ): Promise<DeployabilityCheckResult> => {
   let safeState: RetiredSafeState;
   try {
@@ -807,10 +818,14 @@ const getRetiredProgramSkip = async (
   // A withdrawal-only instance's copy doesn't depend on its staking details.
   if (safeState !== 'withdrawalOnly') {
     try {
-      stakingDetails = await readRetiredProgramStakingDetails(
+      const read = await readRetiredProgramStakingDetails(
         agentMeta,
         stakingProgramId,
       );
+      stakingDetails = read.stakingDetails;
+      evictionFacts.isAgentEvicted = read.isAgentEvicted;
+      // Start is blocked on a retired program, so the watchdog rotates it rather than restarting it.
+      if (read.isAgentEvicted) evictionFacts.isEligibleAfterEviction = false;
     } catch (error) {
       ctx.logMessage(
         `fetchDeployabilityForAgent: retired-program staking details read failed for ${agentMeta.serviceConfigId}: ${error}`,
@@ -883,7 +898,7 @@ const runDeployabilityChecks = async (
     };
   }
 
-  // 4a. A service whose current (on-chain, else stored) program is retired skips before the step-4 reads.
+  // A service whose current (on-chain, else stored) program is retired skips before the staking reads below.
   let currentStakingProgramId: StakingProgramId;
   try {
     currentStakingProgramId = await getCurrentStakingProgramId(agentMeta);
@@ -898,7 +913,12 @@ const runDeployabilityChecks = async (
     };
   }
   if (isRetiredStakingProgram(agentMeta.chainId, currentStakingProgramId)) {
-    return getRetiredProgramSkip(agentMeta, ctx, currentStakingProgramId);
+    return getRetiredProgramSkip(
+      agentMeta,
+      ctx,
+      currentStakingProgramId,
+      evictionFacts,
+    );
   }
 
   // Reward-pool balance of the staking contract, read in step 4 but evaluated
