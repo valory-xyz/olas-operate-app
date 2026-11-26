@@ -13,7 +13,6 @@ import {
   KPI_DESC_PREFIX,
   SERVICE_TEMPLATES,
 } from '@/constants/serviceTemplates';
-import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '@/constants/serviceTemplates/service/trader';
 import { ServicesService } from '@/service/Services';
 import {
   Address,
@@ -234,6 +233,19 @@ export const updateServiceIfNeeded = async (
 };
 
 /**
+ * Polystrat's `DISABLE_TRADING` template entry. Looked up on call through
+ * `SERVICE_TEMPLATES`: importing the template module here, or reading it at
+ * module load, enters the service-template import cycle from the wrong end.
+ */
+const getDisableTradingTemplateEntry = () => {
+  const entry = SERVICE_TEMPLATES.find(
+    ({ agentType }) => agentType === AgentMap.Polystrat,
+  )?.env_variables.DISABLE_TRADING;
+  if (!entry) throw new Error('Polystrat template has no DISABLE_TRADING');
+  return entry;
+};
+
+/**
  * Whether the service is already set up for withdrawal-only mode: unstaked
  * (`no_staking`, from which the middleware derives `use_staking: false`) and
  * redeem-only (`DISABLE_TRADING=true`).
@@ -260,12 +272,7 @@ export const enableWithdrawalOnlyMode = async (service: Service) => {
         [service.home_chain]: { staking_program_id: NO_STAKING_PROGRAM_ID },
       },
       env_variables: {
-        // Read here, not at module load: this module is part of the
-        // service-template import cycle.
-        DISABLE_TRADING: {
-          ...PREDICT_POLYMARKET_SERVICE_TEMPLATE.env_variables.DISABLE_TRADING,
-          value: 'true',
-        },
+        DISABLE_TRADING: { ...getDisableTradingTemplateEntry(), value: 'true' },
       },
     },
   });
