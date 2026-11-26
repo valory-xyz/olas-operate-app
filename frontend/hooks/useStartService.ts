@@ -10,15 +10,18 @@ import { AgentConfig } from '@/types/Agent';
 import { Service, ServiceConfigId } from '@/types/Service';
 import {
   enableWithdrawalOnlyMode,
+  isInWithdrawalOnlyMode,
   updateServiceIfNeeded,
 } from '@/utils/service';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
+import { useElectronApi } from './useElectronApi';
 import {
   BlockingPrestartCheck,
   isPrestartCheckBlocking,
   prestartCheckQuery,
 } from './usePrestartCheck';
+import { useStore } from './useStore';
 
 /** Thrown by `startService` when the agent's prestart check stops the start. */
 export class PrestartCheckFailedError extends Error {
@@ -52,7 +55,7 @@ type StartServiceInput = {
   stakingProgramId?: StakingProgramId;
   createServiceIfMissing?: boolean;
   createSafeIfNeeded: () => Promise<void>;
-  /** Start the existing service unstaked and redeem-only (see `computeIsWithdrawalOnly`). */
+  /** Start the existing service unstaked and redeem-only (see `RetiredSafeState`). */
   withdrawalOnly?: boolean;
 };
 
@@ -62,6 +65,10 @@ type StartServiceInput = {
  */
 export const useStartService = () => {
   const queryClient = useQueryClient();
+  const { store } = useElectronApi();
+  const { storeState } = useStore();
+  const retiredProgramIds =
+    storeState?.retiredStakingProgramIdByServiceConfigId;
 
   const startService = useCallback(
     async ({
@@ -88,7 +95,20 @@ export const useStartService = () => {
       if (service) {
         await updateServiceIfNeeded(service, agentType);
         // After the template sync, so the withdrawal-only values are the last word.
-        if (withdrawalOnly) await enableWithdrawalOnlyMode(service, agentType);
+        if (withdrawalOnly) {
+          // The PATCH stores `no_staking`; keep the retired id for the alert title.
+          if (
+            !isInWithdrawalOnlyMode(service) &&
+            stakingProgramId &&
+            !isNoStakingProgram(stakingProgramId)
+          ) {
+            await store?.set?.('retiredStakingProgramIdByServiceConfigId', {
+              ...retiredProgramIds,
+              [service.service_config_id]: stakingProgramId,
+            });
+          }
+          await enableWithdrawalOnlyMode(service, agentType);
+        }
         await runPrestartCheck(queryClient, service.service_config_id);
         await ServicesService.startService(service.service_config_id);
         return service;
@@ -133,7 +153,7 @@ export const useStartService = () => {
       await ServicesService.startService(serviceToStart.service_config_id);
       return serviceToStart;
     },
-    [queryClient],
+    [queryClient, store, retiredProgramIds],
   );
 
   return { startService };

@@ -14,6 +14,7 @@ import { ServicesService } from '../../service/Services';
 import { Service } from '../../types/Service';
 import {
   enableWithdrawalOnlyMode,
+  isInWithdrawalOnlyMode,
   updateServiceIfNeeded,
 } from '../../utils/service';
 import {
@@ -37,7 +38,18 @@ jest.mock('../../service/Services', () => ({
 
 jest.mock('../../utils/service', () => ({
   enableWithdrawalOnlyMode: jest.fn(),
+  isInWithdrawalOnlyMode: jest.fn(),
   updateServiceIfNeeded: jest.fn(),
+}));
+const mockStoreSet = jest.fn();
+jest.mock('../../hooks/useElectronApi', () => ({
+  useElectronApi: () => ({ store: { set: mockStoreSet } }),
+}));
+const mockStoreState: { current: Record<string, unknown> | undefined } = {
+  current: undefined,
+};
+jest.mock('../../hooks/useStore', () => ({
+  useStore: () => ({ storeState: mockStoreState.current }),
 }));
 jest.mock('../../config/stakingPrograms', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -88,6 +100,7 @@ const renderStartService = (queryClient = createTestQueryClient()) =>
 
 const mockUpdateServiceIfNeeded = updateServiceIfNeeded as jest.Mock;
 const mockEnableWithdrawalOnlyMode = enableWithdrawalOnlyMode as jest.Mock;
+const mockIsInWithdrawalOnlyMode = isInWithdrawalOnlyMode as jest.Mock;
 
 const mockCreateSafeIfNeeded = jest.fn().mockResolvedValue(undefined);
 
@@ -112,6 +125,9 @@ describe('useStartService', () => {
     });
     mockUpdateServiceIfNeeded.mockResolvedValue(undefined);
     mockGetPrestartCheck.mockResolvedValue(PASSED);
+    mockEnableWithdrawalOnlyMode.mockResolvedValue(undefined);
+    mockIsInWithdrawalOnlyMode.mockReturnValue(false);
+    mockStoreState.current = undefined;
   });
 
   it('calls createSafeIfNeeded before anything else', async () => {
@@ -190,7 +206,7 @@ describe('useStartService', () => {
     });
 
     it('does not start when the withdrawal-only PATCH fails', async () => {
-      mockEnableWithdrawalOnlyMode.mockRejectedValue(
+      mockEnableWithdrawalOnlyMode.mockRejectedValueOnce(
         new Error("Couldn't enable withdrawal-only mode"),
       );
 
@@ -207,6 +223,57 @@ describe('useStartService', () => {
       expect(mockGetPrestartCheck).not.toHaveBeenCalled();
       expect(mockStartService).not.toHaveBeenCalled();
     });
+
+    it('saves the retired program before the no_staking PATCH, keeping other services', async () => {
+      const callOrder: string[] = [];
+      mockStoreSet.mockImplementation(async () => {
+        callOrder.push('store');
+      });
+      mockEnableWithdrawalOnlyMode.mockImplementation(async () => {
+        callOrder.push('withdrawalOnly');
+      });
+      mockStoreState.current = {
+        retiredStakingProgramIdByServiceConfigId: { other: 'polystrat_i' },
+      };
+
+      const { result } = renderStartService();
+      await result.current.startService({
+        ...baseInput,
+        service: existingService,
+        stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
+        withdrawalOnly: true,
+      });
+
+      expect(mockStoreSet).toHaveBeenCalledWith(
+        'retiredStakingProgramIdByServiceConfigId',
+        {
+          other: 'polystrat_i',
+          [DEFAULT_SERVICE_CONFIG_ID]: DEFAULT_STAKING_PROGRAM_ID,
+        },
+      );
+      expect(callOrder).toEqual(['store', 'withdrawalOnly']);
+    });
+
+    it.each([
+      ['already withdrawal-only', true, DEFAULT_STAKING_PROGRAM_ID],
+      ['given no_staking', false, 'no_staking'],
+    ] as const)(
+      'does not overwrite the saved program when %s',
+      async (_, isWithdrawalOnly, stakingProgramId) => {
+        mockIsInWithdrawalOnlyMode.mockReturnValue(isWithdrawalOnly);
+
+        const { result } = renderStartService();
+        await result.current.startService({
+          ...baseInput,
+          service: existingService,
+          stakingProgramId,
+          withdrawalOnly: true,
+        });
+
+        expect(mockStoreSet).not.toHaveBeenCalled();
+        expect(mockEnableWithdrawalOnlyMode).toHaveBeenCalled();
+      },
+    );
 
     it('refuses withdrawal-only without an existing service', async () => {
       const { result } = renderStartService();
