@@ -112,6 +112,10 @@ const ROBINHOOD_STAKING_PROGRAM_IDS = {
   ConnectRobinhoodIII: 'connect_iii',
 } as const;
 
+export type RobinhoodStakingProgramId = ValueOf<
+  typeof ROBINHOOD_STAKING_PROGRAM_IDS
+>;
+
 /**
  * @link https://github.com/valory-xyz/olas-operate-middleware/blob/9ca362f302ae749dd99b236d062ccc5c722acabf/operate/ledger/profiles.py#L115
  * Refer the above link for the list of staking program ids.

@@ -1,7 +1,12 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
 import { STAKING_TOKEN_PROXY_ABI } from '@/abis/stakingTokenProxy';
-import { AgentMap, EvmChainIdMap, STAKING_PROGRAM_IDS } from '@/constants';
+import {
+  AgentMap,
+  EvmChainIdMap,
+  RobinhoodStakingProgramId,
+  STAKING_PROGRAM_IDS,
+} from '@/constants';
 import { Address } from '@/types';
 import { deriveStakingProgramId } from '@/utils';
 
@@ -9,7 +14,10 @@ import { ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS } from '../activityChecker
 import { TokenSymbolMap } from '../tokens';
 import type { StakingProgramMap } from '.';
 
-const ROBINHOOD_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
+const ROBINHOOD_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
+  RobinhoodStakingProgramId,
+  Address
+> = {
   [STAKING_PROGRAM_IDS.ConnectRobinhoodI]:
     '0x228DC61b838D6eD82347a93aA2cd3e28544808Ea',
   [STAKING_PROGRAM_IDS.ConnectRobinhoodII]:

@@ -12,7 +12,11 @@ import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
 import { PET_ACTIVITY_CHECKER_ABI } from '@/abis/petActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
-import { OptimismStakingProgramId, STAKING_PROGRAM_IDS } from '@/constants';
+import {
+  OptimismStakingProgramId,
+  RobinhoodStakingProgramId,
+  STAKING_PROGRAM_IDS,
+} from '@/constants';
 import { Address } from '@/types';
 
 const getMechActivityCheckerContract = (
@@ -265,7 +269,7 @@ export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
 } as const;
 
 export const ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
-  string,
+  RobinhoodStakingProgramId,
   MulticallContract
 > = {
   // Connect — V2 requester activity checker shared by every Connect contract.
