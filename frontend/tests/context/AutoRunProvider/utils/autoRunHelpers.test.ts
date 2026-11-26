@@ -2101,7 +2101,7 @@ describe('fetchDeployabilityForAgent', () => {
   it.each([
     ['evicted', StakingState.Evicted, 10, 5],
     ['on an empty reward pool', StakingState.Staked, 0, 5],
-    ['on a full contract', StakingState.Unstaked, 10, 0],
+    ['on a full contract', StakingState.NotStaked, 10, 0],
   ])(
     'runs a staked agent on minutes per run even when %s',
     async (_, serviceStakingState, availableRewards, freeSlots) => {
