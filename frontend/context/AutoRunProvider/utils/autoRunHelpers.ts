@@ -814,24 +814,22 @@ const getRetiredProgramSkip = async (
     );
     safeState = 'error';
   }
-  let stakingDetails: RetiredProgramStakingDetails = { state: 'loading' };
-  // A withdrawal-only instance's copy doesn't depend on its staking details.
-  if (safeState !== 'withdrawalOnly') {
-    try {
-      const read = await readRetiredProgramStakingDetails(
-        agentMeta,
-        stakingProgramId,
-      );
-      stakingDetails = read.stakingDetails;
-      evictionFacts.isAgentEvicted = read.isAgentEvicted;
-      // Start is blocked on a retired program, so the watchdog rotates it rather than restarting it.
-      if (read.isAgentEvicted) evictionFacts.isEligibleAfterEviction = false;
-    } catch (error) {
-      ctx.logMessage(
-        `fetchDeployabilityForAgent: retired-program staking details read failed for ${agentMeta.serviceConfigId}: ${error}`,
-      );
-      stakingDetails = { state: 'error' };
-    }
+  // Read even for a PolySafe: its copy ignores the details, but the watchdog needs the eviction.
+  let stakingDetails: RetiredProgramStakingDetails;
+  try {
+    const read = await readRetiredProgramStakingDetails(
+      agentMeta,
+      stakingProgramId,
+    );
+    stakingDetails = read.stakingDetails;
+    evictionFacts.isAgentEvicted = read.isAgentEvicted;
+    // Start is blocked on a retired program, so the watchdog rotates it rather than restarting it.
+    if (read.isAgentEvicted) evictionFacts.isEligibleAfterEviction = false;
+  } catch (error) {
+    ctx.logMessage(
+      `fetchDeployabilityForAgent: retired-program staking details read failed for ${agentMeta.serviceConfigId}: ${error}`,
+    );
+    stakingDetails = { state: 'error' };
   }
   const status = getRetiredProgramStatus({ safeState, stakingDetails });
   return {

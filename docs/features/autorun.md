@@ -235,6 +235,7 @@ A staking agent can meet its staking KPI but never reach its activity goal (e.g.
 - **On a retired program**, after the another-agent-running check and before the other step-4 reads. The current program is the on-chain one (`getCurrentStakingProgramByServiceIdOrThrow`) for an instance with a valid token, else the stored `stakingProgramId`. If that read fails, the instance is deferred (`Staking data unavailable`, transient), since the stored id may name a program the service isn't staked on.
 - The skip `reason` is the alert's copy for the instance's status (`getRetiredProgramStatus` → `getRetiredProgramReason`), so `notifySkipped` sends it as the notification body. The Safe type comes from `ctx.isPolySafeService` (`fetchIsPolySafeService`), and the staking details from the same `getStakingContractDetails` / `getServiceStakingDetails` reads as step 4.
 - The Safe-type and staking-details reads feed the same classifier as Home, so a cooldown wins over an unreadable Safe type. An unreadable Safe type or staking details gives their copy, logged and transient, since both clear once the read works. The other skips are deterministic.
+- The skip also reports an eviction (`isAgentEvicted`, never `isEligibleAfterEviction`, since Start is blocked), for PolySafe instances too, so the eviction watchdog rotates a running one away instead of restarting it.
 - Instances stay in the rotation (not `getDecommissionedInstances`) and are picked again once they are on a new program.
 
 ---

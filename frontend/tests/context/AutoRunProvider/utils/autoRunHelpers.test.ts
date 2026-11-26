@@ -2216,6 +2216,47 @@ describe('fetchDeployabilityForAgent', () => {
     expect(result.isEligibleAfterEviction).toBe(false);
   });
 
+  it('reports an eviction for a PolySafe on a retired program too, keeping its withdrawal-only copy', async () => {
+    mockGetServiceStakingDetails.mockResolvedValue({
+      serviceStakingState: StakingState.Evicted,
+      serviceStakingStartTime: Math.floor(Date.now() / 1000) - 100,
+    });
+    const meta = {
+      ...makeAgentMeta(),
+      chainId: EvmChainIdMap.Polygon,
+      stakingProgramId: STAKING_PROGRAM_IDS.PolystratII,
+    };
+
+    const result = await fetchDeployabilityForAgent(
+      meta,
+      makeCtx({ isPolySafeService: jest.fn().mockResolvedValue(true) }),
+    );
+
+    expect(result.reason).toBe(RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY);
+    expect(result.isTransient).toBeUndefined();
+    expect(result.isAgentEvicted).toBe(true);
+    expect(result.isEligibleAfterEviction).toBe(false);
+  });
+
+  it("keeps a PolySafe's withdrawal-only copy, not transient, when its staking details can't be read", async () => {
+    mockGetServiceStakingDetails.mockRejectedValue(new Error('rpc down'));
+    const meta = {
+      ...makeAgentMeta(),
+      chainId: EvmChainIdMap.Polygon,
+      stakingProgramId: STAKING_PROGRAM_IDS.PolystratII,
+    };
+
+    const result = await fetchDeployabilityForAgent(
+      meta,
+      makeCtx({ isPolySafeService: jest.fn().mockResolvedValue(true) }),
+    );
+
+    expect(result).toEqual({
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
+    });
+  });
+
   it('reports no eviction for a retired program it is still staked on', async () => {
     const meta = { ...makeAgentMeta(), stakingProgramId: RETIRED };
 
