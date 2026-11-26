@@ -11,14 +11,14 @@ import { MECH_FACILITATOR_ENABLED_FLAGS, X402_ENABLED_FLAGS } from '../../x402';
 import { KPI_DESC_PREFIX } from '../constants';
 
 export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeiai5njfr2vyefw3bpdmcin6bw4ks6cudtl6kue4rp2f4tgthswh3i',
-  service_version: 'v0.41.20',
+  hash: 'bafybeihuqeumiiw6s4zorrrw6u2vsgm6ado3awy4o4ujnrdgeqxezqhhia',
+  service_version: 'v0.42.0',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.41.20',
+      version: 'v0.42.0',
     },
   },
   agentType: AgentMap.PredictTrader,
@@ -176,18 +176,25 @@ export const PREDICT_SERVICE_TEMPLATE: ServiceTemplate = {
       value: 'https://mech-analytics-api.autonolas.tech',
       provision_type: EnvProvisionType.FIXED,
     },
+    DELIVERY_RATE_CAPS: {
+      name: 'Delivery rate caps',
+      description:
+        'The most the agent signs per mech request, per payment asset, in base units (0.08 xDAI). The agent offers each mech a rate from its published cost, up to this.',
+      value: '{"native":80000000000000000}',
+      provision_type: EnvProvisionType.FIXED,
+    },
   },
 } as const;
 
 export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
-  hash: 'bafybeicu7cehfj64zqt2mxtsryz5tidrdfscivxdhhyajq2odvcemsqrk4',
-  service_version: 'v0.41.20',
+  hash: 'bafybeifzij6kldnjmrvbaot5i5l3rqhqdgamidbfpebl3vsj5ug35lehea',
+  service_version: 'v0.42.0',
   agent_release: {
     is_aea: true,
     repository: {
       owner: 'valory-xyz',
       name: 'trader',
-      version: 'v0.41.20',
+      version: 'v0.42.0',
     },
   },
   agentType: AgentMap.Polystrat,
@@ -343,6 +350,13 @@ export const PREDICT_POLYMARKET_SERVICE_TEMPLATE: ServiceTemplate = {
       description:
         'Base URL of the mech-analytics HTTP service. Required when USE_MECH_ANALYTICS is true.',
       value: 'https://mech-analytics-api.autonolas.tech',
+      provision_type: EnvProvisionType.FIXED,
+    },
+    DELIVERY_RATE_CAPS: {
+      name: 'Delivery rate caps',
+      description:
+        'The most the agent signs per mech request, per payment asset, in base units (0.08 USDC). The agent offers each mech a rate from its published cost, up to this.',
+      value: '{"token_usdc":80000}',
       provision_type: EnvProvisionType.FIXED,
     },
   },
