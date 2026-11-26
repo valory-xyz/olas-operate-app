@@ -18,7 +18,7 @@ const getEvictionCopy = (
       reason:
         "The agent didn't make its Marketplace request in two epochs in a row, and will be evicted until ",
       consequence:
-        'Until then it earns no staking rewards. You can keep using it from your coding tool.',
+        "Until then it isn't eligible for OLAS activity rewards. You can keep using it from your coding tool.",
     };
   }
   if (canRunWhileEvicted) {

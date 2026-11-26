@@ -45,7 +45,7 @@ describe('EvictedAlert', () => {
 
   it('tells a Connect agent it is still usable from its coding tool', () => {
     expect(setup(true, 'connect')).toBe(
-      "Agent is temporarily evicted The agent didn't make its Marketplace request in two epochs in a row, and will be evicted until Nov 18, 10:00 (UTC). Until then it earns no staking rewards. You can keep using it from your coding tool.",
+      "Agent is temporarily evicted The agent didn't make its Marketplace request in two epochs in a row, and will be evicted until Nov 18, 10:00 (UTC). Until then it isn't eligible for OLAS activity rewards. You can keep using it from your coding tool.",
     );
   });
 });
