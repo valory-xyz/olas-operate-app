@@ -217,7 +217,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     stakingVersion: '0.4',
     activityTarget: 1,
     agentsSupported: [AgentMap.Optimus],
-    stakingRequirements: { [TokenSymbolMap.OLAS]: 50 },
+    stakingRequirements: { [TokenSymbolMap.OLAS]: 100 },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2].contract,
     activityChecker:
@@ -246,7 +246,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     stakingVersion: '0.4',
     activityTarget: 1,
     agentsSupported: [AgentMap.Optimus],
-    stakingRequirements: { [TokenSymbolMap.OLAS]: 500 },
+    stakingRequirements: { [TokenSymbolMap.OLAS]: 1000 },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2].contract,
     activityChecker:
@@ -275,7 +275,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     stakingVersion: '0.4',
     activityTarget: 1,
     agentsSupported: [AgentMap.Optimus],
-    stakingRequirements: { [TokenSymbolMap.OLAS]: 2500 },
+    stakingRequirements: { [TokenSymbolMap.OLAS]: 5000 },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2].contract,
     activityChecker:

@@ -387,7 +387,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 1,
     agentsSupported: [AgentMap.Basius],
     stakingRequirements: {
-      [TokenSymbolMap.OLAS]: 50,
+      [TokenSymbolMap.OLAS]: 100,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,
@@ -410,7 +410,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 1,
     agentsSupported: [AgentMap.Basius],
     stakingRequirements: {
-      [TokenSymbolMap.OLAS]: 500,
+      [TokenSymbolMap.OLAS]: 1000,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,
@@ -433,7 +433,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 1,
     agentsSupported: [AgentMap.Basius],
     stakingRequirements: {
-      [TokenSymbolMap.OLAS]: 2500,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,

@@ -753,7 +753,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 8,
     agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbolMap.OLAS]: 50,
+      [TokenSymbolMap.OLAS]: 100,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
@@ -784,7 +784,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 8,
     agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbolMap.OLAS]: 2500,
+      [TokenSymbolMap.OLAS]: 5000,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,
@@ -815,7 +815,7 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 8,
     agentsSupported: [AgentMap.PredictTrader],
     stakingRequirements: {
-      [TokenSymbolMap.OLAS]: 5000,
+      [TokenSymbolMap.OLAS]: 10000,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Gnosis][MechType.MarketplaceV2].contract,

@@ -174,7 +174,7 @@ describe('retired staking programs', () => {
   });
 
   it.each(NEW_PROGRAMS)(
-    'new program %s/%s is at %s, live, StakingToken v0.4 and needs %d OLAS',
+    'new program %s/%s is at %s, live, StakingToken v0.4, with a %d OLAS minStakingDeposit',
     (chainId, id, address, olas) => {
       const program = STAKING_PROGRAMS[chainId][id];
       expect(program.address).toBe(address);
@@ -185,7 +185,8 @@ describe('retired staking programs', () => {
       expect(program.deprecated).toBeFalsy();
       expect(program.requiresPolySafe).toBeFalsy();
       expect(program.stakingVersion).toBe('0.4');
-      expect(program.stakingRequirements.OLAS).toBe(olas);
+      // The requirement is the total stake: deposit plus an equal bond.
+      expect(program.stakingRequirements.OLAS).toBe(olas * 2);
       expect(program.activityTarget).toBe(ACTIVITY_TARGET[chainId]);
       expect(program.mechType).toBe(MechType.MarketplaceV2);
     },

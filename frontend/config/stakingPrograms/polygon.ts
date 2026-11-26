@@ -336,7 +336,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 50,
+      OLAS: 100,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
@@ -368,7 +368,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 500,
+      OLAS: 1000,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
@@ -400,7 +400,7 @@ export const POLYGON_STAKING_PROGRAMS: StakingProgramMap = {
     activityTarget: 8,
     agentsSupported: [AgentMap.Polystrat],
     stakingRequirements: {
-      OLAS: 5000,
+      OLAS: 10000,
     },
     mechType: MechType.MarketplaceV2,
     mech: MECHS[EvmChainIdMap.Polygon][MechType.MarketplaceV2].contract,
