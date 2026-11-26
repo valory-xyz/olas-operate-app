@@ -28,13 +28,22 @@ export const useStakingContracts = () => {
   const serviceStakingProgramId =
     getServiceStakingProgramId(selectedService) ?? null;
 
+  const withUnstakedOption = hasUnstakedOption(
+    selectedAgentConfig,
+    evmHomeChainId,
+  );
+
   // "Current" must never fall back to the agent-config default: showing the
   // default as the joined/selected contract fabricates a stake the user never
   // made (OPE-1841). Prefer the on-chain (subgraph) value, then the
-  // service-stored choice; otherwise admit we don't know.
-  const currentStakingProgramId = isActiveStakingProgramLoaded
-    ? (activeStakingProgramId ?? serviceStakingProgramId)
-    : null;
+  // service-stored choice; otherwise admit we don't know. Where staking is
+  // optional the stored choice decides, as `isServiceStaked` does: the
+  // subgraph's cached contract can outlive an unstake.
+  const currentStakingProgramId = withUnstakedOption
+    ? serviceStakingProgramId
+    : isActiveStakingProgramLoaded
+      ? (activeStakingProgramId ?? serviceStakingProgramId)
+      : null;
 
   const isStakingContractsLoaded =
     isActiveStakingProgramLoaded && isMultisigTypeLoaded;
@@ -44,13 +53,6 @@ export const useStakingContracts = () => {
   // reject the stake on-chain.
   const isStakingContractsError =
     isStakingContractsLoaded && isMultisigTypeError;
-
-  // Memoize so the array ref is stable across renders — downstream `useMemo`s
-  // and effects list `orderedStakingProgramIds` in their deps.
-  const withUnstakedOption = hasUnstakedOption(
-    selectedAgentConfig,
-    evmHomeChainId,
-  );
 
   // The contracts alone, without the Unstaked option: "no compatible
   // contracts" is about these.
@@ -71,6 +73,8 @@ export const useStakingContracts = () => {
     currentStakingProgramId,
   ]);
 
+  // Memoize so the array ref is stable across renders — downstream `useMemo`s
+  // and effects list `orderedStakingProgramIds` in their deps.
   const orderedStakingProgramIds = useMemo(
     () =>
       withUnstakedOption && isStakingContractsLoaded && !isStakingContractsError

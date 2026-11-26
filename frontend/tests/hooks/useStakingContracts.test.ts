@@ -571,6 +571,36 @@ describe('useStakingContracts — the Unstaked option (optional staking)', () =>
     expect(result.current.orderedStakingProgramIds[0]).toBe('no_staking');
   });
 
+  it("takes the current program from the service, not the subgraph's cached contract", () => {
+    // unstaked through Confirm Switch; the subgraph still names connect_i
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Gnosis,
+      selectedAgentType: AgentMap.Connect,
+      activeStakingProgramId: STAKING_PROGRAM_IDS.ConnectGnosisI,
+      serviceStakingProgramId: 'no_staking',
+      agentConfig: CONNECT_CONFIG,
+    });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.currentStakingProgramId).toBe('no_staking');
+  });
+
+  it.each([
+    ['the contracts load', { isActiveStakingProgramLoaded: false }],
+    ['the multisig type cannot be read', { isMultisigTypeError: true }],
+  ])('lists no lone Unstaked option while %s', (_, state) => {
+    setupMocks({
+      evmHomeChainId: EvmChainIdMap.Gnosis,
+      selectedAgentType: AgentMap.Connect,
+      activeStakingProgramId: null,
+      agentConfig: CONNECT_CONFIG,
+      ...state,
+    });
+
+    const { result } = renderHook(() => useStakingContracts());
+    expect(result.current.orderedStakingProgramIds).toEqual([]);
+  });
+
   it('offers no Unstaked option on Polygon', () => {
     setupMocks({
       evmHomeChainId: EvmChainIdMap.Polygon,
