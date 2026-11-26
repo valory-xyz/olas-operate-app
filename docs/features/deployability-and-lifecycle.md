@@ -18,7 +18,7 @@ useServiceDeployment (manual start orchestration)
   │     ├── useServices (selectedService, selectedAgentConfig)
   │     ├── useBalanceAndRefillRequirementsContext (allowStart, hasBalances)
   │     ├── useActiveStakingContractDetails (eviction, eligibility, slots)
-  │     ├── useIsPolySafeService (isOnRetiredProgram, isWithdrawalOnly, Safe type error)
+  │     ├── useRetiredProgramStatus (useIsPolySafeService's retiredSafeState + stakingDetailsState → getRetiredProgramStatus)
   │     ├── getRetiredProgramStatus (with useActiveStakingContractDetails' stakingDetailsState)
   │     ├── useIsInitiallyFunded
   │     ├── useIsAgentGeoRestricted
@@ -79,7 +79,7 @@ SettingsService (backend config)
 
 ### Deployability result shape
 
-Defined as `DeployabilityResult` in `frontend/hooks/useDeployability.ts`. Fields: `isLoading`, `canRun`, `reason` (why `canRun` is false, e.g., `'Phased out'`, `'Under construction'`, `'Low balance'`, `'Evicted'`), `loadingReason` (comma-separated loading sources).
+Defined as `DeployabilityResult` in `frontend/hooks/useDeployability.ts`. Fields: `isLoading`, `canRun`, `reason` (why `canRun` is false, e.g., `'Phased out'`, `'Under construction'`, `'Low balance'`, `'Evicted'`), `loadingReason` (comma-separated loading sources), `isWithdrawalOnlyStart` (the start runs withdrawal-only; `useServiceDeployment` passes it on).
 
 ### SharedProvider context shape
 
@@ -229,7 +229,7 @@ handleStart()
   │
   ├── overrideSelectedServiceStatus(DEPLOYING)
   │
-  ├── startService({ ... createServiceIfMissing: true, withdrawalOnly: useIsPolySafeService().isWithdrawalOnly === true })
+  ├── startService({ ... createServiceIfMissing: true, withdrawalOnly: deployability.isWithdrawalOnlyStart })
   │     ├── On error:
   │     │     ├── showNotification('An error occurred...') — not for gas errors (modal) or PrestartCheckFailedError (agent alert)
   │     │     ├── overrideSelectedServiceStatus(null)

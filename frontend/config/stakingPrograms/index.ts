@@ -27,8 +27,8 @@ export type StakingProgramConfig = {
    * The contract pins `service.multisig.codehash` to the PolySafe proxy
    * (`POLY_SAFE_PROXY_CODEHASH`), so only services deployed with a PolySafe can
    * stake there. Absent → the contract expects a standard Safe proxy.
-   * Do NOT mark these programs `deprecated` while PolySafe services exist —
-   * their users would be left with an empty contract list.
+   * Marking them `deprecated` or `retired` leaves PolySafe services no
+   * compatible contract; retired ones go withdrawal-only on purpose.
    */
   requiresPolySafe?: boolean;
   /**
