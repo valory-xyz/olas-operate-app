@@ -1,6 +1,12 @@
+import { isNil } from 'lodash';
+
 import { MainContentContainer } from '@/components/ui';
 import { useServices, useStakingProgram } from '@/hooks';
-import { isNoStakingProgram, isStakingAvailable } from '@/utils/stakingProgram';
+import {
+  hasUnstakedOption,
+  isNoStakingProgram,
+  isStakingAvailable,
+} from '@/utils/stakingProgram';
 
 import { AgentChat } from './AgentChat';
 import { AgentInfo } from './AgentInfo';
@@ -16,9 +22,29 @@ type OverviewProps = {
 
 export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
   const { selectedAgentConfig, selectedServiceConfigId } = useServices();
-  const { selectedStakingProgramId } = useStakingProgram();
+  const { stakingProgramIdByServiceConfigId } = useStakingProgram();
   const { hasPerformance, hasAgentChat, evmHomeChainId } = selectedAgentConfig;
-  const hasStaking = isStakingAvailable(selectedAgentConfig, evmHomeChainId);
+  const canStake = isStakingAvailable(selectedAgentConfig, evmHomeChainId);
+  const isStakingOptional = hasUnstakedOption(
+    selectedAgentConfig,
+    evmHomeChainId,
+  );
+  // Where staking is optional, the service's own program decides: the
+  // subgraph's latest contract is cached for a day and outlives an unstake.
+  const serviceStakingProgramId = stakingProgramIdByServiceConfigId.get(
+    selectedServiceConfigId ?? '',
+  );
+
+  const renderStaking = () => {
+    if (!canStake) return null;
+    if (!isStakingOptional) return <Staking />;
+    if (isNil(serviceStakingProgramId)) return null;
+    return isNoStakingProgram(serviceStakingProgramId) ? (
+      <NotStaked />
+    ) : (
+      <Staking />
+    );
+  };
 
   if (hasAgentChat) {
     return (
@@ -37,12 +63,7 @@ export const Overview = ({ openProfile, hasVisitedProfile }: OverviewProps) => {
           hasVisitedProfile={hasVisitedProfile}
         />
       )}
-      {hasStaking &&
-        (isNoStakingProgram(selectedStakingProgramId) ? (
-          <NotStaked />
-        ) : (
-          <Staking />
-        ))}
+      {renderStaking()}
       <Wallet />
     </MainContentContainer>
   );

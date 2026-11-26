@@ -41,16 +41,26 @@ jest.mock('../../../../../components/MainPage/Home/Overview/Wallet', () => ({
 const mockUseServices = useServices as jest.Mock;
 const mockUseStakingProgram = useStakingProgram as jest.Mock;
 
+const mockStakingProgram = (serviceStakingProgramId?: string | null) =>
+  mockUseStakingProgram.mockReturnValue({
+    stakingProgramIdByServiceConfigId: new Map(
+      serviceStakingProgramId === undefined
+        ? []
+        : [['sc-1', serviceStakingProgramId]],
+    ),
+  });
+
+/** `serviceStakingProgramId` is the selected service's own stored program. */
 const renderOverview = (
   agentConfig: Record<string, unknown>,
-  selectedStakingProgramId: string | null = 'pearl_beta',
+  serviceStakingProgramId: string | null = 'pearl_beta',
 ) => {
   mockUseServices.mockReturnValue({
     selectedServiceConfigId: 'sc-1',
     selectedAgentConfig: agentConfig,
   });
-  mockUseStakingProgram.mockReturnValue({ selectedStakingProgramId });
-  render(<Overview openProfile={jest.fn()} />);
+  mockStakingProgram(serviceStakingProgramId);
+  return render(<Overview openProfile={jest.fn()} />);
 };
 
 const TODAYS_SECTIONS = ['AgentInfo', 'Performance', 'Staking', 'Wallet'];
@@ -92,6 +102,7 @@ describe('Overview', () => {
     const connectOn = (evmHomeChainId: number) => ({
       hasStaking: false,
       hasPerformance: false,
+      defaultStakingProgramId: 'no_staking',
       stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
       evmHomeChainId,
     });
@@ -113,6 +124,38 @@ describe('Overview', () => {
       expect(screen.queryByText('NotStaked')).toBeNull();
       expect(screen.queryByText('Performance')).toBeNull();
     });
+
+    it('shows the not-staked card as soon as the service is unstaked', () => {
+      // the subgraph's cached contract can outlive an unstake by a day; the
+      // service's own program is what the card follows
+      const { rerender } = renderOverview(
+        connectOn(EvmChainIdMap.Gnosis),
+        'connect_i',
+      );
+      expect(screen.getByText('Staking')).toBeInTheDocument();
+
+      mockStakingProgram('no_staking');
+      rerender(<Overview openProfile={jest.fn()} />);
+
+      expect(screen.getByText('NotStaked')).toBeInTheDocument();
+      expect(screen.queryByText('Staking')).toBeNull();
+    });
+
+    it.each([undefined, null])(
+      'shows neither staking section while the program is unknown (%s)',
+      (serviceStakingProgramId) => {
+        mockUseServices.mockReturnValue({
+          selectedServiceConfigId: 'sc-1',
+          selectedAgentConfig: connectOn(EvmChainIdMap.Gnosis),
+        });
+        mockStakingProgram(serviceStakingProgramId);
+        render(<Overview openProfile={jest.fn()} />);
+
+        expect(screen.queryByText('Staking')).toBeNull();
+        expect(screen.queryByText('NotStaked')).toBeNull();
+        expect(screen.getByText('Wallet')).toBeInTheDocument();
+      },
+    );
 
     it('shows no staking at all on Polygon', () => {
       renderOverview(connectOn(EvmChainIdMap.Polygon), 'no_staking');
