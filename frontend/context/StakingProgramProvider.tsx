@@ -9,7 +9,10 @@ import {
 import { StakingProgramId } from '@/constants';
 import { useActiveStakingProgramId, useServices } from '@/hooks';
 import { Maybe, Nullable } from '@/types';
-import { getServiceStakingProgramId } from '@/utils/stakingProgram';
+import {
+  getServiceStakingProgramId,
+  hasUnstakedOption,
+} from '@/utils/stakingProgram';
 
 export const StakingProgramContext = createContext<{
   isActiveStakingProgramLoaded: boolean;
@@ -60,11 +63,19 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
   // 1) On-chain value (where the user actually staked)
   // 2) If not available, use the selected service (can be updated during migration)
   // 3) Fall back to the default config value
+  // Where staking is optional (Connect) the service's own choice decides, as
+  // `isInStakingMode` does: the subgraph's cached contract can outlive an
+  // unstake, and would gate Start on a contract the agent has left.
   const selectedStakingProgramId = useMemo(() => {
-    if (isLoading) return null;
-
     const serviceSelectedStakingProgramId =
       getServiceStakingProgramId(selectedService);
+
+    if (
+      hasUnstakedOption(selectedAgentConfig, selectedAgentConfig.evmHomeChainId)
+    ) {
+      return serviceSelectedStakingProgramId ?? defaultStakingProgramId;
+    }
+    if (isLoading) return null;
 
     return (
       activeStakingProgramId ||
@@ -75,6 +86,7 @@ export const StakingProgramProvider = ({ children }: PropsWithChildren) => {
     isLoading,
     activeStakingProgramId,
     selectedService,
+    selectedAgentConfig,
     defaultStakingProgramId,
   ]);
 
