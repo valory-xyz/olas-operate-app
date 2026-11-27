@@ -77,6 +77,9 @@ export const useCurrentAchievement = () => {
     currentAchievement,
     markCurrentAchievementAsShown,
     skipCurrentAchievement,
+    // one is current, or about to be made current by the effect above
+    hasPendingAchievement:
+      !!currentAchievement || unshownAchievements.length > 0,
     isLoading,
     isError,
   };

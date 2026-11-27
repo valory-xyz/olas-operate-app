@@ -2,6 +2,7 @@ import { Button, Typography } from 'antd';
 
 import { Alert } from '@/components/ui';
 import { useAgentFundingRequests, useServices } from '@/hooks';
+import { isInStakingMode } from '@/utils/stakingProgram';
 
 const { Text } = Typography;
 
@@ -12,7 +13,15 @@ type AgentLowBalanceAlertProps = {
 export const AgentLowBalanceAlert = ({ onFund }: AgentLowBalanceAlertProps) => {
   const { isAgentBalanceLow, agentTokenRequirementsFormatted } =
     useAgentFundingRequests();
-  const { selectedAgentConfig } = useServices();
+  const { selectedAgentConfig, selectedService } = useServices();
+  // Staking requirements apply only to a staked instance: an unstaked Connect
+  // has none.
+  const hasStakingRequirements =
+    isInStakingMode(
+      selectedAgentConfig,
+      selectedAgentConfig.evmHomeChainId,
+      selectedService,
+    ) === true;
 
   if (!isAgentBalanceLow) return null;
 
@@ -32,10 +41,7 @@ export const AgentLowBalanceAlert = ({ onFund }: AgentLowBalanceAlertProps) => {
             </span>{' '}
             to keep running your agent. It&apos;s needed for the agent to
             perform on-chain activity
-            {selectedAgentConfig.hasStaking
-              ? ' and meet staking requirements'
-              : ''}
-            .
+            {hasStakingRequirements ? ' and meet staking requirements' : ''}.
           </Text>
           <br />
           <Button onClick={onFund} size="small" className="mt-8">

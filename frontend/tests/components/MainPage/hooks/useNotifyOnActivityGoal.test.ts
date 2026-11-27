@@ -123,7 +123,7 @@ describe('useNotifyOnActivityGoal', () => {
     expect(mockUseActivityGoal).toHaveBeenCalledWith(DEFAULT_SERVICE_CONFIG_ID);
   });
 
-  it('stays silent for Connect and does not read its goal', () => {
+  it('stays silent for Connect, on minutes per run, and does not read its goal', () => {
     setRunning(AgentMap.Connect);
     setGoal(makeActivityGoal({ unit: 'minutes', is_met: false }));
     const { rerender } = renderHook(() => useNotifyOnActivityGoal());

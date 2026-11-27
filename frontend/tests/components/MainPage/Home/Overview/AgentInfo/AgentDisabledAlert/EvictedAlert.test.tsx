@@ -18,12 +18,13 @@ jest.mock('../../../../../../../utils/time', () => ({
   formatToShortDateTime: () => 'Nov 18, 10:00',
 }));
 
-const setup = (canRunWhileEvicted?: boolean) => {
+const setup = (canRunWhileEvicted?: boolean, selectedAgentType = 'trader') => {
   (useActiveStakingContractDetails as jest.Mock).mockReturnValue({
     evictionExpiresAt: 1_795_000_000,
   });
   (useServices as jest.Mock).mockReturnValue({
     selectedAgentConfig: { canRunWhileEvicted },
+    selectedAgentType,
   });
   render(<EvictedAlert />);
   return screen.getByTestId('alert').textContent;
@@ -39,6 +40,12 @@ describe('EvictedAlert', () => {
   it('keeps the banner of every other agent as it was', () => {
     expect(setup(undefined)).toBe(
       "Agent is temporarily evicted The agent didn't meet staking requirements for three consecutive epochs, and will be evicted until Nov 18, 10:00 (UTC). You can run it again after the eviction period ends.",
+    );
+  });
+
+  it('tells a Connect agent it is still usable from its coding tool', () => {
+    expect(setup(true, 'connect')).toBe(
+      "Agent is temporarily evicted The agent didn't make its Marketplace request in two epochs in a row, and will be evicted until Nov 18, 10:00 (UTC). Until then it isn't eligible for OLAS activity rewards. You can keep using it from your coding tool.",
     );
   });
 });

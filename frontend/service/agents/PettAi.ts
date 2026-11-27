@@ -16,6 +16,7 @@ import {
   StakingRewardsInfo,
 } from '@/types/Autonolas';
 import { isValidServiceId } from '@/utils';
+import { getNowInSeconds } from '@/utils/time';
 
 import {
   ONE_YEAR,
@@ -82,7 +83,7 @@ export abstract class PettAiService extends StakedAgentService {
     ] = multicallResponse;
 
     const lastMultisigNonces = serviceInfo[2];
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const nowInSeconds = getNowInSeconds();
 
     const isServiceStaked = serviceInfo[2].length > 0;
 
@@ -144,7 +145,7 @@ export abstract class PettAiService extends StakedAgentService {
 
     const multicallResponse = await multicallProvider.all(contractCalls);
     const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const nowInSeconds = getNowInSeconds();
 
     return BigInt(
       Math.max(

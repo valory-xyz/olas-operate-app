@@ -139,7 +139,7 @@ const GeoLocationRestrictionCouldNotLoad = () => (
  * Display the onboarding of the selected agent.
  */
 export const AgentOnboarding = () => {
-  const { goto } = useSetup();
+  const { goto, preselectedAgentType, setPreselectedAgentType } = useSetup();
   const { goto: gotoPage } = usePageState();
   const {
     services,
@@ -149,7 +149,14 @@ export const AgentOnboarding = () => {
   } = useServices();
   const { archivedInstances, unarchiveInstance } = useArchivedAgents();
 
-  const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>();
+  // Opens on the agent an entry point outside Setup asked for (the Connect
+  // staking announcement), consumed once, else with nothing selected.
+  const [selectedAgent, setSelectedAgent] = useState<Optional<AgentType>>(
+    () => preselectedAgentType ?? undefined,
+  );
+  useEffect(() => {
+    if (preselectedAgentType) setPreselectedAgentType(null);
+  }, [preselectedAgentType, setPreselectedAgentType]);
   const [selectedArchivedInstanceId, setSelectedArchivedInstanceId] =
     useState<Optional<string>>();
   const [activeTab, setActiveTab] = useState<AgentTab>(AGENT_TAB.New);
@@ -183,7 +190,8 @@ export const AgentOnboarding = () => {
     }
     setIsCreatingConnect(true);
     try {
-      // Creates the Connect service (no_staking) and routes to funding.
+      // Creates the Connect service (no_staking); `useCreateConnectService`
+      // decides whether staking selection or funding comes next.
       await createConnectService(selectedConnectChain);
     } catch (error) {
       console.error(error);

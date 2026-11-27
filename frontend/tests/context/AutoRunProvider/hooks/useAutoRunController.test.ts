@@ -58,6 +58,9 @@ jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
   fetchDeployabilityForAgent: jest.fn().mockResolvedValue({ canRun: true }),
   getUsableRewardStatus: jest.fn().mockReturnValue(undefined),
   isStakingEpochExpired: jest.fn().mockReturnValue(false),
+  runsOnMinutesPerRun: jest.requireActual(
+    '../../../../context/AutoRunProvider/utils/autoRunHelpers',
+  ).runsOnMinutesPerRun,
 }));
 jest.mock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
@@ -339,11 +342,11 @@ describe('useAutoRunController', () => {
       );
       const signalsArgs = lastCallArgs(useAutoRunSignals);
       expect(signalsArgs.isSelectedDoneForEpoch).toBe(true);
-      expect(signalsArgs.isSelectedNoStakingAgent).toBe(false);
+      expect(signalsArgs.isSelectedOnMinutesPerRun).toBe(false);
       expect(signalsArgs).not.toHaveProperty('isEpochTargetMet');
     });
 
-    it('flags a selected Connect instance as no-staking', () => {
+    it('flags a selected Connect instance as on minutes per run', () => {
       renderHook(() =>
         useAutoRunController(
           makeHookParams({
@@ -352,7 +355,25 @@ describe('useAutoRunController', () => {
           }),
         ),
       );
-      expect(lastCallArgs(useAutoRunSignals).isSelectedNoStakingAgent).toBe(
+      expect(lastCallArgs(useAutoRunSignals).isSelectedOnMinutesPerRun).toBe(
+        true,
+      );
+    });
+
+    it('flags a selected Connect instance as on minutes per run while it is staked', () => {
+      const stakedConnectMeta = {
+        ...connectMeta,
+        stakingProgramId: 'connect_i' as const,
+      };
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({
+            configuredAgents: [traderMeta, stakedConnectMeta],
+            selectedServiceConfigId: MOCK_SERVICE_CONFIG_ID_2,
+          }),
+        ),
+      );
+      expect(lastCallArgs(useAutoRunSignals).isSelectedOnMinutesPerRun).toBe(
         true,
       );
     });

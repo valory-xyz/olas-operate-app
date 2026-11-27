@@ -35,10 +35,11 @@ type UseAutoRunSignalsParams = {
    */
   isSelectedDoneForEpoch: boolean | undefined;
   /**
-   * Selected instance has no staking (Connect). Its done signal comes only
-   * from `refreshRewardsEligibility`, so the selection must not overwrite it.
+   * Selected instance runs on minutes per run (Connect). Its done signal comes
+   * only from `refreshRewardsEligibility`, so the selection must not overwrite
+   * it.
    */
-  isSelectedNoStakingAgent: boolean;
+  isSelectedOnMinutesPerRun: boolean;
   /** Whether the staking epoch has expired without a checkpoint being called. */
   isEpochExpired: boolean;
   /** Selected instance's staking program, stored with its snapshot. */
@@ -73,7 +74,7 @@ export const useAutoRunSignals = ({
   runningServiceConfigId,
   isSelectedAgentDetailsLoading,
   isSelectedDoneForEpoch,
-  isSelectedNoStakingAgent,
+  isSelectedOnMinutesPerRun,
   isEpochExpired,
   selectedStakingProgramId,
   selectedRewardsEpoch,
@@ -193,7 +194,7 @@ export const useAutoRunSignals = ({
   // An unknown value is not written: the last read stays, and is checked when used.
   useEffect(() => {
     if (!selectedServiceConfigId) return;
-    if (isSelectedNoStakingAgent) return;
+    if (isSelectedOnMinutesPerRun) return;
     if (isSelectedDoneForEpoch === undefined) return;
     if (!selectedStakingProgramId || !selectedRewardsEpoch) return;
     if (!selectedRewardReadAt) return;
@@ -214,7 +215,7 @@ export const useAutoRunSignals = ({
   }, [
     isSelectedDoneForEpoch,
     isEpochExpired,
-    isSelectedNoStakingAgent,
+    isSelectedOnMinutesPerRun,
     selectedActivityGoal,
     selectedRewardsEpoch,
     selectedRewardReadAt,

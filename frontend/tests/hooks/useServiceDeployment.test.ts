@@ -1,6 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
+import { AGENT_CONFIG } from '../../config/agents';
+import { AgentMap } from '../../constants/agent';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useBalanceContext } from '../../hooks/useBalanceContext';
 import { useDeployability } from '../../hooks/useDeployability';
@@ -280,6 +282,45 @@ describe('useServiceDeployment', () => {
       const { result } = renderHook(() => useServiceDeployment());
       expect(result.current.isLoading).toBe(false);
     });
+  });
+
+  describe('isLoading — Connect, which can stake only on some chains', () => {
+    /** Connect's real config on a chain and program, its staking details not loaded. */
+    const setupConnectOn = (
+      evmHomeChainId: number,
+      middlewareHomeChainId: string,
+      selectedStakingProgramId: string,
+    ) => {
+      mockUseServices.mockReturnValue({
+        ...mockUseServices(),
+        selectedAgentConfig: {
+          ...AGENT_CONFIG[AgentMap.Connect],
+          evmHomeChainId,
+          middlewareHomeChainId,
+        },
+        selectedAgentType: AgentMap.Connect,
+      } as unknown as ReturnType<typeof useServices>);
+      mockUseStakingProgram.mockReturnValue({
+        selectedStakingProgramId,
+      } as unknown as ReturnType<typeof useStakingProgram>);
+      mockUseStakingContractContext.mockReturnValue({
+        ...mockUseStakingContractContext(),
+        isAllStakingContractDetailsRecordLoaded: false,
+      } as unknown as ReturnType<typeof useStakingContractContext>);
+    };
+
+    it.each([
+      ['staked on Gnosis', 100, 'gnosis', 'connect_i', true],
+      ['unstaked on Gnosis', 100, 'gnosis', 'no_staking', false],
+      ['on Polygon', 137, 'polygon', 'no_staking', false],
+    ])(
+      'Connect %s: waits for the staking details as expected',
+      (_, evmHomeChainId, middlewareHomeChainId, programId, expected) => {
+        setupConnectOn(evmHomeChainId, middlewareHomeChainId, programId);
+        const { result } = renderHook(() => useServiceDeployment());
+        expect(result.current.isLoading).toBe(expected);
+      },
+    );
   });
 
   describe('isDeployable', () => {

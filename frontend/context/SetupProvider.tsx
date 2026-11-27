@@ -6,8 +6,8 @@ import {
   useState,
 } from 'react';
 
-import { SETUP_SCREEN, SetupScreen } from '@/constants';
-import { Address, BackupWalletType, Maybe } from '@/types';
+import { AgentType, SETUP_SCREEN, SetupScreen } from '@/constants';
+import { Address, BackupWalletType, Maybe, Nullable } from '@/types';
 
 type SetupObjectType = {
   state: SetupScreen;
@@ -31,6 +31,11 @@ type SetupContextType = {
   // so the apply must succeed before onboarding moves on.
   isReplacingBackup: boolean;
   setIsReplacingBackup: (isReplacingBackup: boolean) => void;
+  // An agent an entry point outside Setup asks AgentOnboarding to open on
+  // (the Connect staking announcement). Consumed when AgentOnboarding mounts,
+  // so a Back inside Setup opens with nothing selected.
+  preselectedAgentType: Nullable<AgentType>;
+  setPreselectedAgentType: (agentType: Nullable<AgentType>) => void;
 };
 
 export const SetupContext = createContext<SetupContextType>({
@@ -44,6 +49,8 @@ export const SetupContext = createContext<SetupContextType>({
   setPassword: () => {},
   isReplacingBackup: false,
   setIsReplacingBackup: () => {},
+  preselectedAgentType: null,
+  setPreselectedAgentType: () => {},
 });
 
 export const SetupProvider = ({ children }: PropsWithChildren) => {
@@ -54,6 +61,8 @@ export const SetupProvider = ({ children }: PropsWithChildren) => {
   });
   const [password, setPassword] = useState<string | null>(null);
   const [isReplacingBackup, setIsReplacingBackup] = useState(false);
+  const [preselectedAgentType, setPreselectedAgentType] =
+    useState<Nullable<AgentType>>(null);
 
   return (
     <SetupContext.Provider
@@ -64,6 +73,8 @@ export const SetupProvider = ({ children }: PropsWithChildren) => {
         setPassword,
         isReplacingBackup,
         setIsReplacingBackup,
+        preselectedAgentType,
+        setPreselectedAgentType,
       }}
     >
       {children}

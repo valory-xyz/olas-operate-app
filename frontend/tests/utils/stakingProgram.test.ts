@@ -9,7 +9,12 @@ import {
   deriveStakingProgramId,
   EVICTION_RUN_START_MARGIN_SECONDS,
   getCompatibleStakingProgramIds,
+  getServiceStakingProgramId,
+  hasFreeServiceSlot,
+  hasUnstakedOption,
+  isInStakingMode,
   isNoStakingProgram,
+  isStakingAvailable,
   isStakingProgramCompatibleWithMultisig,
   runsInsideEvictionWindow,
 } from '../../utils/stakingProgram';
@@ -219,5 +224,137 @@ describe('runsInsideEvictionWindow', () => {
     expect(
       run({ evictionExpiresAt: NOW + EVICTION_RUN_START_MARGIN_SECONDS + 1 }),
     ).toBe(true);
+  });
+});
+
+describe('isStakingAvailable', () => {
+  const connect = {
+    hasStaking: false,
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+  };
+
+  it.each([
+    [EvmChainIdMap.Gnosis, true],
+    [EvmChainIdMap.Robinhood, true],
+    [EvmChainIdMap.Polygon, false],
+  ])(
+    'decides per chain from stakingChains (chain %s → %s)',
+    (chainId, expected) => {
+      expect(isStakingAvailable(connect, chainId)).toBe(expected);
+    },
+  );
+
+  it.each([true, false])(
+    'falls back to hasStaking (%s) without stakingChains',
+    (hasStaking) => {
+      expect(isStakingAvailable({ hasStaking }, EvmChainIdMap.Gnosis)).toBe(
+        hasStaking,
+      );
+    },
+  );
+});
+
+describe('hasUnstakedOption', () => {
+  const connect = {
+    hasStaking: false,
+    defaultStakingProgramId: 'no_staking' as StakingProgramId,
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+  };
+
+  it('is true where an agent defaulting to no_staking can stake', () => {
+    expect(hasUnstakedOption(connect, EvmChainIdMap.Gnosis)).toBe(true);
+  });
+
+  it('is false where it cannot stake', () => {
+    expect(hasUnstakedOption(connect, EvmChainIdMap.Polygon)).toBe(false);
+  });
+
+  it('is false for an agent that always stakes', () => {
+    expect(
+      hasUnstakedOption(
+        {
+          hasStaking: true,
+          defaultStakingProgramId: STAKING_PROGRAM_IDS.OmenstratI,
+        },
+        EvmChainIdMap.Gnosis,
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('getServiceStakingProgramId', () => {
+  const serviceIn = (staking_program_id?: string) => ({
+    home_chain: 'gnosis',
+    chain_configs: {
+      gnosis: { chain_data: { user_params: { staking_program_id } } },
+      base: { chain_data: { user_params: { staking_program_id: 'other' } } },
+    },
+  });
+
+  it("reads the home chain's stored program", () => {
+    expect(
+      getServiceStakingProgramId(
+        serviceIn('connect_i') as unknown as Parameters<
+          typeof getServiceStakingProgramId
+        >[0],
+      ),
+    ).toBe('connect_i');
+  });
+
+  it('is undefined with no service', () => {
+    expect(getServiceStakingProgramId(undefined)).toBeUndefined();
+  });
+});
+
+describe('isInStakingMode', () => {
+  const CONNECT = {
+    hasStaking: false,
+    defaultStakingProgramId: 'no_staking' as const,
+    stakingChains: [EvmChainIdMap.Gnosis],
+  };
+  const service = (staking_program_id: string | null) =>
+    ({
+      home_chain: 'gnosis',
+      chain_configs: {
+        gnosis: { chain_data: { user_params: { staking_program_id } } },
+      },
+    }) as unknown as Parameters<typeof isInStakingMode>[2];
+
+  it.each([
+    [
+      'an agent that cannot stake there',
+      { hasStaking: false },
+      'connect_i',
+      false,
+    ],
+    [
+      'an agent that always stakes, program unknown',
+      { hasStaking: true },
+      null,
+      true,
+    ],
+    ['an optional agent, staked', CONNECT, 'connect_i', true],
+    ['an optional agent, unstaked', CONNECT, 'no_staking', false],
+    ['an optional agent, program unknown', CONNECT, null, undefined],
+  ])('answers %s', (_, agentConfig, stakingProgramId, expected) => {
+    expect(
+      isInStakingMode(
+        agentConfig as Parameters<typeof isInStakingMode>[0],
+        EvmChainIdMap.Gnosis,
+        service(stakingProgramId),
+      ),
+    ).toBe(expected);
+  });
+});
+
+describe('hasFreeServiceSlot', () => {
+  it.each([
+    ['a slot is free', { serviceIds: [1], maxNumServices: 2 }, true],
+    ['every slot is taken', { serviceIds: [1, 2], maxNumServices: 2 }, false],
+    ['the ids are unknown', { maxNumServices: 2 }, null],
+    ['the limit is unknown', { serviceIds: [1] }, null],
+    ['there are no details', undefined, null],
+  ])('is right when %s', (_, details, expected) => {
+    expect(hasFreeServiceSlot(details)).toBe(expected);
   });
 });

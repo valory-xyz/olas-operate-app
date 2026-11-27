@@ -15,6 +15,7 @@ import {
   StakingContractDetails,
   StakingRewardsInfo,
 } from '@/types';
+import { getNowInSeconds } from '@/utils/time';
 
 import {
   ONE_YEAR,
@@ -82,7 +83,7 @@ export abstract class Polystrat extends StakedAgentService {
       tsCheckpoint,
     ] = multicallResponse;
 
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const nowInSeconds = getNowInSeconds();
 
     const livenessWeightedRequestThreshold =
       Math.ceil(Math.max(livenessPeriod, nowInSeconds - tsCheckpoint)) *
@@ -142,7 +143,7 @@ export abstract class Polystrat extends StakedAgentService {
 
     const multicallResponse = await multicallProvider.all(contractCalls);
     const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const nowInSeconds = getNowInSeconds();
 
     return BigInt(
       Math.max(

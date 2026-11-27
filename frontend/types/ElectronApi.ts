@@ -34,6 +34,8 @@ export type PearlStore = {
   firstStakingRewardAchieved?: boolean;
   /** The agent that earned the first staking reward, written with the flag above. */
   firstStakingRewardAgentType?: AgentType;
+  /** Set once the "Staking for Connect agents" announcement was answered. */
+  connectStakingAnnouncementSeen?: boolean;
 
   /** @deprecated Use `lastSelectedServiceConfigId` instead. Kept for one-time migration only. */
   lastSelectedAgentType?: AgentType;

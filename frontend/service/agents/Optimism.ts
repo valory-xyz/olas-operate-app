@@ -18,6 +18,7 @@ import {
   StakingRewardsInfo,
 } from '@/types';
 import { isValidServiceId } from '@/utils';
+import { getNowInSeconds } from '@/utils/time';
 
 import {
   ONE_YEAR,
@@ -25,8 +26,6 @@ import {
 } from './shared-services/StakedAgentService';
 
 const REQUESTS_SAFETY_MARGIN = 1;
-
-const getNowInSeconds = () => Math.floor(Date.now() / 1000);
 
 export abstract class OptimismService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({

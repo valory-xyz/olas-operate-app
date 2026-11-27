@@ -143,6 +143,8 @@ const renderWithState = (state: SetupScreen | string) => {
         },
         setSetupObject: jest.fn(),
         password: null,
+        preselectedAgentType: null,
+        setPreselectedAgentType: jest.fn(),
         setPassword: jest.fn(),
         isReplacingBackup: false,
         setIsReplacingBackup: jest.fn(),

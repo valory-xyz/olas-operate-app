@@ -48,6 +48,33 @@ describe('useCurrentAchievement', () => {
   it('returns null currentAchievement when no achievements', () => {
     const { result } = renderHook(() => useCurrentAchievement());
     expect(result.current.currentAchievement).toBeNull();
+    expect(result.current.hasPendingAchievement).toBe(false);
+  });
+
+  it('reports a pending achievement until every one is skipped', async () => {
+    mockUseAchievements.mockReturnValue({
+      achievements: [makeAchievement('ach-1')],
+      isLoading: false,
+      isError: false,
+    });
+
+    const pendingPerRender: boolean[] = [];
+    const { result } = renderHook(() => {
+      const current = useCurrentAchievement();
+      pendingPerRender.push(current.hasPendingAchievement);
+      return current;
+    });
+    // pending from the first render, before an effect makes it current
+    expect(pendingPerRender[0]).toBe(true);
+    await waitFor(() => {
+      expect(result.current.currentAchievement?.achievement_id).toBe('ach-1');
+    });
+
+    act(() => result.current.skipCurrentAchievement());
+
+    await waitFor(() =>
+      expect(result.current.hasPendingAchievement).toBe(false),
+    );
   });
 
   it('auto-shows the first unshown achievement', async () => {

@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { AgentStaking } from '@/components/AgentStaking/AgentStaking';
 import { ConfirmSwitch } from '@/components/ConfirmSwitch/ConfirmSwitch';
 import { DepositOlasForStaking } from '@/components/ConfirmSwitch/DepositOlasForStaking';
+import { ConnectStakingAnnouncement } from '@/components/ConnectStakingAnnouncement';
 import { OnboardingSurvey } from '@/components/OnboardingSurvey';
 import { HelpAndSupport } from '@/components/Pages/HelpAndSupportPage';
 import { ReleaseNotesPage } from '@/components/Pages/ReleaseNotesPage';
@@ -110,6 +111,7 @@ export const Main = () => {
         <MainDraggableTopBar $isSplitScreenPage={isSplitScreenPage} />
         <AchievementModal />
         <OnboardingSurvey />
+        <ConnectStakingAnnouncement />
         <ContentTransition
           animationKey={pageState}
           className="flex-auto flex flex-col"
