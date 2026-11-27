@@ -33,6 +33,7 @@ type ContextValue = {
     StakingContractDetails & ServiceStakingDetails
   > | null;
   isSelectedStakingContractDetailsLoading?: boolean;
+  isSelectedStakingContractDetailsError?: boolean;
   allStakingContractDetailsRecord?: Record<
     StakingProgramId,
     Partial<StakingContractDetails>
@@ -75,6 +76,9 @@ function makeWrapper(overrides: ContextValue = {}) {
               overrides.selectedStakingContractDetails ?? null,
             isSelectedStakingContractDetailsLoading:
               overrides.isSelectedStakingContractDetailsLoading ?? false,
+            isSelectedStakingContractDetailsError:
+              overrides.isSelectedStakingContractDetailsError ?? false,
+            isSelectedStakingContractDetailsFetching: false,
             allStakingContractDetailsRecord:
               overrides.allStakingContractDetailsRecord,
             isAllStakingContractDetailsRecordLoaded:
@@ -508,6 +512,110 @@ describe('useActiveStakingContractDetails', () => {
         wrapper,
       });
       expect(result.current.isServiceStakedForMinimumDuration).toBe(false);
+    });
+  });
+
+  // ---- stakingDetailsState ----
+
+  describe('stakingDetailsState', () => {
+    const START = DEFAULT_TS_CHECKPOINT;
+    const renderLoaded = (
+      serviceStakingState: StakingState,
+      secondsSinceStart: number,
+    ) => {
+      jest
+        .spyOn(Date, 'now')
+        .mockReturnValue((START + secondsSinceStart) * 1000);
+      const wrapper = makeWrapper({
+        selectedStakingContractDetails: {
+          ...makeStakingContractDetails({
+            minimumStakingDuration: DEFAULT_LIVENESS_PERIOD_S,
+          }),
+          ...makeServiceStakingDetails({
+            serviceStakingState,
+            serviceStakingStartTime: START,
+          }),
+        },
+      });
+      return renderHook(() => useActiveStakingContractDetails(), { wrapper });
+    };
+
+    it.each([
+      ['staked', StakingState.Staked],
+      ['evicted', StakingState.Evicted],
+    ])('is in the minimum period while %s inside it', (_, state) => {
+      const { result } = renderLoaded(state, 10);
+      expect(result.current.stakingDetailsState).toEqual({
+        state: 'loaded',
+        placement: 'inMinimumPeriod',
+        cooldownEndsAt: START + DEFAULT_LIVENESS_PERIOD_S,
+      });
+    });
+
+    it('is past the minimum period once it is over, still in the contract', () => {
+      const { result } = renderLoaded(
+        StakingState.Staked,
+        DEFAULT_LIVENESS_PERIOD_S,
+      );
+      expect(result.current.stakingDetailsState).toEqual({
+        state: 'loaded',
+        placement: 'pastMinimumPeriod',
+      });
+    });
+
+    it('is out of the contract once unstaked, even inside the period', () => {
+      const { result } = renderLoaded(StakingState.NotStaked, 10);
+      expect(result.current.stakingDetailsState).toEqual({
+        state: 'loaded',
+        placement: 'outOfContract',
+      });
+    });
+
+    it('is the same object across renders with unchanged inputs', () => {
+      const { result, rerender } = renderLoaded(StakingState.Staked, 10);
+      const first = result.current.stakingDetailsState;
+      rerender();
+      expect(result.current.stakingDetailsState).toBe(first);
+    });
+
+    it('is loading while the details reload, even if the stale ones were in the period', () => {
+      jest
+        .spyOn(Date, 'now')
+        .mockReturnValue((DEFAULT_TS_CHECKPOINT + 10) * 1000);
+      const wrapper = makeWrapper({
+        isSelectedStakingContractDetailsLoading: true,
+        selectedStakingContractDetails: {
+          ...makeStakingContractDetails({
+            minimumStakingDuration: DEFAULT_LIVENESS_PERIOD_S,
+          }),
+          ...makeServiceStakingDetails({
+            serviceStakingState: StakingState.Staked,
+            serviceStakingStartTime: DEFAULT_TS_CHECKPOINT,
+          }),
+        },
+      });
+      const { result } = renderHook(() => useActiveStakingContractDetails(), {
+        wrapper,
+      });
+      expect(result.current.stakingDetailsState).toEqual({ state: 'loading' });
+    });
+
+    it('is an error on a failed read, not "unstaked"', () => {
+      const wrapper = makeWrapper({
+        isSelectedStakingContractDetailsError: true,
+      });
+      const { result } = renderHook(() => useActiveStakingContractDetails(), {
+        wrapper,
+      });
+      expect(result.current.stakingDetailsState).toEqual({ state: 'error' });
+    });
+
+    it('is loading without details and without an error', () => {
+      const wrapper = makeWrapper({ selectedStakingContractDetails: null });
+      const { result } = renderHook(() => useActiveStakingContractDetails(), {
+        wrapper,
+      });
+      expect(result.current.stakingDetailsState).toEqual({ state: 'loading' });
     });
   });
 

@@ -1,11 +1,16 @@
 import { isNil } from 'lodash';
-import { useContext } from 'react';
+import { useContext, useMemo } from 'react';
 
 import { StakingProgramId } from '@/constants';
 import { StakingContractDetailsContext } from '@/context/StakingContractDetailsProvider';
 import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { Maybe, StakingState } from '@/types';
-import { hasFreeServiceSlot, isNoStakingProgram } from '@/utils/stakingProgram';
+import {
+  getLoadedRetiredProgramStakingDetails,
+  hasFreeServiceSlot,
+  isNoStakingProgram,
+  RetiredProgramStakingDetails,
+} from '@/utils/stakingProgram';
 
 export const useStakingContractContext = () =>
   useContext(StakingContractDetailsContext);
@@ -20,6 +25,9 @@ export const useActiveStakingContractDetails = () => {
   const {
     selectedStakingContractDetails,
     isSelectedStakingContractDetailsLoading,
+    isSelectedStakingContractDetailsError,
+    isSelectedStakingContractDetailsFetching,
+    refetchSelectedStakingContractDetails,
   } = useStakingContractContext();
   const { selectedStakingProgramId } = useContext(StakingProgramContext);
 
@@ -73,9 +81,36 @@ export const useActiveStakingContractDetails = () => {
     );
   })();
 
+  const isServiceInContract = isServiceStaked || isAgentEvicted;
+
   // Eviction expire time in seconds
   const evictionExpiresAt =
     (serviceStakingStartTime ?? 0) + (minimumStakingDuration ?? 0);
+
+  // Loaded and present: a failed read must not pass for "unstaked".
+  const hasStakingDetails =
+    !isSelectedStakingContractDetailsLoading &&
+    !isNil(selectedStakingContractDetails);
+
+  // Memoised: the alert's transition re-renders on every new object.
+  const stakingDetailsState = useMemo((): RetiredProgramStakingDetails => {
+    if (hasStakingDetails) {
+      return getLoadedRetiredProgramStakingDetails({
+        isServiceInContract,
+        isServiceStakedForMinimumDuration,
+        cooldownEndsAt: evictionExpiresAt,
+      });
+    }
+    return isSelectedStakingContractDetailsError
+      ? { state: 'error' }
+      : { state: 'loading' };
+  }, [
+    hasStakingDetails,
+    isServiceInContract,
+    isServiceStakedForMinimumDuration,
+    evictionExpiresAt,
+    isSelectedStakingContractDetailsError,
+  ]);
 
   const isEligibleForStaking =
     !isNil(hasEnoughRewardsAndSlots) &&
@@ -86,6 +121,9 @@ export const useActiveStakingContractDetails = () => {
     isEligibleForStaking,
     isServiceStakedForMinimumDuration,
     isServiceStaked,
+    stakingDetailsState,
+    isSelectedStakingContractDetailsFetching,
+    refetchSelectedStakingContractDetails,
     evictionExpiresAt,
     isSelectedStakingContractDetailsLoading,
     selectedStakingContractDetails,

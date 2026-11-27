@@ -37,6 +37,9 @@ describe('BASE_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.BasiusI,
       STAKING_PROGRAM_IDS.BasiusII,
       STAKING_PROGRAM_IDS.BasiusIII,
+      STAKING_PROGRAM_IDS.BasiusIV,
+      STAKING_PROGRAM_IDS.BasiusV,
+      STAKING_PROGRAM_IDS.BasiusVI,
     ];
     for (const id of expectedIds) {
       expect(BASE_STAKING_PROGRAMS[id]).toBeDefined();
@@ -160,6 +163,9 @@ describe('BASE_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.BasiusI,
       STAKING_PROGRAM_IDS.BasiusII,
       STAKING_PROGRAM_IDS.BasiusIII,
+      STAKING_PROGRAM_IDS.BasiusIV,
+      STAKING_PROGRAM_IDS.BasiusV,
+      STAKING_PROGRAM_IDS.BasiusVI,
     ];
 
     it('support only the Basius agent', () => {

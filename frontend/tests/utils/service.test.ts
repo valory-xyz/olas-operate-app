@@ -10,11 +10,15 @@ import {
   CONNECT_SERVICE_TEMPLATE,
   connectFundRequirementsFor,
 } from '../../constants/serviceTemplates/service/connect';
+import { PREDICT_POLYMARKET_SERVICE_TEMPLATE } from '../../constants/serviceTemplates/service/trader';
+import { STAKING_PROGRAM_IDS } from '../../constants/stakingProgram';
 import { AgentConfig } from '../../types/Agent';
 import { Service, ServiceTemplate } from '../../types/Service';
 import {
+  enableWithdrawalOnlyMode,
   getServiceEvmChainId,
   getServiceInstanceName,
+  isInWithdrawalOnlyMode,
   isValidServiceId,
   matchesAgentConfig,
   onDummyServiceCreation,
@@ -45,6 +49,9 @@ jest.mock('../../constants/serviceTemplates', () => {
   const {
     CONNECT_SERVICE_TEMPLATE: connectTemplate,
   } = require('../../constants/serviceTemplates/service/connect');
+  const {
+    PREDICT_POLYMARKET_SERVICE_TEMPLATE: polystratTemplate,
+  } = require('../../constants/serviceTemplates/service/trader');
   return {
     KPI_DESC_PREFIX: '[Pearl service]',
     SERVICE_TEMPLATES: [
@@ -94,6 +101,7 @@ jest.mock('../../constants/serviceTemplates', () => {
         },
       },
       connectTemplate,
+      polystratTemplate,
     ],
   };
 });
@@ -172,11 +180,198 @@ describe('isValidServiceId', () => {
   });
 });
 
+/** A Polystrat service in sync with its template, with `user_params` overrides. */
+const createPolystratService = ({
+  stakingProgramId = STAKING_PROGRAM_IDS.PolystratII,
+  disableTrading = 'false',
+  hash = PREDICT_POLYMARKET_SERVICE_TEMPLATE.hash,
+}: {
+  stakingProgramId?: StakingProgramId;
+  disableTrading?: string;
+  hash?: string;
+} = {}) => {
+  const template = PREDICT_POLYMARKET_SERVICE_TEMPLATE;
+  return {
+    service_config_id: SERVICE_CONFIG_ID,
+    name: template.name,
+    hash,
+    description: template.description,
+    home_chain: template.home_chain,
+    env_variables: {
+      ...template.env_variables,
+      DISABLE_TRADING: {
+        ...template.env_variables.DISABLE_TRADING,
+        value: disableTrading,
+      },
+    },
+    chain_configs: {
+      [template.home_chain]: {
+        chain_data: {
+          user_params: {
+            staking_program_id: stakingProgramId,
+            fund_requirements:
+              template.configurations[template.home_chain]?.fund_requirements,
+          },
+        },
+      },
+    },
+    agent_release: template.agent_release,
+  } as unknown as Service;
+};
+
+describe('isInWithdrawalOnlyMode', () => {
+  it.each([
+    ['no_staking', 'true', true],
+    ['no_staking', 'false', false],
+    [STAKING_PROGRAM_IDS.PolystratII, 'true', false],
+  ] as const)(
+    'staking_program_id=%s, DISABLE_TRADING=%s -> %s',
+    (stakingProgramId, disableTrading, expected) => {
+      expect(
+        isInWithdrawalOnlyMode(
+          createPolystratService({ stakingProgramId, disableTrading }),
+        ),
+      ).toBe(expected);
+    },
+  );
+});
+
+describe('enableWithdrawalOnlyMode', () => {
+  it('PATCHes staking_program_id=no_staking and DISABLE_TRADING=true', async () => {
+    await enableWithdrawalOnlyMode(
+      createPolystratService(),
+      AgentMap.Polystrat,
+    );
+
+    expect(mockUpdateService).toHaveBeenCalledWith({
+      serviceConfigId: SERVICE_CONFIG_ID,
+      partialServiceTemplate: {
+        configurations: {
+          [MiddlewareChainMap.POLYGON]: { staking_program_id: 'no_staking' },
+        },
+        env_variables: {
+          DISABLE_TRADING: {
+            ...PREDICT_POLYMARKET_SERVICE_TEMPLATE.env_variables
+              .DISABLE_TRADING,
+            value: 'true',
+          },
+        },
+      },
+    });
+  });
+
+  it('sends no PATCH when the service is already in withdrawal-only mode', async () => {
+    await enableWithdrawalOnlyMode(
+      createPolystratService({
+        stakingProgramId: 'no_staking',
+        disableTrading: 'true',
+      }),
+      AgentMap.Polystrat,
+    );
+
+    expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+
+  it('names the service when the PATCH fails, keeping the cause', async () => {
+    const cause = new Error('Failed to update service');
+    mockUpdateService.mockRejectedValueOnce(cause);
+
+    const error = await enableWithdrawalOnlyMode(
+      createPolystratService(),
+      AgentMap.Polystrat,
+    ).catch((e: Error) => e);
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe(
+      `Couldn't enable withdrawal-only mode for ${SERVICE_CONFIG_ID}: Failed to update service`,
+    );
+    expect((error as Error).cause).toBe(cause);
+  });
+
+  it('refuses an agent whose template has no DISABLE_TRADING', async () => {
+    await expect(
+      enableWithdrawalOnlyMode(createService(), AgentMap.AgentsFun),
+    ).rejects.toThrow('memeooorr has no DISABLE_TRADING');
+    expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+});
+
+describe('template sync, then withdrawal-only mode', () => {
+  it('keeps DISABLE_TRADING=true through a PUT replacement of the env set', async () => {
+    const base = createPolystratService({
+      stakingProgramId: 'no_staking',
+      disableTrading: 'true',
+    });
+    // A key the template dropped forces the PUT branch.
+    const service = {
+      ...base,
+      env_variables: {
+        ...base.env_variables,
+        REMOVED_VARIABLE: { value: 'legacy' },
+      },
+    } as unknown as Service;
+
+    await updateServiceIfNeeded(service, AgentMap.Polystrat);
+    await enableWithdrawalOnlyMode(service, AgentMap.Polystrat);
+
+    expect(mockPutService).toHaveBeenCalledTimes(1);
+    const [{ partialServiceTemplate }] = mockPutService.mock.calls[0];
+    expect(partialServiceTemplate.env_variables.DISABLE_TRADING).toEqual({
+      ...PREDICT_POLYMARKET_SERVICE_TEMPLATE.env_variables.DISABLE_TRADING,
+      value: 'true',
+    });
+    expect(
+      partialServiceTemplate.env_variables.REMOVED_VARIABLE,
+    ).toBeUndefined();
+  });
+
+  it("sends the template's default for a USER variable the service doesn't have yet", async () => {
+    // A Polystrat service created before DISABLE_TRADING existed.
+    const base = createPolystratService();
+    const { DISABLE_TRADING: _omitted, ...envWithoutDisableTrading } =
+      base.env_variables;
+    const service = {
+      ...base,
+      env_variables: {
+        ...envWithoutDisableTrading,
+        REMOVED_VARIABLE: { value: 'legacy' },
+      },
+    } as unknown as Service;
+
+    await updateServiceIfNeeded(service, AgentMap.Polystrat);
+
+    const [{ partialServiceTemplate }] = mockPutService.mock.calls[0];
+    expect(partialServiceTemplate.env_variables.DISABLE_TRADING).toEqual(
+      PREDICT_POLYMARKET_SERVICE_TEMPLATE.env_variables.DISABLE_TRADING,
+    );
+  });
+});
+
 describe('updateServiceIfNeeded', () => {
   it('does not update when no template is matched', async () => {
     const service = createService({ name: 'Unknown service' });
     await updateServiceIfNeeded(service, AgentMap.PredictTrader);
     expect(mockUpdateService).not.toHaveBeenCalled();
+  });
+
+  it("keeps a withdrawal-only DISABLE_TRADING=true out of the template sync's PATCH", async () => {
+    // A stale hash forces a PATCH, so the env diff is actually sent.
+    const service = createPolystratService({
+      disableTrading: 'true',
+      hash: 'bafy-stale-hash',
+    });
+
+    await updateServiceIfNeeded(service, AgentMap.Polystrat);
+
+    expect(mockUpdateService).toHaveBeenCalledTimes(1);
+    const [{ partialServiceTemplate }] = mockUpdateService.mock.calls[0];
+    expect(partialServiceTemplate.hash).toBe(
+      PREDICT_POLYMARKET_SERVICE_TEMPLATE.hash,
+    );
+    expect(
+      partialServiceTemplate.env_variables?.DISABLE_TRADING,
+    ).toBeUndefined();
+    expect(mockPutService).not.toHaveBeenCalled();
   });
 
   it('does not update when the service already matches the template', async () => {
@@ -360,12 +555,13 @@ describe('updateServiceIfNeeded', () => {
     expect(mockUpdateService).not.toHaveBeenCalled();
   });
 
-  it('replaces env_variables via PUT when the service has stale keys not in template', async () => {
+  it('replaces env_variables via PUT when the service has stale keys not in template, keeping only USER values', async () => {
     const service = createService({
       env_variables: {
-        RESET_PAUSE_DURATION: { value: '300' },
-        STORE_PATH: { value: 'persistent_data/' },
-        PERSONA: { value: '' },
+        // FIXED and COMPUTED values that differ go back to the template's.
+        RESET_PAUSE_DURATION: { value: '60' },
+        STORE_PATH: { value: 'elsewhere/' },
+        PERSONA: { value: 'A curious agent' },
         REMOVED_VARIABLE: { value: 'legacy' },
       },
     });
@@ -389,10 +585,11 @@ describe('updateServiceIfNeeded', () => {
             value: 'persistent_data/',
             provision_type: 'computed',
           },
+          // A USER value is the service's, not the template's default.
           PERSONA: {
             name: 'Persona description',
             description: '',
-            value: '',
+            value: 'A curious agent',
             provision_type: 'user',
           },
         },

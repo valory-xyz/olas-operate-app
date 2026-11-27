@@ -130,6 +130,15 @@ export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.OmenstratVII]: getRequesterActivityCheckerContract(
     '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
   ),
+  [STAKING_PROGRAM_IDS.OmenstratVIII]: getRequesterActivityCheckerContract(
+    '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  ),
+  [STAKING_PROGRAM_IDS.OmenstratIX]: getRequesterActivityCheckerContract(
+    '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  ),
+  [STAKING_PROGRAM_IDS.OmenstratX]: getRequesterActivityCheckerContract(
+    '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  ),
   // Connect — the same V2 requester activity checker as Omenstrat.
   [STAKING_PROGRAM_IDS.ConnectGnosisI]: getRequesterActivityCheckerContract(
     '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
@@ -186,6 +195,15 @@ export const BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.BasiusIII]: getRequesterActivityCheckerContract(
     '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
   ),
+  [STAKING_PROGRAM_IDS.BasiusIV]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
+  [STAKING_PROGRAM_IDS.BasiusV]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
+  [STAKING_PROGRAM_IDS.BasiusVI]: getRequesterActivityCheckerContract(
+    '0xE73C4e90983aa65d42b2de968E0C8F25Ced835A8',
+  ),
 } as const;
 
 export const MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
@@ -232,6 +250,15 @@ export const OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.OptimusIII]: getRequesterActivityCheckerContract(
     '0x408dCA2b565f5eC7779C181870feFb51Ed67C3F4',
   ),
+  [STAKING_PROGRAM_IDS.OptimusIV]: getRequesterActivityCheckerContract(
+    '0x408dCA2b565f5eC7779C181870feFb51Ed67C3F4',
+  ),
+  [STAKING_PROGRAM_IDS.OptimusV]: getRequesterActivityCheckerContract(
+    '0x408dCA2b565f5eC7779C181870feFb51Ed67C3F4',
+  ),
+  [STAKING_PROGRAM_IDS.OptimusVI]: getRequesterActivityCheckerContract(
+    '0x408dCA2b565f5eC7779C181870feFb51Ed67C3F4',
+  ),
 } as const;
 
 export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
@@ -264,6 +291,15 @@ export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
     '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
   ),
   [STAKING_PROGRAM_IDS.PolystratVI]: getRequesterActivityCheckerContract(
+    '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  ),
+  [STAKING_PROGRAM_IDS.PolystratVII]: getRequesterActivityCheckerContract(
+    '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  ),
+  [STAKING_PROGRAM_IDS.PolystratVIII]: getRequesterActivityCheckerContract(
+    '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
+  ),
+  [STAKING_PROGRAM_IDS.PolystratIX]: getRequesterActivityCheckerContract(
     '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
   ),
 } as const;

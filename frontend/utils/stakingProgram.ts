@@ -7,6 +7,7 @@ import type {
 import type { AgentType, EvmChainId } from '@/constants';
 import {
   NO_STAKING_PROGRAM_ID,
+  RETIRED_STAKING_PROGRAM_COPY,
   type StakingProgramId,
 } from '@/constants/stakingProgram';
 import {
@@ -16,6 +17,7 @@ import {
   Nullable,
   StakingContractDetails,
 } from '@/types';
+import { formatToShortDateTime } from '@/utils/time';
 
 /**
  * Given an address, returns a normalized staking program ID by lowercasing the address
@@ -33,7 +35,8 @@ export const deriveStakingProgramId = (address: Address): string => {
  */
 export const isNoStakingProgram = (
   stakingProgramId: Nullable<StakingProgramId> | undefined,
-) => stakingProgramId === NO_STAKING_PROGRAM_ID;
+): stakingProgramId is typeof NO_STAKING_PROGRAM_ID =>
+  stakingProgramId === NO_STAKING_PROGRAM_ID;
 
 /**
  * Whether an instance of the agent on `chainId` can stake. Agents with
@@ -131,15 +134,7 @@ type GetCompatibleStakingProgramIdsParams = {
   currentStakingProgramId: Nullable<StakingProgramId>;
 };
 
-/**
- * Ordered list of staking programs the user may select:
- * 1. The current program first — even if deprecated or incompatible, the user
- *    must be able to see the contract they are actually staked in.
- * 2. Deprecated programs are hidden.
- * 3. Programs not supporting the agent type are hidden.
- * 4. Programs whose multisig requirement doesn't match the service are hidden
- *    (the contract would reject the stake transaction anyway).
- */
+/** The staking programs the user may select, in order; see "Program ordering" in docs/features/staking-and-rewards.md. */
 export const getCompatibleStakingProgramIds = ({
   programs,
   agentType,
@@ -152,7 +147,7 @@ export const getCompatibleStakingProgramIds = ({
     if (stakingProgramId === currentStakingProgramId) {
       return [stakingProgramId, ...acc];
     }
-    if (program.deprecated) return acc;
+    if (program.deprecated || program.retired) return acc;
     if (!program.agentsSupported.includes(agentType)) return acc;
     if (!isStakingProgramCompatibleWithMultisig(program, isPolySafeService)) {
       return acc;
@@ -187,3 +182,111 @@ export const runsInsideEvictionWindow = ({
   isAgentEvicted &&
   !!canRunWhileEvicted &&
   evictionExpiresAt - nowSeconds > EVICTION_RUN_START_MARGIN_SECONDS;
+
+/** What a service on a retired program can do, by its Safe type (a PolySafe only withdraws). */
+export type RetiredSafeState =
+  | 'withdrawalOnly'
+  | 'canSwitch'
+  | 'loading'
+  | 'error';
+
+/** What is known of a service's multisig. */
+export type SafeType = 'loading' | 'error' | 'polySafe' | 'standard';
+
+/** The retired-program state for a known Safe type, or one that is loading or unreadable. */
+export const toRetiredSafeState = (safeType: SafeType): RetiredSafeState => {
+  if (safeType === 'polySafe') return 'withdrawalOnly';
+  if (safeType === 'standard') return 'canSwitch';
+  return safeType;
+};
+
+/** What is known of a service's place in its staking contract. */
+export type RetiredProgramStakingDetails =
+  | { state: 'loading' }
+  | { state: 'error' }
+  | { state: 'loaded'; placement: 'inMinimumPeriod'; cooldownEndsAt: number }
+  | { state: 'loaded'; placement: 'pastMinimumPeriod' | 'outOfContract' };
+
+/** The loaded details, from the contract's reads; `cooldownEndsAt` in seconds. */
+export const getLoadedRetiredProgramStakingDetails = ({
+  isServiceInContract,
+  isServiceStakedForMinimumDuration,
+  cooldownEndsAt,
+}: {
+  isServiceInContract: boolean;
+  isServiceStakedForMinimumDuration: boolean;
+  cooldownEndsAt: number;
+}): RetiredProgramStakingDetails => {
+  if (!isServiceInContract)
+    return { state: 'loaded', placement: 'outOfContract' };
+  return isServiceStakedForMinimumDuration
+    ? { state: 'loaded', placement: 'pastMinimumPeriod' }
+    : { state: 'loaded', placement: 'inMinimumPeriod', cooldownEndsAt };
+};
+
+/** What can be said about a service on a retired program; `endsAt` in seconds. */
+export type RetiredProgramStatus =
+  | { kind: 'withdrawalOnly' }
+  | { kind: 'cooldown'; endsAt: number }
+  | { kind: 'safeTypeUnknown' }
+  | { kind: 'safeTypeLoading' }
+  | { kind: 'stakingDetailsUnknown' }
+  | { kind: 'stakingDetailsLoading' }
+  | { kind: 'awaitingUnstake' }
+  | { kind: 'switch' };
+
+/** Classifies a service on a retired program for the alert and the start gate. */
+export const getRetiredProgramStatus = ({
+  safeState,
+  stakingDetails,
+}: {
+  safeState: RetiredSafeState;
+  stakingDetails: RetiredProgramStakingDetails;
+}): RetiredProgramStatus => {
+  if (safeState === 'withdrawalOnly') return { kind: 'withdrawalOnly' };
+  if (
+    stakingDetails.state === 'loaded' &&
+    stakingDetails.placement === 'inMinimumPeriod'
+  ) {
+    return { kind: 'cooldown', endsAt: stakingDetails.cooldownEndsAt };
+  }
+  if (safeState === 'error') return { kind: 'safeTypeUnknown' };
+  if (safeState === 'loading') return { kind: 'safeTypeLoading' };
+  if (stakingDetails.state === 'error')
+    return { kind: 'stakingDetailsUnknown' };
+  if (stakingDetails.state === 'loading') {
+    return { kind: 'stakingDetailsLoading' };
+  }
+  return {
+    kind:
+      stakingDetails.placement === 'outOfContract'
+        ? 'switch'
+        : 'awaitingUnstake',
+  };
+};
+
+/** The cooldown's end, as the alert and the reasons show it; `endsAt` in seconds. */
+export const formatCooldownEnd = (endsAt: number) =>
+  `${formatToShortDateTime(endsAt * 1000)} (UTC)`;
+
+/** The alert's copy for a status, as a start-gate or Auto-run reason; `null` while loading. */
+export const getRetiredProgramReason = (
+  status: RetiredProgramStatus,
+): string | null => {
+  switch (status.kind) {
+    case 'withdrawalOnly':
+      return RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY;
+    case 'cooldown':
+      return `${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_PREFIX} ${formatCooldownEnd(status.endsAt)}${RETIRED_STAKING_PROGRAM_COPY.COOLDOWN_SUFFIX}`;
+    case 'safeTypeUnknown':
+      return RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN;
+    case 'stakingDetailsUnknown':
+      return RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN;
+    case 'safeTypeLoading':
+    case 'stakingDetailsLoading':
+      return null;
+    case 'awaitingUnstake':
+    case 'switch':
+      return RETIRED_STAKING_PROGRAM_COPY.SWITCH;
+  }
+};

@@ -31,12 +31,19 @@ export const OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<
     '0x746281b8fbDbd008729Dc9382392810F771B1BfD',
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII]:
     '0x5a4317A5695aD6E86744eFC824414cF899f07C68',
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusIV]:
+    '0xaDa8AFB446576483B791f58Da33b20ebd217c1fE',
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusV]:
+    '0x767F4101183Ca56325270facbF0FcdDFEfd043aA',
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusVI]:
+    '0x307a23a821f7B837308cfd7673650674B5780b36',
 };
 
 export const OPTIMISM_STAKING_PROGRAMS: {
   [stakingProgramId in OptimismStakingProgramId]: StakingProgramConfig;
 } = {
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha2]: {
+    retired: true,
     chainId: EvmChainIdMap.Optimism,
     name: 'Optimus Alpha II',
     agentsSupported: [AgentMap.Optimus],
@@ -62,6 +69,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha3]: {
+    retired: true,
     chainId: EvmChainIdMap.Optimism,
     name: 'Optimus Alpha III',
     agentsSupported: [AgentMap.Optimus],
@@ -89,6 +97,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusAlpha4]: {
+    retired: true,
     chainId: EvmChainIdMap.Optimism,
     name: 'Optimus Alpha IV',
     agentsSupported: [AgentMap.Optimus],
@@ -116,6 +125,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusI]: {
+    retired: true,
     chainId: EvmChainIdMap.Optimism,
     name: 'Optimus I',
     activityTarget: 1,
@@ -144,6 +154,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusII]: {
+    retired: true,
     chainId: EvmChainIdMap.Optimism,
     name: 'Optimus II',
     activityTarget: 1,
@@ -172,6 +183,7 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     ),
   },
   [OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII]: {
+    retired: true,
     chainId: EvmChainIdMap.Optimism,
     name: 'Optimus III',
     activityTarget: 1,
@@ -196,6 +208,93 @@ export const OPTIMISM_STAKING_PROGRAMS: {
     id: deriveStakingProgramId(
       OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         OPTIMISM_STAKING_PROGRAM_IDS.OptimusIII
+      ],
+    ),
+  },
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusIV]: {
+    chainId: EvmChainIdMap.Optimism,
+    name: 'Optimus IV',
+    stakingVersion: '0.4',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Optimus],
+    stakingRequirements: { [TokenSymbolMap.OLAS]: 100 },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2].contract,
+    activityChecker:
+      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusIV
+      ],
+    address:
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusIV
+      ],
+    contract: new MulticallContract(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusIV
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusIV
+      ],
+    ),
+  },
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusV]: {
+    chainId: EvmChainIdMap.Optimism,
+    name: 'Optimus V',
+    stakingVersion: '0.4',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Optimus],
+    stakingRequirements: { [TokenSymbolMap.OLAS]: 1000 },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2].contract,
+    activityChecker:
+      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusV
+      ],
+    address:
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusV
+      ],
+    contract: new MulticallContract(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusV
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusV
+      ],
+    ),
+  },
+  [OPTIMISM_STAKING_PROGRAM_IDS.OptimusVI]: {
+    chainId: EvmChainIdMap.Optimism,
+    name: 'Optimus VI',
+    stakingVersion: '0.4',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Optimus],
+    stakingRequirements: { [TokenSymbolMap.OLAS]: 5000 },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Optimism][MechType.MarketplaceV2].contract,
+    activityChecker:
+      OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusVI
+      ],
+    address:
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusVI
+      ],
+    contract: new MulticallContract(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusVI
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      OPTIMISM_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        OPTIMISM_STAKING_PROGRAM_IDS.OptimusVI
       ],
     ),
   },

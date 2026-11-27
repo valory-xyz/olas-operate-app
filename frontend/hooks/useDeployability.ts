@@ -1,23 +1,28 @@
 import { isNil } from 'lodash';
 import { useMemo } from 'react';
 
+import { RETIRED_STAKING_PROGRAM_COPY } from '@/constants';
 import { ELIGIBILITY_REASON } from '@/context/AutoRunProvider/constants';
 import { useAgentRunning } from '@/hooks/useAgentRunning';
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
 import { useOnlineStatusContext } from '@/hooks/useOnlineStatus';
+import { useRetiredProgramStatus } from '@/hooks/useRetiredProgramStatus';
 import { useRunsInsideEvictionWindow } from '@/hooks/useRunsInsideEvictionWindow';
 import { useServices } from '@/hooks/useServices';
 import { useSharedContext } from '@/hooks/useSharedContext';
 import { useActiveStakingContractDetails } from '@/hooks/useStakingContractDetails';
 import { useStakingProgram } from '@/hooks/useStakingProgram';
+import { getRetiredProgramReason } from '@/utils/stakingProgram';
 
 type DeployabilityResult = {
   isLoading: boolean;
   canRun: boolean;
   reason?: string;
   loadingReason?: string;
+  /** The start runs unstaked and redeem-only; the start call must follow it. */
+  isWithdrawalOnlyStart: boolean;
 };
 
 /**
@@ -59,6 +64,13 @@ export const useDeployability = ({
     isSelectedStakingContractDetailsLoading,
   } = useActiveStakingContractDetails();
   const { isActiveStakingProgramLoaded } = useStakingProgram();
+  // The same status and copy as the retired-contract alert.
+  const { status: retiredStatus } = useRetiredProgramStatus();
+  const retiredStatusKind = retiredStatus?.kind ?? null;
+  const retiredReason = retiredStatus
+    ? getRetiredProgramReason(retiredStatus)
+    : null;
+  const isWithdrawalOnlyStart = retiredStatusKind === 'withdrawalOnly';
   const { isInitialFunded } = useIsInitiallyFunded();
   const { isAgentGeoRestricted, isGeoLoading } = useIsAgentGeoRestricted({
     agentType: selectedAgentType,
@@ -95,10 +107,12 @@ export const useDeployability = ({
     }
     if (
       !isActiveStakingProgramLoaded ||
-      isSelectedStakingContractDetailsLoading
+      isSelectedStakingContractDetailsLoading ||
+      retiredStatusKind === 'stakingDetailsLoading'
     )
       reasons.push('Staking');
     if (isGeoLoading) reasons.push('Geo');
+    if (retiredStatusKind === 'safeTypeLoading') reasons.push('Safe type');
     if (safeEligibility?.isLoading) reasons.push('Safe');
     if (isInitialFunded === undefined) reasons.push('Setup');
     return reasons;
@@ -107,6 +121,7 @@ export const useDeployability = ({
     isBalancesAndFundingRequirementsEnabledForAllServices,
     isBalancesAndFundingRequirementsLoadingForAllServices,
     isGeoLoading,
+    retiredStatusKind,
     hasSelectedAgentBalances,
     isOnline,
     isInitialFunded,
@@ -121,7 +136,10 @@ export const useDeployability = ({
   const loadingReason =
     loadingReasons.length > 0 ? loadingReasons.join(', ') : undefined;
 
-  return useMemo(() => {
+  const result = useMemo((): Omit<
+    DeployabilityResult,
+    'isWithdrawalOnlyStart'
+  > => {
     if (safeEligibility && !safeEligibility.ok && !safeEligibility.isLoading) {
       return {
         isLoading,
@@ -145,6 +163,14 @@ export const useDeployability = ({
       return { isLoading, canRun: false, reason: 'Phased out' };
     }
 
+    if (retiredStatusKind && !isWithdrawalOnlyStart) {
+      return {
+        isLoading,
+        canRun: false,
+        reason: retiredReason ?? RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+      };
+    }
+
     // If service is under construction
     if (selectedAgentConfig.isUnderConstruction) {
       return { isLoading, canRun: false, reason: 'Under construction' };
@@ -166,9 +192,10 @@ export const useDeployability = ({
       };
     }
 
-    // If not enough service slots, and service is not staked
+    // If not enough service slots, and service is not staked. Withdrawal-only
+    // starts unstaked, so neither slots nor eviction (below) apply to it.
     const hasSlot = !isNil(hasEnoughServiceSlots) && !hasEnoughServiceSlots;
-    if (hasSlot && !isServiceStaked && !runsEvicted) {
+    if (hasSlot && !isServiceStaked && !runsEvicted && !isWithdrawalOnlyStart) {
       return { isLoading, canRun: false, reason: 'No available slots' };
     }
 
@@ -176,7 +203,8 @@ export const useDeployability = ({
     if (
       isAgentEvicted &&
       !isEligibleForStaking &&
-      !selectedAgentConfig.canRunWhileEvicted
+      !selectedAgentConfig.canRunWhileEvicted &&
+      !isWithdrawalOnlyStart
     ) {
       return { isLoading, canRun: false, reason: 'Evicted' };
     }
@@ -207,7 +235,10 @@ export const useDeployability = ({
     isEligibleForStaking,
     isInitialFunded,
     isLoading,
+    retiredStatusKind,
+    retiredReason,
     isServiceStaked,
+    isWithdrawalOnlyStart,
     runsEvicted,
     safeEligibility,
     selectedAgentConfig.canRunWhileEvicted,
@@ -216,4 +247,9 @@ export const useDeployability = ({
     selectedAgentConfig.isUnderConstruction,
     loadingReason,
   ]);
+
+  return useMemo(
+    () => ({ ...result, isWithdrawalOnlyStart }),
+    [result, isWithdrawalOnlyStart],
+  );
 };

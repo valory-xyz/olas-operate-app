@@ -36,7 +36,8 @@ const mockGetCurrentStakingProgramByServiceId = jest.fn();
 const mockGetStakingProgramIdByAddress = jest.fn();
 
 const makeMockServiceApi = () => ({
-  getCurrentStakingProgramByServiceId: mockGetCurrentStakingProgramByServiceId,
+  getCurrentStakingProgramByServiceIdOrNull:
+    mockGetCurrentStakingProgramByServiceId,
   getStakingProgramIdByAddress: mockGetStakingProgramIdByAddress,
 });
 
@@ -148,7 +149,7 @@ describe('createActiveStakingProgramIdQuery', () => {
       expect(mockGetCurrentStakingProgramByServiceId).not.toHaveBeenCalled();
     });
 
-    it('calls serviceApi.getCurrentStakingProgramByServiceId for valid tokenId', async () => {
+    it('calls serviceApi.getCurrentStakingProgramByServiceIdOrNull for valid tokenId', async () => {
       mockGetCurrentStakingProgramByServiceId.mockResolvedValue(
         DEFAULT_STAKING_PROGRAM_ID,
       );

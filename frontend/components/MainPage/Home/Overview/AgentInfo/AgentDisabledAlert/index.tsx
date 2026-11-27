@@ -24,6 +24,7 @@ import {
   useMasterWalletContext,
   usePageState,
   usePrestartCheck,
+  useRetiredProgramStatus,
   useRunsInsideEvictionWindow,
   useServices,
   useStakingProgram,
@@ -38,6 +39,10 @@ import { ContractDeprecatedAlert } from './ContractDeprecatedAlert';
 import { EvictedAlert } from './EvictedAlert';
 import { MasterEoaLowBalanceAlert } from './MasterEoaLowBalanceAlert';
 import { NoSlotsAvailableAlert } from './NoSlotsAvailableAlert';
+import {
+  RetiredContractAlert,
+  RetiredContractAlertState,
+} from './RetiredContractAlert';
 import { UnderConstructionAlert } from './UnderConstructionAlert';
 import { UnfinishedSetupAlert } from './UnfinishedSetupAlert';
 
@@ -65,6 +70,12 @@ export const AgentDisabledAlert = () => {
     isServiceStaked,
     selectedStakingContractDetails,
   } = useActiveStakingContractDetails();
+  const {
+    status: retiredStatus,
+    stakingProgramName: retiredProgramName,
+    safeTypeRetry,
+    stakingDetailsRetry,
+  } = useRetiredProgramStatus();
   const { isInitialFunded } = useIsInitiallyFunded();
   const { getMasterSafeOf, masterWallets } = useMasterWalletContext();
   const { isAnotherAgentRunning } = useAgentRunning();
@@ -169,6 +180,31 @@ export const AgentDisabledAlert = () => {
       return { key: 'another-running', content: <AgentRunningAlert /> };
     }
 
+    if (retiredStatus) {
+      const state = ((): RetiredContractAlertState => {
+        switch (retiredStatus.kind) {
+          case 'safeTypeUnknown':
+            return { kind: retiredStatus.kind, ...safeTypeRetry };
+          case 'stakingDetailsUnknown':
+            return { kind: retiredStatus.kind, ...stakingDetailsRetry };
+          default:
+            return retiredStatus;
+        }
+      })();
+      return {
+        key: 'contract-retired',
+        content: (
+          <>
+            <RetiredContractAlert
+              stakingProgramName={retiredProgramName}
+              state={state}
+            />
+            <MasterEoaLowBalanceAlert />
+          </>
+        ),
+      };
+    }
+
     if (selectedStakingProgramMeta && selectedStakingProgramMeta.deprecated) {
       return {
         key: 'contract-deprecated',
@@ -249,6 +285,10 @@ export const AgentDisabledAlert = () => {
     isSelectedStakingContractDetailsLoading,
     isServiceRunning,
     isServiceStaked,
+    retiredStatus,
+    retiredProgramName,
+    safeTypeRetry,
+    stakingDetailsRetry,
     runsEvicted,
     prestartCheck,
     runningAgentIssues,

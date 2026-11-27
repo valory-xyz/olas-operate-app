@@ -7,6 +7,10 @@ import { STAKING_PROGRAMS } from '../../config/stakingPrograms';
 import { TokenSymbolMap } from '../../config/tokens';
 import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap } from '../../constants/chains';
+import {
+  NO_STAKING_PROGRAM_ID,
+  STAKING_PROGRAM_IDS,
+} from '../../constants/stakingProgram';
 
 describe('AGENT_CONFIG', () => {
   it('has an entry for every agent type', () => {
@@ -347,16 +351,34 @@ describe('AGENT_CONFIG defaultStakingProgramId', () => {
     Object.entries(AGENT_CONFIG).filter(
       ([, config]) =>
         config.isAgentEnabled &&
-        config.defaultStakingProgramId !== 'no_staking',
+        config.defaultStakingProgramId !== NO_STAKING_PROGRAM_ID,
     ),
   )(
-    '%s default is a non-deprecated program on its home chain that supports the agent',
+    '%s default is a non-deprecated, non-retired program on its home chain that supports the agent',
     (agentType, config) => {
       const program =
         STAKING_PROGRAMS[config.evmHomeChainId][config.defaultStakingProgramId];
       expect(program).toBeDefined();
       expect(program.deprecated).toBeFalsy();
+      expect(program.retired).toBeFalsy();
       expect(program.agentsSupported).toContain(agentType);
+    },
+  );
+
+  it.each([
+    [AgentMap.PredictTrader, STAKING_PROGRAM_IDS.OmenstratVIII],
+    [AgentMap.Polystrat, STAKING_PROGRAM_IDS.PolystratVII],
+    [AgentMap.Optimus, STAKING_PROGRAM_IDS.OptimusIV],
+    [AgentMap.Basius, STAKING_PROGRAM_IDS.BasiusIV],
+  ])(
+    '%s defaults to its 50 OLAS-deposit program %s',
+    (agentType, programId) => {
+      const config = AGENT_CONFIG[agentType];
+      expect(config.defaultStakingProgramId).toBe(programId);
+      expect(
+        STAKING_PROGRAMS[config.evmHomeChainId][programId].stakingRequirements
+          .OLAS,
+      ).toBe(100); // 50 OLAS deposit plus a 50 OLAS bond
     },
   );
 });

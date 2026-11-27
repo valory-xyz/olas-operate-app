@@ -36,6 +36,9 @@ const BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
   [STAKING_PROGRAM_IDS.BasiusI]: '0x0fB55CEf7B12B76ea52900325461a5443F51B43F',
   [STAKING_PROGRAM_IDS.BasiusII]: '0x728ca3b024Ba4c273695Df6e45e79DB675B8c756',
   [STAKING_PROGRAM_IDS.BasiusIII]: '0x9593C4524DF86f46935aa0eC996B4ccBe71c8234',
+  [STAKING_PROGRAM_IDS.BasiusIV]: '0x180E4A9A59BA5B6817fA0668A864343147E8A63b',
+  [STAKING_PROGRAM_IDS.BasiusV]: '0xad7f7DE6909f1DE49c14F4003d37485A02012159',
+  [STAKING_PROGRAM_IDS.BasiusVI]: '0x3639E1C2F9a7FF11aAdD239Cd778A7b5af39820b',
 };
 
 export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
@@ -309,6 +312,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.BasiusI]: {
+    retired: true,
     chainId: EvmChainIdMap.Base,
     name: 'Basius I',
     activityTarget: 1,
@@ -331,6 +335,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.BasiusII]: {
+    retired: true,
     chainId: EvmChainIdMap.Base,
     name: 'Basius II',
     activityTarget: 1,
@@ -353,6 +358,7 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
   },
   [STAKING_PROGRAM_IDS.BasiusIII]: {
+    retired: true,
     chainId: EvmChainIdMap.Base,
     name: 'Basius III',
     activityTarget: 1,
@@ -372,6 +378,75 @@ export const BASE_STAKING_PROGRAMS: StakingProgramMap = {
     ),
     id: deriveStakingProgramId(
       BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusIII],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.BasiusIV]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Basius IV',
+    stakingVersion: '0.4',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Basius],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 100,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.BasiusIV],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusIV],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusIV],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusIV],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.BasiusV]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Basius V',
+    stakingVersion: '0.4',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Basius],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 1000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.BasiusV],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusV],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusV],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusV],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.BasiusVI]: {
+    chainId: EvmChainIdMap.Base,
+    name: 'Basius VI',
+    stakingVersion: '0.4',
+    activityTarget: 1,
+    agentsSupported: [AgentMap.Basius],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 5000,
+    },
+    mechType: MechType.MarketplaceV2,
+    mech: MECHS[EvmChainIdMap.Base][MechType.MarketplaceV2].contract,
+    activityChecker:
+      BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS[STAKING_PROGRAM_IDS.BasiusVI],
+    address:
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusVI],
+    contract: new MulticallContract(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusVI],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      BASE_STAKING_PROGRAMS_CONTRACT_ADDRESSES[STAKING_PROGRAM_IDS.BasiusVI],
     ),
   },
 };

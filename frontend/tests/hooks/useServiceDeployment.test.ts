@@ -219,6 +219,7 @@ const setupDefaults = () => {
   mockUseDeployability.mockReturnValue({
     canRun: true,
     isLoading: false,
+    isWithdrawalOnlyStart: false,
   });
 };
 
@@ -343,6 +344,7 @@ describe('useServiceDeployment', () => {
         canRun: false,
         isLoading: false,
         reason: 'Low balance',
+        isWithdrawalOnlyStart: false,
       });
       const { result } = renderHook(() => useServiceDeployment());
       expect(result.current.isDeployable).toBe(false);
@@ -411,7 +413,51 @@ describe('useServiceDeployment', () => {
           agentType: 'trader',
           stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
           createServiceIfMissing: true,
+          withdrawalOnly: false,
         }),
+      );
+    });
+
+    it.each([true, false])(
+      "starts with useDeployability's isWithdrawalOnlyStart=%s",
+      async (isWithdrawalOnlyStart) => {
+        mockUseDeployability.mockReturnValue({
+          canRun: true,
+          isLoading: false,
+          isWithdrawalOnlyStart,
+        });
+        const { result } = renderHook(() => useServiceDeployment());
+
+        await act(async () => {
+          await result.current.handleStart();
+        });
+
+        expect(mockStartServiceFn).toHaveBeenCalledWith(
+          expect.objectContaining({ withdrawalOnly: isWithdrawalOnlyStart }),
+        );
+      },
+    );
+
+    it('starts withdrawal-only when the gate decides so after mount', async () => {
+      mockUseDeployability.mockReturnValue({
+        canRun: true,
+        isLoading: false,
+        isWithdrawalOnlyStart: false,
+      });
+      const { result, rerender } = renderHook(() => useServiceDeployment());
+
+      mockUseDeployability.mockReturnValue({
+        canRun: true,
+        isLoading: false,
+        isWithdrawalOnlyStart: true,
+      });
+      rerender();
+      await act(async () => {
+        await result.current.handleStart();
+      });
+
+      expect(mockStartServiceFn).toHaveBeenCalledWith(
+        expect.objectContaining({ withdrawalOnly: true }),
       );
     });
 

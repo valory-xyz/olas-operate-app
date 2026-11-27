@@ -181,6 +181,7 @@ export const useServiceDeployment = () => {
         service,
         stakingProgramId: selectedStakingProgramId,
         createServiceIfMissing: true,
+        withdrawalOnly: deployability.isWithdrawalOnlyStart,
         createSafeIfNeeded: () =>
           createSafeIfNeeded({
             masterSafes,
@@ -221,6 +222,7 @@ export const useServiceDeployment = () => {
   }, [
     masterWallets,
     selectedStakingProgramId,
+    deployability.isWithdrawalOnlyStart,
     pauseAllPolling,
     overrideSelectedServiceStatus,
     resumeAllPolling,

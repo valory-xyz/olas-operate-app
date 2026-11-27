@@ -4,6 +4,7 @@ import { act } from 'react';
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
 import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
+import { RETIRED_STAKING_PROGRAM_COPY } from '../../../../constants/stakingProgram';
 import {
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
@@ -1985,6 +1986,27 @@ describe('useAutoRunLifecycle', () => {
       expect(params.scanAndStartNext).toHaveBeenCalledWith(
         scTrader,
         expect.objectContaining({ first: scOptimus, trigger: 'eviction' }),
+      );
+    });
+
+    it('rotates away from an eviction on a retired program, which Start cannot restart', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: false,
+        }),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ trigger: 'eviction' }),
       );
     });
 

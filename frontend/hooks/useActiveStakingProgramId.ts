@@ -39,7 +39,7 @@ export const createActiveStakingProgramIdQuery = ({
       if (!isValidServiceId(serviceNftTokenId)) return null;
 
       const currentStakingProgramId =
-        await serviceApi.getCurrentStakingProgramByServiceId(
+        await serviceApi.getCurrentStakingProgramByServiceIdOrNull(
           serviceNftTokenId,
           evmHomeChainId,
         );
