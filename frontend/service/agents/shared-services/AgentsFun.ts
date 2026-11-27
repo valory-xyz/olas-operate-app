@@ -16,6 +16,7 @@ import {
   StakingRewardsInfo,
 } from '@/types/Autonolas';
 import { isValidServiceId } from '@/utils';
+import { getNowInSeconds } from '@/utils/time';
 
 import { ONE_YEAR, StakedAgentService } from './StakedAgentService';
 
@@ -76,7 +77,7 @@ export abstract class AgentsFunService extends StakedAgentService {
       livenessRatio,
     ] = multicallResponse;
 
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const nowInSeconds = getNowInSeconds();
 
     const isServiceStaked = serviceInfo[2].length > 0;
 
@@ -159,7 +160,7 @@ export abstract class AgentsFunService extends StakedAgentService {
 
     const multicallResponse = await multicallProvider.all(contractCalls);
     const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const nowInSeconds = getNowInSeconds();
 
     return BigInt(
       Math.max(

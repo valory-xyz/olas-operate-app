@@ -15,6 +15,7 @@ import {
 } from '@/hooks';
 import { Nullable } from '@/types';
 
+import { useAreOmenstratContractsFull } from '../hooks/useAreOmenstratContractsFull';
 import { MigrateButtonText, useCanMigrate } from '../hooks/useCanMigrate';
 import { SelectMode } from '../types';
 import { CooldownContentTooltip } from './CooldownTooltip';
@@ -144,6 +145,7 @@ export const SelectActivityRewardsConfiguration = ({
 }: SelectActivityRewardsConfigurationProps) => {
   const {
     orderedStakingProgramIds,
+    stakingContractIds,
     isStakingContractsLoaded,
     isStakingContractsError,
     retryStakingContracts,
@@ -163,10 +165,12 @@ export const SelectActivityRewardsConfiguration = ({
     setStableOrder(orderedStakingProgramIds);
   }
 
+  const areOmenstratContractsFull = useAreOmenstratContractsFull();
+
   const hasNoCompatibleContracts =
     isStakingContractsLoaded &&
     !isStakingContractsError &&
-    orderedStakingProgramIds.length === 0;
+    stakingContractIds.length === 0;
 
   return (
     <Flex vertical justify="center" className="w-full">
@@ -180,6 +184,17 @@ export const SelectActivityRewardsConfiguration = ({
           your agent.
         </Text>
       </MainContentContainer>
+
+      {areOmenstratContractsFull && (
+        <MainContentContainer vertical className="mt-24">
+          <Alert
+            type="info"
+            showIcon
+            className="text-sm"
+            message="All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead."
+          />
+        </MainContentContainer>
+      )}
 
       {isStakingContractsError && (
         <MainContentContainer vertical className="mt-32">

@@ -4,7 +4,7 @@ import { useUnmount } from 'usehooks-ts';
 
 import { Modal } from '@/components/ui';
 import { AgentType } from '@/constants';
-import { useServices } from '@/hooks';
+import { useAchievementPending, useServices } from '@/hooks';
 import { Achievement } from '@/types/Achievement';
 import { Nullable } from '@/types/Util';
 
@@ -40,11 +40,13 @@ const getPayoutAgentType = (
 };
 
 export const AchievementModal = () => {
-  const { getAgentTypeFromService } = useServices();
+  const { getAgentTypeFromService, isFetched: isServicesFetched } =
+    useServices();
   const {
     currentAchievement,
     markCurrentAchievementAsShown,
     skipCurrentAchievement,
+    hasPendingAchievement,
     isLoading,
     isError,
   } = useCurrentAchievement();
@@ -62,13 +64,22 @@ export const AchievementModal = () => {
     currentAchievement?.achievement_type,
   );
 
+  const [closedAchievementId, setClosedAchievementId] =
+    useState<Nullable<string>>(null);
+
   const handleClose = () => {
+    setClosedAchievementId(currentAchievement?.achievement_id ?? null);
     markCurrentAchievementAsShown();
     setShowModal(false);
   };
 
   useEffect(() => {
-    if (!currentAchievement || !agentType) return;
+    if (!currentAchievement) return;
+    if (!agentType) {
+      // Its service was removed, so it will never resolve.
+      if (isServicesFetched) skipCurrentAchievement();
+      return;
+    }
 
     if (!payoutAgentType) {
       skipCurrentAchievement();
@@ -80,14 +91,27 @@ export const AchievementModal = () => {
   }, [
     currentAchievement,
     agentType,
+    isServicesFetched,
     payoutAgentType,
     markCurrentAchievementAsShown,
     skipCurrentAchievement,
     triggerAchievementBackgroundTasks,
   ]);
 
+  // False once closed, though it stays current until markCurrentAchievementAsShown's delay.
+  const isPending =
+    !isError &&
+    (isLoading ||
+      (hasPendingAchievement &&
+        currentAchievement?.achievement_id !== closedAchievementId));
+  const { setAchievementPending } = useAchievementPending();
+  useEffect(() => {
+    setAchievementPending(isPending);
+  }, [isPending, setAchievementPending]);
+
   useUnmount(() => {
     setShowModal(false);
+    setAchievementPending(false);
   });
 
   if (isLoading || isError) return null;

@@ -10,6 +10,7 @@ import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
 import { COLOR, GOVERN_APP_URL, NA, StakingProgramId } from '@/constants';
 import { useServices } from '@/hooks';
 import { useStakingContractContext } from '@/hooks/useStakingContractDetails';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import { useEachStakingDetails } from './SelectStakingPage/hooks/useStakingDetails';
 
@@ -74,7 +75,53 @@ type StakingContractCardProps = {
   renderAction?: () => ReactNode;
 };
 
-export const StakingContractCard = ({
+const RewardAndDeposit = ({
+  reward,
+  deposit,
+}: {
+  reward: ReactNode;
+  deposit: ReactNode;
+}) => (
+  <Flex vertical gap={12} className="px-24 pt-24">
+    <Flex align="center" gap={10}>
+      <TbSparkles size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+      <Text type="secondary">{reward} OLAS – activity reward</Text>
+    </Flex>
+
+    <Flex align="center" gap={10}>
+      <TbLock size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
+      <Text type="secondary">{deposit} OLAS – required deposit</Text>
+    </Flex>
+  </Flex>
+);
+
+/** The Unstaked option of an agent whose staking is optional: no contract. */
+const UnstakedContractCard = ({
+  renderAction,
+}: Pick<StakingContractCardProps, 'renderAction'>) => (
+  <ContractCard $noBodyPadding $isView={!renderAction}>
+    <Flex align="center" className="px-24 py-24">
+      <Title level={3} className="m-0">
+        Unstaked
+      </Title>
+    </Flex>
+
+    <Divider />
+
+    <RewardAndDeposit reward={0} deposit={0} />
+
+    {renderAction?.()}
+  </ContractCard>
+);
+
+export const StakingContractCard = (props: StakingContractCardProps) =>
+  isNoStakingProgram(props.stakingProgramId) ? (
+    <UnstakedContractCard renderAction={props.renderAction} />
+  ) : (
+    <ProgramContractCard {...props} />
+  );
+
+const ProgramContractCard = ({
   stakingProgramId,
   renderAction,
 }: StakingContractCardProps) => {
@@ -116,22 +163,10 @@ export const StakingContractCard = ({
 
       <Divider />
 
-      <Flex vertical gap={12} className="px-24 pt-24">
-        <Flex align="center" gap={10}>
-          <TbSparkles size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
-          <Text type="secondary">
-            ~{contractDetails?.rewardsPerWorkPeriod?.toFixed(2)} OLAS – activity
-            reward
-          </Text>
-        </Flex>
-
-        <Flex align="center" gap={10}>
-          <TbLock size={20} color={COLOR.TEXT_NEUTRAL_TERTIARY} />
-          <Text type="secondary">
-            {contractDetails?.olasStakeRequired} OLAS – required deposit
-          </Text>
-        </Flex>
-      </Flex>
+      <RewardAndDeposit
+        reward={<>~{contractDetails?.rewardsPerWorkPeriod?.toFixed(2)}</>}
+        deposit={contractDetails?.olasStakeRequired}
+      />
 
       {renderAction?.()}
     </ContractCard>

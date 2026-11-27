@@ -26,6 +26,7 @@ import {
   getSafeEligibility,
   getSafeEligibilityMessage,
 } from '@/utils/safe';
+import { isNoStakingProgram, isStakingAvailable } from '@/utils/stakingProgram';
 
 const createSafeIfNeeded = async ({
   masterSafes,
@@ -100,17 +101,23 @@ export const useServiceDeployment = () => {
 
   const isLoading = useMemo(() => {
     if (isServicesLoading || isServiceRunning) return true;
-    // no_staking agents have no staking contracts, so their
-    // staking-details record never "loads" — don't gate deployability on it.
+    // An agent that cannot stake on this chain, or a service that runs
+    // unstaked, reads no staking contract to start: don't gate on the record,
+    // which may never load for it.
     if (
-      selectedAgentConfig.hasStaking &&
+      isStakingAvailable(
+        selectedAgentConfig,
+        selectedAgentConfig.evmHomeChainId,
+      ) &&
+      !isNoStakingProgram(selectedStakingProgramId) &&
       !isAllStakingContractDetailsRecordLoaded
     ) {
       return true;
     }
     return false;
   }, [
-    selectedAgentConfig.hasStaking,
+    selectedAgentConfig,
+    selectedStakingProgramId,
     isAllStakingContractDetailsRecordLoaded,
     isServiceRunning,
     isServicesLoading,
@@ -174,6 +181,7 @@ export const useServiceDeployment = () => {
         service,
         stakingProgramId: selectedStakingProgramId,
         createServiceIfMissing: true,
+        withdrawalOnly: deployability.isWithdrawalOnlyStart,
         createSafeIfNeeded: () =>
           createSafeIfNeeded({
             masterSafes,
@@ -214,6 +222,7 @@ export const useServiceDeployment = () => {
   }, [
     masterWallets,
     selectedStakingProgramId,
+    deployability.isWithdrawalOnlyStart,
     pauseAllPolling,
     overrideSelectedServiceStatus,
     resumeAllPolling,

@@ -6,7 +6,7 @@
  * stops every Connect instance on that chain rather than just one alert.
  */
 
-import { MiddlewareChainMap } from '../../../constants';
+import { EnvProvisionMap, MiddlewareChainMap } from '../../../constants';
 import {
   CONNECT_FUND_REQUIREMENTS,
   CONNECT_SERVICE_TEMPLATE,
@@ -77,5 +77,19 @@ describe('CONNECT_FUND_REQUIREMENTS', () => {
       [MiddlewareChainMap.GNOSIS]:
         CONNECT_FUND_REQUIREMENTS[MiddlewareChainMap.GNOSIS],
     });
+  });
+});
+
+describe("Connect's staking env vars", () => {
+  // The middleware fills these at deploy only for COMPUTED vars; without one,
+  // Connect never learns it is staked.
+  it.each([
+    'STAKING_CONTRACT_ADDRESS',
+    'ACTIVITY_CHECKER_CONTRACT_ADDRESS',
+    'SERVICE_ID',
+  ])('declares %s as computed by the middleware', (key) => {
+    const variables: Record<string, { provision_type: string }> =
+      CONNECT_SERVICE_TEMPLATE.env_variables;
+    expect(variables[key]?.provision_type).toBe(EnvProvisionMap.COMPUTED);
   });
 });

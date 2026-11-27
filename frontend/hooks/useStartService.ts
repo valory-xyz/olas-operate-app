@@ -8,9 +8,14 @@ import { SERVICE_TEMPLATES } from '@/constants/serviceTemplates';
 import { ServicesService } from '@/service/Services';
 import { AgentConfig } from '@/types/Agent';
 import { Service, ServiceConfigId } from '@/types/Service';
-import { updateServiceIfNeeded } from '@/utils/service';
+import {
+  enableWithdrawalOnlyMode,
+  isInWithdrawalOnlyMode,
+  updateServiceIfNeeded,
+} from '@/utils/service';
 import { isNoStakingProgram } from '@/utils/stakingProgram';
 
+import { useElectronApi } from './useElectronApi';
 import {
   BlockingPrestartCheck,
   isPrestartCheckBlocking,
@@ -49,6 +54,8 @@ type StartServiceInput = {
   stakingProgramId?: StakingProgramId;
   createServiceIfMissing?: boolean;
   createSafeIfNeeded: () => Promise<void>;
+  /** Start the existing service unstaked and redeem-only (see `RetiredSafeState`). */
+  withdrawalOnly?: boolean;
 };
 
 /**
@@ -57,6 +64,7 @@ type StartServiceInput = {
  */
 export const useStartService = () => {
   const queryClient = useQueryClient();
+  const { store } = useElectronApi();
 
   const startService = useCallback(
     async ({
@@ -66,13 +74,37 @@ export const useStartService = () => {
       stakingProgramId,
       createServiceIfMissing = false,
       createSafeIfNeeded,
+      withdrawalOnly = false,
     }: StartServiceInput) => {
+      // Withdrawal-only applies to an existing service; the create path below
+      // would stake a new one on `stakingProgramId`, with trading on.
+      if (withdrawalOnly && !service) {
+        throw new Error(
+          `Withdrawal-only start needs an existing ${agentType} service`,
+        );
+      }
+
       // Ensure safe exists before starting or creating service, as it's a prerequisite for both.
       await createSafeIfNeeded();
 
       // If service exists, ensure it's up to date and start it
       if (service) {
         await updateServiceIfNeeded(service, agentType);
+        // After the template sync, so the withdrawal-only values are the last word.
+        if (withdrawalOnly) {
+          if (
+            !isInWithdrawalOnlyMode(service) &&
+            stakingProgramId &&
+            !isNoStakingProgram(stakingProgramId)
+          ) {
+            // This service's entry only: a whole-map write from a stale snapshot drops others.
+            await store?.set?.(
+              `retiredStakingProgramIdByServiceConfigId.${service.service_config_id}`,
+              stakingProgramId,
+            );
+          }
+          await enableWithdrawalOnlyMode(service, agentType);
+        }
         await runPrestartCheck(queryClient, service.service_config_id);
         await ServicesService.startService(service.service_config_id);
         return service;
@@ -117,7 +149,7 @@ export const useStartService = () => {
       await ServicesService.startService(serviceToStart.service_config_id);
       return serviceToStart;
     },
-    [queryClient],
+    [queryClient, store],
   );
 
   return { startService };

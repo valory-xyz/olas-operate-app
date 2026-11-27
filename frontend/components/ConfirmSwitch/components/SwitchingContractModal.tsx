@@ -8,9 +8,10 @@ import {
 } from '@/components/custom-icons';
 import { Modal } from '@/components/ui';
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
-import { PAGES } from '@/constants';
+import { PAGES, StakingProgramId } from '@/constants';
 import { useSupportModal } from '@/context/SupportModalProvider';
 import { usePageState, useServices } from '@/hooks';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 type SwitchingContractStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ERROR';
 
@@ -24,7 +25,7 @@ const ModalHeader = ({ status }: { status: SwitchingContractStatus }) => {
 type SwitchingContractModalProps = {
   status: SwitchingContractStatus;
   onClose: () => void;
-  stakingProgramIdToMigrateTo: string;
+  stakingProgramIdToMigrateTo: StakingProgramId;
 };
 
 export const SwitchingContractModal = ({
@@ -41,12 +42,13 @@ export const SwitchingContractModal = ({
     toggleSupportModal();
   }, [onClose, toggleSupportModal]);
 
+  const isUnstaking = isNoStakingProgram(stakingProgramIdToMigrateTo);
+
   const modalProps = useMemo(() => {
     if (status === 'IN_PROGRESS') {
       return {
-        title: 'Switching in Progress',
-        description:
-          'Your agent is switching contracts. It usually takes up to 5 min. Please keep the app open until the process is complete.',
+        title: isUnstaking ? 'Unstaking in Progress' : 'Switching in Progress',
+        description: `Your agent is ${isUnstaking ? 'being unstaked' : 'switching contracts'}. It usually takes up to 5 min. Please keep the app open until the process is complete.`,
       };
     }
 
@@ -58,7 +60,9 @@ export const SwitchingContractModal = ({
 
       return {
         title: 'Contract Switched Successfully!',
-        description: `Your ${selectedAgentConfig.displayName} agent ${selectedAgentName} is now staked on ${stakingProgramMeta?.name} staking contract.`,
+        description: isUnstaking
+          ? `Your ${selectedAgentConfig.displayName} agent ${selectedAgentName} is no longer staked. The OLAS you staked is back in your Pearl Wallet.`
+          : `Your ${selectedAgentConfig.displayName} agent ${selectedAgentName} is now staked on ${stakingProgramMeta?.name} staking contract.`,
         action: (
           <Button
             type="primary"
@@ -95,6 +99,7 @@ export const SwitchingContractModal = ({
     onClose,
     handleContactSupport,
     selectedAgentName,
+    isUnstaking,
   ]);
 
   return <Modal header={<ModalHeader status={status} />} {...modalProps} />;

@@ -101,12 +101,13 @@ describe('useCanMigrate', () => {
   });
 
   describe('isCurrentStakingProgram = true', () => {
-    it('returns "Selected" with canMigrate false', () => {
+    it('returns "Current" with canMigrate false', () => {
       const { isCurrentStakingProgram } = setupMocks({
         isCurrentStakingProgram: true,
       });
       const { result } = renderUseCanMigrate(isCurrentStakingProgram);
-      expect(result.current.buttonText).toBe(MigrateButtonText.CurrentContract);
+      // The literal copy, so a change of the enum's text fails here.
+      expect(result.current.buttonText).toBe('Current');
       expect(result.current.canMigrate).toBe(false);
     });
 
@@ -343,5 +344,31 @@ describe('useCanMigrate', () => {
         );
       },
     );
+  });
+
+  describe('the Unstaked option (no_staking)', () => {
+    const renderUnstaked = () =>
+      renderHook(() =>
+        useCanMigrate({
+          stakingProgramId: 'no_staking',
+          isCurrentStakingProgram: false,
+        }),
+      );
+
+    it('can be selected: it has no contract, so no slots to run out of', () => {
+      setupMocks({ contractDetails: null });
+      const { result } = renderUnstaked();
+      expect(result.current.buttonText).toBe(MigrateButtonText.SelectContract);
+      expect(result.current.canMigrate).toBe(true);
+    });
+
+    it('is blocked inside the minimum staking period, like any switch', () => {
+      setupMocks({ isServiceStakedForMinimumDuration: false });
+      const { result } = renderUnstaked();
+      expect(result.current.buttonText).toBe(
+        MigrateButtonText.AgentInCooldownPeriod,
+      );
+      expect(result.current.canMigrate).toBe(false);
+    });
   });
 });

@@ -4,7 +4,8 @@ import Image from 'next/image';
 
 import { CardFlex } from '@/components/ui';
 import { EvmChainName } from '@/constants';
-import { useServices } from '@/hooks';
+import { useServices, useStakingProgram } from '@/hooks';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import { useShouldAllowStakingContractSwitch } from '../hooks/useShouldAllowStakingContractSwitch';
 import { ConfirmSwitchButton } from './ConfirmSwitchButton';
@@ -12,7 +13,29 @@ import { InsufficientBalanceAlert } from './InsufficientBalanceAlert';
 
 const { Text, Title } = Typography;
 
+/** Unstaking needs no OLAS, so it shows only what happens and the button. */
+const ConfirmUnstakeSection = () => (
+  <CardFlex $noBorder className="mt-24">
+    <Flex justify="space-between" align="center" gap={24}>
+      <Text className="text-sm text-neutral-tertiary">
+        Unstaking usually takes up to 5 min.
+        <br />
+        Agent will be restarted during switching.
+      </Text>
+      <ConfirmSwitchButton allowSwitch />
+    </Flex>
+  </CardFlex>
+);
+
 export const ConfirmSwitchSection = () => {
+  const { stakingProgramIdToMigrateTo } = useStakingProgram();
+  if (isNoStakingProgram(stakingProgramIdToMigrateTo)) {
+    return <ConfirmUnstakeSection />;
+  }
+  return <ConfirmStakeSection />;
+};
+
+const ConfirmStakeSection = () => {
   const { selectedAgentConfig } = useServices();
   const { evmHomeChainId: homeChainId } = selectedAgentConfig;
   const chainName = EvmChainName[homeChainId];

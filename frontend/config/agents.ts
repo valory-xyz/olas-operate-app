@@ -4,6 +4,7 @@ import { entries } from 'lodash';
 import {
   EvmChainIdMap,
   MiddlewareChainMap,
+  NO_STAKING_PROGRAM_ID,
   STAKING_PROGRAM_IDS,
   SupportedMiddlewareChain,
 } from '@/constants';
@@ -137,7 +138,7 @@ export const AGENT_CONFIG: {
     evmHomeChainId: EvmChainIdMap.Gnosis,
     middlewareHomeChainId: MiddlewareChainMap.GNOSIS,
     agentIds: [14, 25],
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.OmenstratIII,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.OmenstratVIII,
     serviceApi: PredictTraderService,
     displayName: 'Omenstrat',
     description: 'Participates in prediction markets.',
@@ -165,7 +166,7 @@ export const AGENT_CONFIG: {
         [TokenSymbolMap.pUSD]: getPolystratPusdConfig(),
       },
     },
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolystratIV,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.PolystratVII,
     serviceApi: Polystrat,
     displayName: 'Polystrat',
     description: 'Participates in prediction markets on Polymarket.',
@@ -196,7 +197,7 @@ export const AGENT_CONFIG: {
         [TokenSymbolMap.USDC]: getOptimusUsdcConfig(),
       },
     },
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.OptimusI,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.OptimusIV,
     serviceApi: OptimismService,
     displayName: 'Optimus',
     description:
@@ -229,7 +230,7 @@ export const AGENT_CONFIG: {
         [TokenSymbolMap.USDC]: getBasiusUsdcConfig(),
       },
     },
-    defaultStakingProgramId: STAKING_PROGRAM_IDS.BasiusI,
+    defaultStakingProgramId: STAKING_PROGRAM_IDS.BasiusIV,
     serviceApi: BasiusService,
     displayName: 'Basius',
     description:
@@ -358,7 +359,12 @@ export const AGENT_CONFIG: {
         ),
       },
     },
-    defaultStakingProgramId: 'no_staking',
+    defaultStakingProgramId: NO_STAKING_PROGRAM_ID,
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+    // The user's own session makes the epoch's request, not the run, and an
+    // evicted Connect keeps working as a wallet.
+    runsOnMinutesPerRun: true,
+    canRunWhileEvicted: true,
     serviceApi: ConnectService,
     displayName: 'Connect',
     description: 'Connect agent powered by a local Claude Code session.',

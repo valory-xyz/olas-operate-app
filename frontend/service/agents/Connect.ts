@@ -1,58 +1,141 @@
-import { EvmChainId, EvmChainIdMap, StakingProgramId } from '@/constants';
+import { formatEther } from 'ethers/lib/utils';
+
+import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { EvmChainId, PROVIDERS, StakingProgramId } from '@/constants';
 import {
   Address,
   ServiceStakingDetails,
   StakingContractDetails,
   StakingRewardsInfo,
 } from '@/types';
+import { isValidServiceId } from '@/utils';
+import { getNowInSeconds } from '@/utils/time';
 
+import { PredictTraderService } from './PredictTrader';
 import { StakedAgentService } from './shared-services/StakedAgentService';
 
 /**
- * Connect agent service.
- *
- * Connect runs with `staking_program_id: 'no_staking'`, so none of the staking
- * methods below are ever invoked at runtime — the `'no_staking'` guards in
- * `StakingContractDetailsProvider` / `RewardProvider` short-circuit before the
- * call. They exist only to satisfy the `StakedAgentService` contract and the
- * `serviceApi` union in `AgentConfig`.
+ * Index of the Marketplace request count in both the activity checker's
+ * `getMultisigNonces` and the staking contract's `ServiceInfo.nonces`.
+ */
+const REQUEST_COUNT_INDEX = 1;
+
+/**
+ * Connect agent service; staking is optional and per chain (`AgentConfig.stakingChains`).
  *
  * @warning DO NOT STORE STATE IN THIS CLASS. It is a singleton shared across
  * the application.
  */
 export abstract class ConnectService extends StakedAgentService {
-  static getAgentStakingRewardsInfo = async (_args: {
+  static getAgentStakingRewardsInfo = async ({
+    agentMultisigAddress,
+    serviceId,
+    stakingProgramId,
+    chainId,
+  }: {
     agentMultisigAddress: Address;
     serviceId: number;
     stakingProgramId: StakingProgramId;
-    chainId?: EvmChainId;
+    // required: Connect's program ids repeat across its chains
+    chainId: EvmChainId;
   }): Promise<StakingRewardsInfo | undefined> => {
-    // no_staking: Connect never stakes, so there are no rewards to report.
-    return undefined;
+    if (!agentMultisigAddress) return;
+    if (!isValidServiceId(serviceId)) return;
+
+    const stakingProgramConfig = STAKING_PROGRAMS[chainId]?.[stakingProgramId];
+    if (!stakingProgramConfig) throw new Error('Staking program not found');
+
+    const { activityChecker, contract: stakingTokenProxyContract } =
+      stakingProgramConfig;
+
+    const contractCalls = [
+      stakingTokenProxyContract.getServiceInfo(serviceId),
+      stakingTokenProxyContract.livenessPeriod(),
+      stakingTokenProxyContract.rewardsPerSecond(),
+      stakingTokenProxyContract.calculateStakingReward(serviceId),
+      stakingTokenProxyContract.minStakingDeposit(),
+      stakingTokenProxyContract.tsCheckpoint(),
+      activityChecker.livenessRatio(),
+      activityChecker.getMultisigNonces(agentMultisigAddress),
+    ];
+    const { reads, isAwaitingBaseline } =
+      await StakedAgentService.readWithBaseline(
+        PROVIDERS[chainId].multicallProvider,
+        stakingProgramConfig,
+        serviceId,
+        contractCalls,
+      );
+
+    const [
+      serviceInfo,
+      livenessPeriod,
+      rewardsPerSecond,
+      accruedStakingReward,
+      minStakingDeposit,
+      tsCheckpoint,
+      livenessRatio,
+      multisigNonces,
+    ] = reads;
+
+    const lastNonces = serviceInfo[2];
+    const isServiceStaked = lastNonces.length > REQUEST_COUNT_INDEX;
+
+    const secondsSinceCheckpoint = getNowInSeconds() - tsCheckpoint;
+    const effectivePeriod = Math.max(livenessPeriod, secondsSinceCheckpoint);
+    // No safety margin, unlike the agents that make their own requests: the
+    // user makes exactly one a day, and the contract counts that one.
+    const requiredRequests = Math.ceil(
+      (effectivePeriod * livenessRatio) / 1e18,
+    );
+
+    const eligibleRequests = isServiceStaked
+      ? multisigNonces[REQUEST_COUNT_INDEX] - lastNonces[REQUEST_COUNT_INDEX]
+      : 0;
+
+    const isEligibleForRewards =
+      !isAwaitingBaseline && eligibleRequests >= requiredRequests;
+
+    const availableRewardsForEpoch = rewardsPerSecond * effectivePeriod;
+
+    return {
+      serviceInfo,
+      livenessPeriod,
+      livenessRatio,
+      rewardsPerSecond,
+      isEligibleForRewards,
+      isAwaitingBaseline,
+      activityThisEpoch: eligibleRequests,
+      availableRewardsForEpoch,
+      accruedServiceStakingRewards: parseFloat(
+        formatEther(`${accruedStakingReward}`),
+      ),
+      minimumStakedAmount: parseFloat(formatEther(`${minStakingDeposit}`)) * 2,
+      tsCheckpoint,
+    } satisfies StakingRewardsInfo;
   };
 
   static getAvailableRewardsForEpoch = async (
-    _stakingProgramId: StakingProgramId,
-    _chainId: EvmChainId = EvmChainIdMap.Gnosis,
-  ): Promise<bigint | undefined> => {
-    return undefined;
-  };
+    stakingProgramId: StakingProgramId,
+    chainId: EvmChainId,
+  ): Promise<bigint | undefined> =>
+    PredictTraderService.getAvailableRewardsForEpoch(stakingProgramId, chainId);
 
   static getServiceStakingDetails = async (
-    _serviceNftTokenId: number,
-    _stakingProgramId: StakingProgramId,
-    _chainId: EvmChainId = EvmChainIdMap.Gnosis,
-  ): Promise<ServiceStakingDetails> => {
-    // Never called for no_staking (query is disabled upstream).
-    throw new Error('Connect agent does not support staking (no_staking).');
-  };
+    serviceNftTokenId: number,
+    stakingProgramId: StakingProgramId,
+    chainId: EvmChainId,
+  ): Promise<ServiceStakingDetails> =>
+    PredictTraderService.getServiceStakingDetails(
+      serviceNftTokenId,
+      stakingProgramId,
+      chainId,
+    );
 
   static getStakingContractDetails = async (
-    _stakingProgramId: StakingProgramId,
-    _chainId: EvmChainId = EvmChainIdMap.Gnosis,
-  ): Promise<StakingContractDetails | undefined> => {
-    return undefined;
-  };
+    stakingProgramId: StakingProgramId,
+    chainId: EvmChainId,
+  ): Promise<StakingContractDetails | undefined> =>
+    PredictTraderService.getStakingContractDetails(stakingProgramId, chainId);
 
   /**
    * `POST /session` (launching the local Claude Code session) is NOT here: the

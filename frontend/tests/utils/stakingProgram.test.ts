@@ -1,6 +1,8 @@
 import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap } from '../../constants/chains';
 import {
+  NO_STAKING_PROGRAM_ID,
+  RETIRED_STAKING_PROGRAM_COPY,
   STAKING_PROGRAM_IDS,
   StakingProgramId,
 } from '../../constants/stakingProgram';
@@ -8,10 +10,21 @@ import {
   chainHasPolySafePrograms,
   deriveStakingProgramId,
   EVICTION_RUN_START_MARGIN_SECONDS,
+  formatCooldownEnd,
   getCompatibleStakingProgramIds,
+  getLoadedRetiredProgramStakingDetails,
+  getRetiredProgramReason,
+  getRetiredProgramStatus,
+  getServiceStakingProgramId,
+  hasFreeServiceSlot,
+  hasUnstakedOption,
+  isInStakingMode,
   isNoStakingProgram,
+  isStakingAvailable,
   isStakingProgramCompatibleWithMultisig,
+  RetiredProgramStakingDetails,
   runsInsideEvictionWindow,
+  toRetiredSafeState,
 } from '../../utils/stakingProgram';
 import { makeStakingProgramConfig } from '../helpers/factories';
 
@@ -53,8 +66,16 @@ const GNOSIS_PROGRAMS = {
 };
 
 describe('isNoStakingProgram', () => {
+  it('narrows to NO_STAKING_PROGRAM_ID', () => {
+    const id: StakingProgramId = NO_STAKING_PROGRAM_ID as StakingProgramId;
+    if (!isNoStakingProgram(id)) throw new Error('expected no_staking');
+    // Compiles only while `isNoStakingProgram` is a type guard.
+    const narrowed: typeof NO_STAKING_PROGRAM_ID = id;
+    expect(narrowed).toBe(NO_STAKING_PROGRAM_ID);
+  });
+
   it('is true only for the no_staking program', () => {
-    expect(isNoStakingProgram('no_staking')).toBe(true);
+    expect(isNoStakingProgram(NO_STAKING_PROGRAM_ID)).toBe(true);
     expect(
       isNoStakingProgram(STAKING_PROGRAM_IDS.PearlBetaMechMarketplace3),
     ).toBe(false);
@@ -138,6 +159,30 @@ describe('getCompatibleStakingProgramIds', () => {
     ).toEqual([POLY_SAFE_PROGRAM, STANDARD_SAFE_PROGRAM]);
   });
 
+  it('hides retired programs, and lists the current retired one first', () => {
+    const RETIRED_PROGRAM = 'polystrat_retired' as StakingProgramId;
+    const programs = {
+      ...POLYGON_PROGRAMS,
+      [RETIRED_PROGRAM]: polygonProgram({ retired: true }),
+    };
+
+    expect(
+      getCompatibleStakingProgramIds({
+        ...base,
+        programs,
+        isPolySafeService: false,
+      }),
+    ).toEqual([STANDARD_SAFE_PROGRAM]);
+    expect(
+      getCompatibleStakingProgramIds({
+        ...base,
+        programs,
+        isPolySafeService: false,
+        currentStakingProgramId: RETIRED_PROGRAM,
+      }),
+    ).toEqual([RETIRED_PROGRAM, STANDARD_SAFE_PROGRAM]);
+  });
+
   it('puts the current program first even when deprecated', () => {
     expect(
       getCompatibleStakingProgramIds({
@@ -219,5 +264,268 @@ describe('runsInsideEvictionWindow', () => {
     expect(
       run({ evictionExpiresAt: NOW + EVICTION_RUN_START_MARGIN_SECONDS + 1 }),
     ).toBe(true);
+  });
+});
+
+describe('toRetiredSafeState', () => {
+  it.each([
+    ['polySafe', 'withdrawalOnly'],
+    ['standard', 'canSwitch'],
+    ['loading', 'loading'],
+    ['error', 'error'],
+  ] as const)('%s -> %s', (safeType, expected) => {
+    expect(toRetiredSafeState(safeType)).toBe(expected);
+  });
+});
+
+describe('getRetiredProgramStatus', () => {
+  const COOLDOWN_END = 1_800_000_000;
+  const OUT: RetiredProgramStakingDetails = {
+    state: 'loaded',
+    placement: 'outOfContract',
+  };
+  const PAST: RetiredProgramStakingDetails = {
+    state: 'loaded',
+    placement: 'pastMinimumPeriod',
+  };
+  const IN_PERIOD: RetiredProgramStakingDetails = {
+    state: 'loaded',
+    placement: 'inMinimumPeriod',
+    cooldownEndsAt: COOLDOWN_END,
+  };
+
+  it.each([
+    ['switch', 'canSwitch', OUT],
+    ['awaitingUnstake', 'canSwitch', PAST],
+    ['cooldown', 'canSwitch', IN_PERIOD],
+    ['withdrawalOnly', 'withdrawalOnly', IN_PERIOD],
+    // A no_staking service's details query is disabled: it must still withdraw.
+    ['withdrawalOnly', 'withdrawalOnly', { state: 'loading' }],
+    ['withdrawalOnly', 'withdrawalOnly', { state: 'error' }],
+    // Unknown Safe type: never the switch, which a PolySafe can't do.
+    ['safeTypeLoading', 'loading', OUT],
+    ['safeTypeUnknown', 'error', OUT],
+    // Unknown staking details: never the switch, which could be in a cooldown.
+    ['stakingDetailsLoading', 'canSwitch', { state: 'loading' }],
+    ['stakingDetailsUnknown', 'canSwitch', { state: 'error' }],
+    // Both unknown: the Safe type is resolved first, so its Retry is offered.
+    ['safeTypeUnknown', 'error', { state: 'error' }],
+    ['safeTypeLoading', 'loading', { state: 'error' }],
+  ] as const)(
+    '%s for Safe state %s, details %o',
+    (expected, safeState, stakingDetails) => {
+      expect(getRetiredProgramStatus({ safeState, stakingDetails }).kind).toBe(
+        expected,
+      );
+    },
+  );
+
+  it('carries the cooldown end, known regardless of the Safe type', () => {
+    expect(
+      getRetiredProgramStatus({
+        safeState: 'error',
+        stakingDetails: IN_PERIOD,
+      }),
+    ).toEqual({ kind: 'cooldown', endsAt: COOLDOWN_END });
+  });
+
+  it('never reports a cooldown without loaded details', () => {
+    for (const stakingDetails of [
+      { state: 'loading' },
+      { state: 'error' },
+    ] as const) {
+      expect(
+        getRetiredProgramStatus({ safeState: 'canSwitch', stakingDetails })
+          .kind,
+      ).not.toBe('cooldown');
+    }
+  });
+});
+
+describe('getLoadedRetiredProgramStakingDetails', () => {
+  it.each([
+    [false, false, { state: 'loaded', placement: 'outOfContract' }],
+    [false, true, { state: 'loaded', placement: 'outOfContract' }],
+    [true, true, { state: 'loaded', placement: 'pastMinimumPeriod' }],
+    [
+      true,
+      false,
+      { state: 'loaded', placement: 'inMinimumPeriod', cooldownEndsAt: 42 },
+    ],
+  ])(
+    'inContract=%s, servedMinimum=%s → %o',
+    (isServiceInContract, isServiceStakedForMinimumDuration, expected) => {
+      expect(
+        getLoadedRetiredProgramStakingDetails({
+          isServiceInContract,
+          isServiceStakedForMinimumDuration,
+          cooldownEndsAt: 42,
+        }),
+      ).toEqual(expected);
+    },
+  );
+});
+
+describe('getRetiredProgramReason', () => {
+  it.each([
+    [{ kind: 'withdrawalOnly' }, RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY],
+    [
+      { kind: 'safeTypeUnknown' },
+      RETIRED_STAKING_PROGRAM_COPY.SAFE_TYPE_UNKNOWN,
+    ],
+    [
+      { kind: 'stakingDetailsUnknown' },
+      RETIRED_STAKING_PROGRAM_COPY.STAKING_DETAILS_UNKNOWN,
+    ],
+    [{ kind: 'awaitingUnstake' }, RETIRED_STAKING_PROGRAM_COPY.SWITCH],
+    [{ kind: 'switch' }, RETIRED_STAKING_PROGRAM_COPY.SWITCH],
+    [{ kind: 'safeTypeLoading' }, null],
+    [{ kind: 'stakingDetailsLoading' }, null],
+  ] as const)('%o → its alert copy', (status, expected) => {
+    expect(getRetiredProgramReason(status)).toBe(expected);
+  });
+
+  it('gives the cooldown copy with its end date', () => {
+    const reason = getRetiredProgramReason({
+      kind: 'cooldown',
+      endsAt: 1_800_000_000,
+    });
+    // 1_800_000_000 s is 2027-01-15 08:00 UTC.
+    expect(formatCooldownEnd(1_800_000_000)).toBe('Jan 15, 8:00 AM (UTC)');
+    expect(reason).toBe(
+      'Pearl no longer supports deprecated contracts. Your agent is in a cooldown period until Jan 15, 8:00 AM (UTC). After that, switch to one of the available contracts to run your agent again.',
+    );
+  });
+});
+
+describe('isStakingAvailable', () => {
+  const connect = {
+    hasStaking: false,
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+  };
+
+  it.each([
+    [EvmChainIdMap.Gnosis, true],
+    [EvmChainIdMap.Robinhood, true],
+    [EvmChainIdMap.Polygon, false],
+  ])(
+    'decides per chain from stakingChains (chain %s → %s)',
+    (chainId, expected) => {
+      expect(isStakingAvailable(connect, chainId)).toBe(expected);
+    },
+  );
+
+  it.each([true, false])(
+    'falls back to hasStaking (%s) without stakingChains',
+    (hasStaking) => {
+      expect(isStakingAvailable({ hasStaking }, EvmChainIdMap.Gnosis)).toBe(
+        hasStaking,
+      );
+    },
+  );
+});
+
+describe('hasUnstakedOption', () => {
+  const connect = {
+    hasStaking: false,
+    defaultStakingProgramId: 'no_staking' as StakingProgramId,
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+  };
+
+  it('is true where an agent defaulting to no_staking can stake', () => {
+    expect(hasUnstakedOption(connect, EvmChainIdMap.Gnosis)).toBe(true);
+  });
+
+  it('is false where it cannot stake', () => {
+    expect(hasUnstakedOption(connect, EvmChainIdMap.Polygon)).toBe(false);
+  });
+
+  it('is false for an agent that always stakes', () => {
+    expect(
+      hasUnstakedOption(
+        {
+          hasStaking: true,
+          defaultStakingProgramId: STAKING_PROGRAM_IDS.OmenstratI,
+        },
+        EvmChainIdMap.Gnosis,
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('getServiceStakingProgramId', () => {
+  const serviceIn = (staking_program_id?: string) => ({
+    home_chain: 'gnosis',
+    chain_configs: {
+      gnosis: { chain_data: { user_params: { staking_program_id } } },
+      base: { chain_data: { user_params: { staking_program_id: 'other' } } },
+    },
+  });
+
+  it("reads the home chain's stored program", () => {
+    expect(
+      getServiceStakingProgramId(
+        serviceIn('connect_i') as unknown as Parameters<
+          typeof getServiceStakingProgramId
+        >[0],
+      ),
+    ).toBe('connect_i');
+  });
+
+  it('is undefined with no service', () => {
+    expect(getServiceStakingProgramId(undefined)).toBeUndefined();
+  });
+});
+
+describe('isInStakingMode', () => {
+  const CONNECT = {
+    hasStaking: false,
+    defaultStakingProgramId: 'no_staking' as const,
+    stakingChains: [EvmChainIdMap.Gnosis],
+  };
+  const service = (staking_program_id: string | null) =>
+    ({
+      home_chain: 'gnosis',
+      chain_configs: {
+        gnosis: { chain_data: { user_params: { staking_program_id } } },
+      },
+    }) as unknown as Parameters<typeof isInStakingMode>[2];
+
+  it.each([
+    [
+      'an agent that cannot stake there',
+      { hasStaking: false },
+      'connect_i',
+      false,
+    ],
+    [
+      'an agent that always stakes, program unknown',
+      { hasStaking: true },
+      null,
+      true,
+    ],
+    ['an optional agent, staked', CONNECT, 'connect_i', true],
+    ['an optional agent, unstaked', CONNECT, 'no_staking', false],
+    ['an optional agent, program unknown', CONNECT, null, undefined],
+  ])('answers %s', (_, agentConfig, stakingProgramId, expected) => {
+    expect(
+      isInStakingMode(
+        agentConfig as Parameters<typeof isInStakingMode>[0],
+        EvmChainIdMap.Gnosis,
+        service(stakingProgramId),
+      ),
+    ).toBe(expected);
+  });
+});
+
+describe('hasFreeServiceSlot', () => {
+  it.each([
+    ['a slot is free', { serviceIds: [1], maxNumServices: 2 }, true],
+    ['every slot is taken', { serviceIds: [1, 2], maxNumServices: 2 }, false],
+    ['the ids are unknown', { maxNumServices: 2 }, null],
+    ['the limit is unknown', { serviceIds: [1] }, null],
+    ['there are no details', undefined, null],
+  ])('is right when %s', (_, details, expected) => {
+    expect(hasFreeServiceSlot(details)).toBe(expected);
   });
 });

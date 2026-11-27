@@ -1,7 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { act, createElement, PropsWithChildren, useContext } from 'react';
 
+import { EvmChainIdMap } from '../../constants/chains';
 import {
+  NO_STAKING_PROGRAM_ID,
   STAKING_PROGRAM_IDS,
   StakingProgramId,
 } from '../../constants/stakingProgram';
@@ -39,6 +41,7 @@ const mockUseActiveStakingProgramId = jest.fn<
 const mockUseServices = jest.fn<
   {
     selectedService?: Service;
+    services?: Service[];
     selectedAgentConfig: {
       defaultStakingProgramId: StakingProgramId;
     };
@@ -168,6 +171,57 @@ describe('StakingProgramProvider', () => {
     });
   });
 
+  describe('selectedStakingProgramId where staking is optional (Connect)', () => {
+    const CONNECT_PROGRAM = STAKING_PROGRAM_IDS.ConnectGnosisI;
+    const setupConnect = (
+      storedProgramId: StakingProgramId | undefined,
+      { isLoading = false } = {},
+    ) => {
+      mockUseServices.mockReturnValue({
+        selectedService: storedProgramId
+          ? (makeMiddlewareService('gnosis', {
+              chain_configs: makeChainConfig('gnosis', {
+                staking_program_id: storedProgramId,
+              }),
+            }) as Service)
+          : undefined,
+        selectedAgentConfig: {
+          hasStaking: false,
+          stakingChains: [EvmChainIdMap.Gnosis],
+          evmHomeChainId: EvmChainIdMap.Gnosis,
+          defaultStakingProgramId: NO_STAKING_PROGRAM_ID,
+        } as AgentConfig,
+      });
+      // the subgraph still names the contract the agent unstaked from
+      mockUseActiveStakingProgramId.mockReturnValue({
+        isLoading,
+        data: CONNECT_PROGRAM,
+      });
+    };
+
+    it("takes the service's choice over the subgraph's cached contract", () => {
+      setupConnect(NO_STAKING_PROGRAM_ID);
+      const { result } = renderStakingProgramContext();
+      expect(result.current.selectedStakingProgramId).toBe(
+        NO_STAKING_PROGRAM_ID,
+      );
+    });
+
+    it('does not wait on the subgraph', () => {
+      setupConnect(CONNECT_PROGRAM, { isLoading: true });
+      const { result } = renderStakingProgramContext();
+      expect(result.current.selectedStakingProgramId).toBe(CONNECT_PROGRAM);
+    });
+
+    it('falls back to the default when there is no service program', () => {
+      setupConnect(undefined);
+      const { result } = renderStakingProgramContext();
+      expect(result.current.selectedStakingProgramId).toBe(
+        NO_STAKING_PROGRAM_ID,
+      );
+    });
+  });
+
   describe('defaultStakingProgramId', () => {
     it('initializes from selectedAgentConfig.defaultStakingProgramId', () => {
       setupMocks({ defaultStakingProgramId: DEFAULT_PROGRAM });
@@ -257,6 +311,32 @@ describe('StakingProgramProvider', () => {
       await waitFor(() => {
         expect(result.current.stakingProgramIdToMigrateTo).toBeNull();
       });
+    });
+  });
+
+  describe('stakingProgramIdByServiceConfigId', () => {
+    it("maps each service to its home chain's stored program, or null", () => {
+      const stored = makeMiddlewareService('gnosis', {
+        service_config_id: 'sc-stored',
+        chain_configs: makeChainConfig('gnosis', {
+          staking_program_id: SERVICE_PROGRAM,
+        }),
+      }) as Service;
+      const none = makeMiddlewareService('gnosis', {
+        service_config_id: 'sc-none',
+        chain_configs: {},
+      }) as Service;
+      setupMocks();
+      mockUseServices.mockReturnValue({
+        ...mockUseServices(),
+        services: [stored, none],
+      });
+
+      const { result } = renderStakingProgramContext();
+      const map = result.current.stakingProgramIdByServiceConfigId;
+      expect(map.get('sc-stored')).toBe(SERVICE_PROGRAM);
+      expect(map.get('sc-none')).toBeNull();
+      expect(map.size).toBe(2);
     });
   });
 

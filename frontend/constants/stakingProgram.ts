@@ -25,6 +25,14 @@ const GNOSIS_STAKING_PROGRAM_IDS = {
   OmenstratV: 'omenstrat_v',
   OmenstratVI: 'omenstrat_vi',
   OmenstratVII: 'omenstrat_vii',
+  OmenstratVIII: 'omenstrat_viii',
+  OmenstratIX: 'omenstrat_ix',
+  OmenstratX: 'omenstrat_x',
+  // Connect agent (optional staking). Ids are unique per chain only, so each
+  // chain's Connect keys carry the chain name: the maps are spread into one
+  // STAKING_PROGRAM_IDS object below.
+  ConnectGnosisI: 'connect_i',
+  ConnectGnosisII: 'connect_ii',
 } as const;
 
 const BASE_STAKING_PROGRAM_IDS = {
@@ -43,6 +51,9 @@ const BASE_STAKING_PROGRAM_IDS = {
   BasiusI: 'basius_i',
   BasiusII: 'basius_ii',
   BasiusIII: 'basius_iii',
+  BasiusIV: 'basius_iv',
+  BasiusV: 'basius_v',
+  BasiusVI: 'basius_vi',
 } as const;
 
 const MODE_STAKING_PROGRAM_IDS = {
@@ -66,6 +77,9 @@ export const OPTIMISM_STAKING_PROGRAM_IDS = {
   OptimusI: 'optimus_i',
   OptimusII: 'optimus_ii',
   OptimusIII: 'optimus_iii',
+  OptimusIV: 'optimus_iv',
+  OptimusV: 'optimus_v',
+  OptimusVI: 'optimus_vi',
 } as const;
 
 export type OptimismStakingProgramId = ValueOf<
@@ -84,10 +98,23 @@ const POLYGON_STAKING_PROGRAM_IDS = {
   PolystratIV: 'polystrat_iv',
   PolystratV: 'polystrat_v',
   PolystratVI: 'polystrat_vi',
+  PolystratVII: 'polystrat_vii',
+  PolystratVIII: 'polystrat_viii',
+  PolystratIX: 'polystrat_ix',
 } as const;
 
 export type PolygonStakingProgramId = ValueOf<
   typeof POLYGON_STAKING_PROGRAM_IDS
+>;
+
+const ROBINHOOD_STAKING_PROGRAM_IDS = {
+  ConnectRobinhoodI: 'connect_i',
+  ConnectRobinhoodII: 'connect_ii',
+  ConnectRobinhoodIII: 'connect_iii',
+} as const;
+
+export type RobinhoodStakingProgramId = ValueOf<
+  typeof ROBINHOOD_STAKING_PROGRAM_IDS
 >;
 
 /**
@@ -100,6 +127,7 @@ export const STAKING_PROGRAM_IDS = {
   ...MODE_STAKING_PROGRAM_IDS,
   ...OPTIMISM_STAKING_PROGRAM_IDS,
   ...POLYGON_STAKING_PROGRAM_IDS,
+  ...ROBINHOOD_STAKING_PROGRAM_IDS,
 } as const;
 
 /**
@@ -111,8 +139,28 @@ export const STAKING_PROGRAM_IDS = {
 export const POLY_SAFE_PROXY_CODEHASH =
   '0x92565062fdea8761e07d9df2fcdbd66c0582af6ddf0e0355bc07754ad97400b0';
 
-const NO_STAKING_PROGRAM_ID = 'no_staking';
+/** A service that runs unstaked (Connect, unless its user stakes it). */
+export const NO_STAKING_PROGRAM_ID = 'no_staking' as const;
 
 export type StakingProgramId =
   | ValueOf<typeof STAKING_PROGRAM_IDS>
   | typeof NO_STAKING_PROGRAM_ID;
+
+const NO_LONGER_SUPPORTED = 'Pearl no longer supports deprecated contracts.';
+const STAKING_DETAILS_NOT_LOADED =
+  "Pearl couldn't load this agent's staking details. Try again in a few minutes.";
+
+/** Copy of the retired-contract alert, also used as start-gate and Auto-run skip reasons. */
+export const RETIRED_STAKING_PROGRAM_COPY = {
+  SWITCH: `Switch to one of the available contracts to run your agent. ${NO_LONGER_SUPPORTED}`,
+  /** Around the cooldown's end date, which the alert renders between the two. */
+  COOLDOWN_PREFIX: `${NO_LONGER_SUPPORTED} Your agent is in a cooldown period until`,
+  COOLDOWN_SUFFIX:
+    '. After that, switch to one of the available contracts to run your agent again.',
+  /** The Safe type can't be read, so neither SWITCH nor WITHDRAWAL_ONLY can be offered. */
+  SAFE_TYPE_UNKNOWN: STAKING_DETAILS_NOT_LOADED,
+  /** The staking details can't be read, so neither the cooldown nor SWITCH can be offered. */
+  STAKING_DETAILS_UNKNOWN: STAKING_DETAILS_NOT_LOADED,
+  WITHDRAWAL_ONLY:
+    'This agent can no longer trade because it cannot switch to a new staking contract. To keep using Polystrat, add a new agent. To get your funds back, start your agent and sell its positions on the Profile tab. Then withdraw from your Agent Wallet.',
+} as const;

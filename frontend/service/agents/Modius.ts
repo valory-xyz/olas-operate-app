@@ -17,6 +17,7 @@ import {
   StakingRewardsInfo,
 } from '@/types/Autonolas';
 import { isValidServiceId } from '@/utils';
+import { getNowInSeconds } from '@/utils/time';
 
 import {
   ONE_YEAR,
@@ -24,8 +25,6 @@ import {
 } from './shared-services/StakedAgentService';
 
 const REQUESTS_SAFETY_MARGIN = 1;
-
-const getNowInSeconds = () => Math.floor(Date.now() / 1000);
 
 export abstract class ModiusService extends StakedAgentService {
   static getAgentStakingRewardsInfo = async ({
@@ -149,7 +148,7 @@ export abstract class ModiusService extends StakedAgentService {
 
     const multicallResponse = await multicallProvider.all(contractCalls);
     const [rewardsPerSecond, livenessPeriod, tsCheckpoint] = multicallResponse;
-    const nowInSeconds = Math.floor(Date.now() / 1000);
+    const nowInSeconds = getNowInSeconds();
 
     return BigInt(
       Math.max(

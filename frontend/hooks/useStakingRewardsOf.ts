@@ -8,7 +8,10 @@ import { OnlineStatusContext } from '@/context/OnlineStatusProvider';
 import { sumBigNumbers } from '@/utils/calculations';
 import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import { matchesAgentConfig } from '@/utils/service';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
+import {
+  getServiceStakingProgramId,
+  isNoStakingProgram,
+} from '@/utils/stakingProgram';
 
 import { createActiveStakingProgramIdQuery } from './useActiveStakingProgramId';
 import { createStakingRewardsQuery } from './useAgentStakingRewardsDetails';
@@ -43,20 +46,16 @@ export const useStakingRewardsOf = (chainId: EvmChainId) => {
         const agent = ACTIVE_AGENTS.find(([, agentConfig]) =>
           matchesAgentConfig(service, agentConfig),
         );
-        // Skip unmatched services and no_staking agents (e.g. Connect) —
-        // they have no staking rewards to fetch.
-        if (
-          !agent ||
-          isNoStakingProgram(AGENT_CONFIG[agent[0]].defaultStakingProgramId)
-        ) {
-          return null;
-        }
-        const agentType = agent[0];
-
         const chainConfigs = service.chain_configs;
         const chainDetails = isNil(chainConfigs)
           ? null
           : chainConfigs[asMiddlewareChain(chainId)]?.chain_data;
+        // Skip unmatched services and services that run unstaked (Connect
+        // unless the user staked it) — they have no staking rewards to fetch.
+        if (!agent || isNoStakingProgram(getServiceStakingProgramId(service))) {
+          return null;
+        }
+        const agentType = agent[0];
         const serviceNftTokenId = chainDetails?.token;
         return {
           agentConfig: AGENT_CONFIG[agentType],

@@ -71,7 +71,7 @@ The user picks which staking program to use. The view cycles through these state
 
 - Default program = `selectedAgentConfig.defaultStakingProgramId` (from `frontend/config/agents.ts`)
 - "Change Configuration" button toggles to list view (`LIST_MANUAL`)
-- List is ordered by `useStakingContracts`: current program first (shown even if deprecated), other deprecated programs hidden, filtered by `agentsSupported`, then filtered by multisig compatibility (see "Multisig compatibility" below). `currentStakingProgramId` here is the on-chain (subgraph) program falling back to the service-stored `staking_program_id` — it never falls back to the agent-config default, so the "Selected" badge can't land on a contract the user never joined (OPE-1841)
+- List is ordered by `useStakingContracts`: current program first (shown even if deprecated or retired), other deprecated and retired programs hidden, filtered by `agentsSupported`, then filtered by multisig compatibility (see "Multisig compatibility" below). `currentStakingProgramId` here is the on-chain (subgraph) program falling back to the service-stored `staking_program_id` — it never falls back to the agent-config default, so the "Current" badge can't land on a contract the user never joined (OPE-1841)
 - If the agent-config default is not in the compatible list, the page skips the "Recommended configuration" card and shows the list directly (with an info alert when the list is empty). The Back button is hidden in that case so the user can't reach the incompatible recommended card (OPE-1919)
 - On selection, `SelectStakingButton` writes the chosen `staking_program_id` to the service config before first deploy
 - Select failure toasts: with no service yet it creates one, and a failure shows *"Couldn't download the agent. Check your internet connection, VPN, proxy or antivirus HTTPS scanning, then try again."* for a package download error (`SERVICE_PACKAGE_DOWNLOAD_FAILED`), else *"Couldn't create the agent. Please try again."*. With an existing service, a failed contract update shows *"An error occurred while updating the staking contract."*
@@ -80,7 +80,7 @@ The user picks which staking program to use. The view cycles through these state
 
 Component: `frontend/components/MainPage/Home/Overview/Staking/Staking.tsx`
 
-Always visible in the main page Overview section. Displays:
+Visible in the main page Overview section wherever the agent can stake; for an agent whose staking is optional see [Optional staking (Connect)](#optional-staking-connect). Displays:
 
 - **`EpochClock`** — countdown to epoch end. Color-coded: warning (yellow) when < 12 h remain, danger (red) when < 3 h remain. Derived from `currentEpochLifetime` in `useStakingDetails`.
 - **`Streak`** — consecutive epochs with rewards earned, with a flame icon. Uses `optimisticStreak` (adds 1 if `isEligibleForRewards` is true, since the subgraph lags the current epoch).
@@ -128,13 +128,32 @@ When the user clicks "Switch Staking Contract", SelectStakingPage opens in **mig
 
 Migration requires the agent to be stopped first (or auto-run to rotate away). The new program's slot availability and rewards are checked before the UI allows selection.
 
+## Retired staking programs
+
+`StakingProgramConfig.retired` marks the programs Pearl no longer stakes on or runs agents on: every program with `retired: true` in `frontend/config/stakingPrograms/*.ts`. The middleware keeps the same ids in `RETIRED_STAKING_PROGRAMS` and does the unstaking itself: its funding job unstakes a service on a retired program once its minimum staking period is over. The app never calls an unstake route. `deprecated` keeps its older meaning (hidden, warning alert, can still run).
+
+- **Lists**: `getCompatibleStakingProgramIds` hides retired programs, but still lists the current one first, labelled "Current" and not selectable.
+- **On a retired program** (`useIsPolySafeService().isOnRetiredProgram`): the selected program is retired (`isRetiredStakingProgram`; `selectedStakingProgramId` is the on-chain program while staked, else the stored one, else the agent's default), or the service is already in withdrawal-only mode (`isInWithdrawalOnlyMode`). The second case matters once the middleware has unstaked a withdrawal-only service: the subgraph clears `latestStakingContract` on unstake, and the stored id is `no_staking`, so the retired id is gone.
+- **Safe state** (`useIsPolySafeService().retiredSafeState`, a `RetiredSafeState` from `utils/stakingProgram.ts`): `withdrawalOnly` for a service already in withdrawal-only mode, or a PolySafe one on a retired program; `canSwitch` for a standard Safe or a live program; `loading` or `error` while the Safe type is loading or unreadable. Only data decides the type: a Retry after a failed read stays `error` until the read succeeds, so it never passes for a standard Safe.
+- **Status**: `useRetiredProgramStatus()` gives the alert and the start gate one status from `getRetiredProgramStatus`, plus the two Retry handlers.
+- **Alert**: `AgentDisabledAlert` shows `RetiredContractAlert` when on a retired program. It comes after the another-agent-running branch and pre-empts no-slots, eviction, empty-pool and Agent low-balance alerts. `MasterEoaLowBalanceAlert` still renders under it, because the unstake needs gas. The title names the program. For a withdrawal-only service, stored as `no_staking`, it names the retired program `useStartService` saved under `retiredStakingProgramIdByServiceConfigId` (Pearl store) just before the `no_staking` PATCH. It reads "Staking contract is deprecated" only when nothing was saved. `getRetiredProgramStatus` (`utils/stakingProgram.ts`) picks one variant, in this order. It takes the staking details as one value (`stakingDetailsState`: `loading`, `error`, or `loaded` with a `placement` of `inMinimumPeriod` (with the cooldown end), `pastMinimumPeriod` or `outOfContract`), so it can't report a cooldown without them:
+  - `withdrawalOnly`: a "Withdraw" button opens the Agent Wallet;
+  - `cooldown`, while the loaded details show the agent staked or evicted inside its minimum staking period: the end date in UTC, no button;
+  - `safeTypeUnknown` when the Safe type couldn't be read (a "Retry" re-reads it, and shows as loading while it does), or `safeTypeLoading` (title only) while it loads: whether the agent can switch depends on it. The Safe type is resolved before the staking details, so with both unknown its Retry is the one offered;
+  - `stakingDetailsUnknown` when the staking details couldn't be read (with a "Retry" that refetches them, loading while it does), or `stakingDetailsLoading` (title only) while they load;
+  - `awaitingUnstake`: the switch copy with no button, while the agent is still in the contract after its period (the middleware unstakes it within `RETIRED_STAKING_CHECK_INTERVAL_SECONDS`, 10 min);
+  - `switch`: "Switch Staking Contract", once the details show it out of the contract and the Safe type is standard.
+- **Start gate**: `useDeployability` maps the same `getRetiredProgramStatus` through `getRetiredProgramReason`: `canRun: false` with that status's alert copy as `reason` (the cooldown copy with its end date, `STAKING_DETAILS_UNKNOWN`, `SAFE_TYPE_UNKNOWN` or `SWITCH`), `withdrawalOnly` excepted; `safeTypeLoading` and `stakingDetailsLoading` are the `Safe type` and `Staking` loading reasons. It returns `isWithdrawalOnlyStart`, which `useServiceDeployment` passes as the start's `withdrawalOnly`. See [deployability-and-lifecycle.md](deployability-and-lifecycle.md#deployability-decision-tree-usedeployability).
+- **Withdrawal-only mode**: starting a withdrawal-only service passes `withdrawalOnly` to `useStartService`, which calls `enableWithdrawalOnlyMode(service, agentType)` after `updateServiceIfNeeded`. That PATCHes `configurations.<home_chain>.staking_program_id: no_staking` (the middleware's `use_staking` is read-only, derived from `staking_program_id`) and `DISABLE_TRADING=true` from the agent's template entry (a USER env var in the Polystrat template). It sends nothing when `isInWithdrawalOnlyMode` says the service already has both, since every PATCH re-downloads the service package. `updateServiceIfNeeded` keeps USER values: its PATCH never sends them, and its PUT replacement keeps the service's own value for every USER variable, so neither path resets `DISABLE_TRADING`. The agent runs unstaked and only redeems. The user sells positions on the Profile tab. The middleware refuses (409) any deploy whose target program is retired.
+- **Auto-run**: see [autorun.md](autorun.md#310-retired-staking-program); retired instances are skipped, withdrawal-only ones included.
+
 ## AutoRun integration
 
 AutoRun schedules on "done for the epoch": staking eligibility combined with the activity goal. The key function is `refreshRewardsEligibility()` in `frontend/context/AutoRunProvider/utils/autoRunHelpers.ts`.
 
 **`refreshRewardsEligibility(candidate)`** returns whether the agent is done for the epoch:
 - Throttled per `serviceConfigId` (minimum 120 s between fetches)
-- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block
+- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block. An agent with `runsOnMinutesPerRun` (Connect) skips the staking read: done is its run window's goal ([Optional staking (Connect)](#optional-staking-connect))
 - Done = `isEpochTargetMet` and the current activity goal met, or a current block with `no_markets_left: true` (`deriveIsDoneForEpoch`), with or without `isEpochTargetMet` for an agent with `canReportNoMarketsLeft` (Omenstrat) and only once it is met for any other agent; without a block, `isEpochTargetMet` alone
 - Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and the agent is done, overrides it to `false` so the agent runs and triggers the on-chain checkpoint
 - Returns `true` (done), `false` (not done), or `undefined` (data missing, the goal unreadable once `isEpochTargetMet` is true, or the goal unreadable before it while the instance was already done this epoch)
@@ -159,7 +178,7 @@ AutoRun schedules on "done for the epoch": staking eligibility combined with the
 - `frontend/context/StakingContractDetailsProvider.tsx` — contract details caching + refetch logic
 - `frontend/context/RewardProvider.tsx` — rewards state + optimistic calculation
 - `frontend/hooks/useStakingProgram.ts` — program metadata (active, default, selected, all available)
-- `frontend/hooks/useStakingContracts.ts` — ordered list of available programs (active first, deprecated + multisig-incompatible filtered)
+- `frontend/hooks/useStakingContracts.ts` — ordered list of available programs (active first, deprecated, retired and multisig-incompatible filtered)
 - `frontend/hooks/useIsPolySafeService.ts` — detects whether the service multisig is a PolySafe (fast path via program, else `eth_getCode` hash)
 - `frontend/hooks/useStakingContractDetails.ts` — contract state for any program + active contract eligibility
 - `frontend/hooks/useStakingContractCountdown.ts` — minimum staking duration countdown timer
@@ -290,23 +309,36 @@ Derives several status flags from `selectedStakingContractDetails`:
 
 ### Program ordering (useStakingContracts)
 
-`currentStakingProgramId` = subgraph-derived `activeStakingProgramId`, falling back to the service-stored `user_params.staking_program_id`, else `null`. It deliberately does **not** fall back to `defaultStakingProgramId` — the default is not evidence of a stake, and surfacing it as "current" marked contracts the user never joined as "Selected" (OPE-1841).
+`currentStakingProgramId` = subgraph-derived `activeStakingProgramId`, falling back to the service-stored `user_params.staking_program_id`, else `null`. It deliberately does **not** fall back to `defaultStakingProgramId` — the default is not evidence of a stake, and surfacing it as "current" marked contracts the user never joined as "Current" (OPE-1841).
 
 `orderedStakingProgramIds` is built by filtering and sorting available programs:
 
-1. Place the current staking program first — even if deprecated or incompatible, so a user staked in a legacy contract can still see it marked as selected
-2. Skip remaining deprecated programs
+1. Place the current staking program first — even if deprecated or incompatible, so a user staked in a legacy contract can still see it marked as current
+2. Skip remaining deprecated and retired programs
 3. Skip programs that don't support the selected agent type
 4. Skip programs whose multisig requirement doesn't match the service (see below)
 5. Append remaining programs in original order
 
 The pure logic lives in `getCompatibleStakingProgramIds()` (`frontend/utils/stakingProgram.ts`). Returns empty array (and `isStakingContractsLoaded: false`) while `isActiveStakingProgramLoaded` or `isMultisigTypeLoaded` is false.
 
+When staking is optional for the agent on this chain (`hasUnstakedOption`: its default is `no_staking` and `isStakingAvailable` allows the chain), `no_staking` is put first: the Unstaked tile (0 OLAS reward, 0 OLAS deposit). See [Optional staking (Connect)](#optional-staking-connect).
+
+### Optional staking (Connect)
+
+Connect defaults to `no_staking` and may stake only on the chains in `AgentConfig.stakingChains`; `isStakingAvailable(agentConfig, chainId)` replaces direct `hasStaking` reads, and agents without `stakingChains` keep `hasStaking`. `useNotifyOnActivityGoal` goes through `isStakingAvailable` too, and leaves out agents on minutes per run: Connect's goal is its run window, so its "daily goal" notification comes from Auto-Run's hand-over instead. A chain outside `stakingChains` (Polygon) has no staking UI.
+
+- **Setup:** `useCreateConnectService` creates the instance unstaked, then opens `SelectStaking` (instead of funding) on a chain where it can stake. The Configure view shows Unstaked as the *Default configuration*; Continue keeps it unstaked, Change Configuration opens the list. FundYourAgent's Back returns there.
+- **Existing instance:** the Overview shows a Staking section with the not-staked card and Manage Staking (to the contract list) while unstaked, and the usual countdown, streak and Manage Staking once staked. It decides from the service's own `staking_program_id` (`isInStakingMode`), not `selectedStakingProgramId`, whose cached subgraph source can outlive an unstake; while that is unknown, neither renders. Picking Unstaked while staked goes through Confirm Switch with `no_staking`, after the minimum staking period (`useCanMigrate`). It needs no OLAS because `ConfirmSwitchSection` renders `ConfirmUnstakeSection` for `no_staking`, which never calls `useShouldAllowStakingContractSwitch`. `SwitchingContractModal` has its own unstaking copy.
+- **Eligibility:** `ConnectService` reads the requester activity checker: `getMultisigNonces(safe)[1] - serviceInfo.nonces[1]` against `ceil(max(livenessPeriod, now - tsCheckpoint) * livenessRatio / 1e18)`, with no safety margin, so the one Marketplace request a day the user makes earns the epoch.
+- **Eviction:** `canRunWhileEvicted` keeps Start Agent enabled; `EvictedAlert` has a Connect branch.
+- **Announcement:** `ConnectStakingAnnouncement` (mounted in `MainPage`) shows "Staking for Connect agents" once per user (`connectStakingAnnouncementSeen`, backend-bound). It waits for the onboarding survey, Connect's first-run modal and an achievement that is loading, showing or about to show (`AchievementModal` publishes it through `useAchievementPending`), and for the services to load. "Stake your Connect Agent" opens the contract list of the first non-archived Connect instance in `stakingChains` order, else Connect setup with no chain chosen (`setPreselectedAgentType`, a one-shot that `AgentOnboarding` consumes on mount, so a Back inside Setup still opens empty).
+- **Omenstrat full:** Omenstrat's list shows "All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead." when no Omenstrat contract still offered to PredictTrader (one with an `activityTarget`, neither deprecated nor retired: `getOmenstratProgramIds`) has a free slot (`useAreOmenstratContractsFull`).
+
 ### Multisig compatibility (OPE-1919)
 
-Staking contracts pin `service.multisig.codehash`. The original six Polygon contracts (Polygon Beta I–III, Polystrat I–III) only accept services deployed with a **PolySafe** multisig (`proxyHash() = POLY_SAFE_PROXY_CODEHASH`), while new Pearl versions deploy a standard Safe — so old and new Polystrat services need different contract sets. Polystrat IV/V/VI (same 100/1000/10000 OLAS tiers, same activity checker) accept a standard Safe and are the default for new services (`defaultStakingProgramId: PolystratIV`).
+Staking contracts pin `service.multisig.codehash`. The original six Polygon contracts (Polygon Beta I–III, Polystrat I–III) only accept services deployed with a **PolySafe** multisig (`proxyHash() = POLY_SAFE_PROXY_CODEHASH`), while new Pearl versions deploy a standard Safe — so old and new Polystrat services need different contract sets. Polystrat IV/V/VI accepted a standard Safe and are now retired. New standard-Safe services default to Polystrat VII (`defaultStakingProgramId: PolystratVII`; the VII/VIII/IX tiers need 100/1000/10000 OLAS).
 
-- `StakingProgramConfig.requiresPolySafe: true` marks a contract as PolySafe-only. Absent = standard Safe (every other chain). Never mark these programs `deprecated` while PolySafe services exist — their users would get an empty list.
+- `StakingProgramConfig.requiresPolySafe: true` marks a contract as PolySafe-only. Absent = standard Safe (every other chain). Marking them `deprecated` or `retired` hides them, so PolySafe services have no compatible contract. That is the intent for the retired ones: no live program accepts a PolySafe, so such services go withdrawal-only (see "Retired staking programs").
 - `useIsPolySafeService` (`frontend/hooks/useIsPolySafeService.ts`) detects the service's multisig type, in order:
   1. Chain has no `requiresPolySafe` programs → standard Safe, no RPC call
   2. Service is staked on-chain (`activeStakingProgramId`) → the staked program's flag is proof either way (the contract enforces the codehash on stake), no RPC call. The service-stored `staking_program_id` is deliberately **not** used: it is only the user's choice and may predate a failed stake
@@ -339,7 +371,7 @@ Clamps to 0 when negative. Returns `countdownDisplay` as a formatted string via 
 
 Aggregates rewards across all services on a given chain:
 
-1. Filters services matching the chain
+1. Filters services matching the chain, skipping those whose own `staking_program_id` is `no_staking` (an unstaked Connect)
 2. For each service, queries `activeStakingProgramId` via `createActiveStakingProgramIdQuery` (multicall, not subgraph)
 3. For each service + program pair, queries rewards via `createStakingRewardsQuery`
 4. Sums `accruedServiceStakingRewards` across all successful queries

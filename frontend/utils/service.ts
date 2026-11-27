@@ -1,6 +1,12 @@
 import { isEmpty, isEqual } from 'lodash';
 
-import { AgentMap, AgentType, EvmChainId, StakingProgramId } from '@/constants';
+import {
+  AgentMap,
+  AgentType,
+  EvmChainId,
+  NO_STAKING_PROGRAM_ID,
+  StakingProgramId,
+} from '@/constants';
 import { MiddlewareChain } from '@/constants/chains';
 import { EnvProvisionMap } from '@/constants/envVariables';
 import {
@@ -20,6 +26,7 @@ import {
 
 import { generateAgentName } from './generateAgentName';
 import { asEvmChainId, asMiddlewareChain } from './middlewareHelpers';
+import { isNoStakingProgram } from './stakingProgram';
 
 /**
  * Returns the creation timestamp of a service from its hash_history.
@@ -219,9 +226,78 @@ export const updateServiceIfNeeded = async (
     await ServicesService.putService({
       serviceConfigId: service.service_config_id,
       partialServiceTemplate: {
-        env_variables: serviceTemplate.env_variables,
+        env_variables: keepUserEnvValues(
+          serviceTemplate.env_variables,
+          service.env_variables,
+        ),
       },
     });
+  }
+};
+
+/** The template's env set with the service's USER values kept, since a PUT replaces the whole set. */
+const keepUserEnvValues = (
+  templateEnv: ServiceTemplate['env_variables'],
+  serviceEnv: Service['env_variables'],
+): ServiceTemplate['env_variables'] =>
+  Object.fromEntries(
+    Object.entries(templateEnv).map(([key, templateVariable]) => {
+      const serviceVariable = serviceEnv[key];
+      if (
+        templateVariable.provision_type !== EnvProvisionMap.USER ||
+        !serviceVariable
+      ) {
+        return [key, templateVariable];
+      }
+      return [key, { ...templateVariable, value: serviceVariable.value }];
+    }),
+  );
+
+/** The agent's `DISABLE_TRADING` template entry, read on call to stay out of the template import cycle. */
+const getDisableTradingTemplateEntry = (agentType: AgentType) => {
+  const entry = SERVICE_TEMPLATES.find(
+    (template) => template.agentType === agentType,
+  )?.env_variables.DISABLE_TRADING;
+  if (!entry) {
+    throw new Error(
+      `${agentType} has no DISABLE_TRADING: no withdrawal-only mode`,
+    );
+  }
+  return entry;
+};
+
+/** Whether the service is stored unstaked (`no_staking`) and redeem-only (`DISABLE_TRADING=true`). */
+export const isInWithdrawalOnlyMode = (service: Service) =>
+  isNoStakingProgram(
+    service.chain_configs[service.home_chain]?.chain_data.user_params
+      .staking_program_id,
+  ) && service.env_variables.DISABLE_TRADING?.value === 'true';
+
+/** Sets the service to run unstaked and redeem-only; skipped when already so, as a PATCH re-downloads the package. */
+export const enableWithdrawalOnlyMode = async (
+  service: Service,
+  agentType: AgentType,
+) => {
+  if (isInWithdrawalOnlyMode(service)) return;
+  const disableTrading = getDisableTradingTemplateEntry(agentType);
+  try {
+    await ServicesService.updateService({
+      serviceConfigId: service.service_config_id,
+      partialServiceTemplate: {
+        configurations: {
+          [service.home_chain]: { staking_program_id: NO_STAKING_PROGRAM_ID },
+        },
+        env_variables: {
+          DISABLE_TRADING: { ...disableTrading, value: 'true' },
+        },
+      },
+    });
+  } catch (error) {
+    // Otherwise indistinguishable from the template sync's PATCH failure.
+    throw new Error(
+      `Couldn't enable withdrawal-only mode for ${service.service_config_id}: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
   }
 };
 

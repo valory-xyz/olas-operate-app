@@ -158,7 +158,8 @@ export const useOnboardingSurvey = () => {
     survey.firstShownAt,
   ]);
 
-  // Connect never stakes; `Home` reports the first Profile visit as its equivalent moment.
+  // Connect may run unstaked, so it has no reliable reward signal: its first
+  // Profile visit (reported by Home) is its equivalent of a first success.
   const reportConnectProfileVisit = useCallback(() => {
     if (!isEligible || !isNewAccount) return;
     if (selectedAgentType !== AgentMap.Connect) return;

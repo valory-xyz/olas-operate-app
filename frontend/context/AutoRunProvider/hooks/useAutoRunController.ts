@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { AGENT_CONFIG } from '@/config/agents';
@@ -13,7 +14,7 @@ import {
 import { useBalanceAndRefillRequirementsContext } from '@/hooks/useBalanceAndRefillRequirementsContext';
 import { useIsAgentGeoRestricted } from '@/hooks/useIsAgentGeoRestricted';
 import { useIsInitiallyFunded } from '@/hooks/useIsInitiallyFunded';
-import { isNoStakingProgram } from '@/utils/stakingProgram';
+import { fetchIsPolySafeService } from '@/hooks/useIsPolySafeService';
 
 import {
   AUTO_RUN_VERBOSE_LOGS,
@@ -26,6 +27,7 @@ import {
   fetchDeployabilityForAgent,
   getUsableRewardStatus,
   isStakingEpochExpired,
+  runsOnMinutesPerRun,
 } from '../utils/autoRunHelpers';
 import { useAutoRunLifecycle } from './useAutoRunLifecycle';
 import { useAutoRunOperations } from './useAutoRunOperations';
@@ -123,8 +125,8 @@ export const useAutoRunController = ({
           selectedActivityGoalReadAt ?? 0,
         )
       : (stakingRewardsDataUpdatedAt ?? 0);
-  const isSelectedNoStakingAgent =
-    !!selectedMeta && isNoStakingProgram(selectedMeta.stakingProgramId);
+  const isSelectedOnMinutesPerRun =
+    !!selectedMeta && runsOnMinutesPerRun(selectedMeta);
   const selectedRewardsEpoch = useMemo(
     () =>
       stakingRewardsDetails
@@ -168,6 +170,17 @@ export const useAutoRunController = ({
       return false;
     },
     [isPolystratGeoRestricted],
+  );
+
+  const queryClient = useQueryClient();
+  const isPolySafeService = useCallback(
+    (agentMeta: AgentMeta) =>
+      fetchIsPolySafeService(
+        queryClient,
+        agentMeta.chainId,
+        agentMeta.multisig,
+      ),
+    [queryClient],
   );
 
   const healthStatsRef = useRef(createEmptyHealthStats());
@@ -240,7 +253,7 @@ export const useAutoRunController = ({
     runningServiceConfigId,
     isSelectedAgentDetailsLoading,
     isSelectedDoneForEpoch,
-    isSelectedNoStakingAgent,
+    isSelectedOnMinutesPerRun,
     isEpochExpired,
     selectedStakingProgramId: selectedMeta?.stakingProgramId,
     selectedRewardsEpoch,
@@ -278,6 +291,7 @@ export const useAutoRunController = ({
         hasBalancesForServiceConfigId,
         isInstanceInitiallyFunded,
         isGeoRestrictedForAgent,
+        isPolySafeService,
         logMessage,
         ...contextOptions,
       });
@@ -289,6 +303,7 @@ export const useAutoRunController = ({
       hasBalancesForServiceConfigId,
       isInstanceInitiallyFunded,
       isGeoRestrictedForAgent,
+      isPolySafeService,
       logMessage,
     ],
   );

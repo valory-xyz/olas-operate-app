@@ -1039,7 +1039,7 @@ wheels = [
 
 [[package]]
 name = "olas-operate-app"
-version = "1.13.3"
+version = "1.14.0"
 source = { virtual = "." }
 dependencies = [
     { name = "olas-operate-middleware" },
@@ -1056,7 +1056,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "olas-operate-middleware", specifier = "==0.15.55" },
+    { name = "olas-operate-middleware", specifier = "==0.15.58" },
     { name = "open-aea-cli-ipfs", specifier = "==2.2.10" },
     { name = "open-aea-ledger-cosmos", specifier = "==2.2.10" },
     { name = "open-aea-ledger-ethereum", specifier = "==2.2.10" },
@@ -1068,7 +1068,7 @@ dev = [{ name = "pyinstaller", specifier = "==6.20.0" }]
 
 [[package]]
 name = "olas-operate-middleware"
-version = "0.15.55"
+version = "0.15.58"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1089,9 +1089,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/04/8c/03865253fbe95018d7853abb0bd9486d13e23f93fda5066cc513a87456fd/olas_operate_middleware-0.15.55.tar.gz", hash = "sha256:51bf40316b412d932fb2c3392f048d707109a1e34cbb340c7cf14f02f520aa3e", size = 358773, upload-time = "2026-11-26T15:12:03.446Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/1e/3147f03549900f40479906cf7aaac7b172f09c7f84ee538cfcb03556431d/olas_operate_middleware-0.15.58.tar.gz", hash = "sha256:485924c5b60d2d39666ca3219c383f9edcd3167474c5a538e10018e8c79f589e", size = 363959, upload-time = "2026-11-27T13:41:20.879Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/36/e5/ff57164e9f460ab44ded83958e6212470a66f5125dceb4a8a66ddb9605fe/olas_operate_middleware-0.15.55-py3-none-any.whl", hash = "sha256:7baee40f073b4d2ce957e543fdaa0465b1a0605d0969a52dd484054a5a259bc4", size = 415516, upload-time = "2026-11-26T15:12:01.381Z" },
+    { url = "https://files.pythonhosted.org/packages/de/8e/ed1989d773d42ce9200f18cf6d54ff3dafa6610fc478b8d8c7632528716f/olas_operate_middleware-0.15.58-py3-none-any.whl", hash = "sha256:3a932336a41ff0f7b39c34601a0f1efdbcd1b46d608eb421428d5bf11da092af", size = 420801, upload-time = "2026-11-27T13:41:19.302Z" },
 ]
 
 [[package]]

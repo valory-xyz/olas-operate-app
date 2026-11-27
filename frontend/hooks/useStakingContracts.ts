@@ -1,8 +1,13 @@
 import { useCallback, useMemo } from 'react';
 
 import { STAKING_PROGRAMS } from '@/config/stakingPrograms';
+import { NO_STAKING_PROGRAM_ID } from '@/constants';
 import { useIsPolySafeService, useServices, useStakingProgram } from '@/hooks';
-import { getCompatibleStakingProgramIds } from '@/utils/stakingProgram';
+import {
+  getCompatibleStakingProgramIds,
+  getServiceStakingProgramId,
+  hasUnstakedOption,
+} from '@/utils/stakingProgram';
 
 export const useStakingContracts = () => {
   const { selectedAgentConfig, selectedAgentType, selectedService } =
@@ -21,16 +26,23 @@ export const useStakingContracts = () => {
   // picks a contract, so it reflects an actual user choice (unlike the
   // agent-config default).
   const serviceStakingProgramId =
-    selectedService?.chain_configs?.[selectedService?.home_chain]?.chain_data
-      ?.user_params?.staking_program_id ?? null;
+    getServiceStakingProgramId(selectedService) ?? null;
+
+  const withUnstakedOption = hasUnstakedOption(
+    selectedAgentConfig,
+    evmHomeChainId,
+  );
 
   // "Current" must never fall back to the agent-config default: showing the
   // default as the joined/selected contract fabricates a stake the user never
   // made (OPE-1841). Prefer the on-chain (subgraph) value, then the
-  // service-stored choice; otherwise admit we don't know.
-  const currentStakingProgramId = isActiveStakingProgramLoaded
-    ? (activeStakingProgramId ?? serviceStakingProgramId)
-    : null;
+  // service-stored choice; otherwise admit we don't know. Where staking is
+  // optional the stored choice decides, as in isInStakingMode.
+  const currentStakingProgramId = withUnstakedOption
+    ? serviceStakingProgramId
+    : isActiveStakingProgramLoaded
+      ? (activeStakingProgramId ?? serviceStakingProgramId)
+      : null;
 
   const isStakingContractsLoaded =
     isActiveStakingProgramLoaded && isMultisigTypeLoaded;
@@ -41,25 +53,37 @@ export const useStakingContracts = () => {
   const isStakingContractsError =
     isStakingContractsLoaded && isMultisigTypeError;
 
+  // The contracts alone, without the Unstaked option: "no compatible
+  // contracts" is about these.
+  const stakingContractIds = useMemo(() => {
+    if (!isStakingContractsLoaded || isStakingContractsError) return [];
+    return getCompatibleStakingProgramIds({
+      programs: STAKING_PROGRAMS[evmHomeChainId],
+      agentType: selectedAgentType,
+      isPolySafeService,
+      currentStakingProgramId,
+    });
+  }, [
+    isStakingContractsLoaded,
+    isStakingContractsError,
+    evmHomeChainId,
+    selectedAgentType,
+    isPolySafeService,
+    currentStakingProgramId,
+  ]);
+
   // Memoize so the array ref is stable across renders — downstream `useMemo`s
   // and effects list `orderedStakingProgramIds` in their deps.
   const orderedStakingProgramIds = useMemo(
     () =>
-      isStakingContractsLoaded && !isStakingContractsError
-        ? getCompatibleStakingProgramIds({
-            programs: STAKING_PROGRAMS[evmHomeChainId],
-            agentType: selectedAgentType,
-            isPolySafeService,
-            currentStakingProgramId,
-          })
-        : [],
+      withUnstakedOption && isStakingContractsLoaded && !isStakingContractsError
+        ? [NO_STAKING_PROGRAM_ID, ...stakingContractIds]
+        : stakingContractIds,
     [
+      withUnstakedOption,
       isStakingContractsLoaded,
       isStakingContractsError,
-      evmHomeChainId,
-      selectedAgentType,
-      isPolySafeService,
-      currentStakingProgramId,
+      stakingContractIds,
     ],
   );
 
@@ -70,6 +94,7 @@ export const useStakingContracts = () => {
   return {
     currentStakingProgramId,
     orderedStakingProgramIds,
+    stakingContractIds,
     isStakingContractsLoaded,
     isStakingContractsError,
     retryStakingContracts,

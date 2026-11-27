@@ -1,6 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 
+import { AGENT_CONFIG } from '../../config/agents';
+import { AgentMap } from '../../constants/agent';
 import { MiddlewareDeploymentStatusMap } from '../../constants/deployment';
 import { useBalanceContext } from '../../hooks/useBalanceContext';
 import { useDeployability } from '../../hooks/useDeployability';
@@ -217,6 +219,7 @@ const setupDefaults = () => {
   mockUseDeployability.mockReturnValue({
     canRun: true,
     isLoading: false,
+    isWithdrawalOnlyStart: false,
   });
 };
 
@@ -282,6 +285,45 @@ describe('useServiceDeployment', () => {
     });
   });
 
+  describe('isLoading — Connect, which can stake only on some chains', () => {
+    /** Connect's real config on a chain and program, its staking details not loaded. */
+    const setupConnectOn = (
+      evmHomeChainId: number,
+      middlewareHomeChainId: string,
+      selectedStakingProgramId: string,
+    ) => {
+      mockUseServices.mockReturnValue({
+        ...mockUseServices(),
+        selectedAgentConfig: {
+          ...AGENT_CONFIG[AgentMap.Connect],
+          evmHomeChainId,
+          middlewareHomeChainId,
+        },
+        selectedAgentType: AgentMap.Connect,
+      } as unknown as ReturnType<typeof useServices>);
+      mockUseStakingProgram.mockReturnValue({
+        selectedStakingProgramId,
+      } as unknown as ReturnType<typeof useStakingProgram>);
+      mockUseStakingContractContext.mockReturnValue({
+        ...mockUseStakingContractContext(),
+        isAllStakingContractDetailsRecordLoaded: false,
+      } as unknown as ReturnType<typeof useStakingContractContext>);
+    };
+
+    it.each([
+      ['staked on Gnosis', 100, 'gnosis', 'connect_i', true],
+      ['unstaked on Gnosis', 100, 'gnosis', 'no_staking', false],
+      ['on Polygon', 137, 'polygon', 'no_staking', false],
+    ])(
+      'Connect %s: waits for the staking details as expected',
+      (_, evmHomeChainId, middlewareHomeChainId, programId, expected) => {
+        setupConnectOn(evmHomeChainId, middlewareHomeChainId, programId);
+        const { result } = renderHook(() => useServiceDeployment());
+        expect(result.current.isLoading).toBe(expected);
+      },
+    );
+  });
+
   describe('isDeployable', () => {
     it('returns true when canRun=true and not loading', () => {
       const { result } = renderHook(() => useServiceDeployment());
@@ -302,6 +344,7 @@ describe('useServiceDeployment', () => {
         canRun: false,
         isLoading: false,
         reason: 'Low balance',
+        isWithdrawalOnlyStart: false,
       });
       const { result } = renderHook(() => useServiceDeployment());
       expect(result.current.isDeployable).toBe(false);
@@ -370,7 +413,51 @@ describe('useServiceDeployment', () => {
           agentType: 'trader',
           stakingProgramId: DEFAULT_STAKING_PROGRAM_ID,
           createServiceIfMissing: true,
+          withdrawalOnly: false,
         }),
+      );
+    });
+
+    it.each([true, false])(
+      "starts with useDeployability's isWithdrawalOnlyStart=%s",
+      async (isWithdrawalOnlyStart) => {
+        mockUseDeployability.mockReturnValue({
+          canRun: true,
+          isLoading: false,
+          isWithdrawalOnlyStart,
+        });
+        const { result } = renderHook(() => useServiceDeployment());
+
+        await act(async () => {
+          await result.current.handleStart();
+        });
+
+        expect(mockStartServiceFn).toHaveBeenCalledWith(
+          expect.objectContaining({ withdrawalOnly: isWithdrawalOnlyStart }),
+        );
+      },
+    );
+
+    it('starts withdrawal-only when the gate decides so after mount', async () => {
+      mockUseDeployability.mockReturnValue({
+        canRun: true,
+        isLoading: false,
+        isWithdrawalOnlyStart: false,
+      });
+      const { result, rerender } = renderHook(() => useServiceDeployment());
+
+      mockUseDeployability.mockReturnValue({
+        canRun: true,
+        isLoading: false,
+        isWithdrawalOnlyStart: true,
+      });
+      rerender();
+      await act(async () => {
+        await result.current.handleStart();
+      });
+
+      expect(mockStartServiceFn).toHaveBeenCalledWith(
+        expect.objectContaining({ withdrawalOnly: true }),
       );
     });
 

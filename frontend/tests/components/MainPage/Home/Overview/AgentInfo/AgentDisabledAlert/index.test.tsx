@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { AgentDisabledAlert } from '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert';
@@ -14,11 +14,17 @@ import {
   useMasterWalletContext,
   usePageState,
   usePrestartCheck,
+  useRetiredProgramStatus,
   useServices,
   useStakingProgram,
 } from '../../../../../../../hooks';
 import { PrestartCheck } from '../../../../../../../hooks/usePrestartCheck';
 import { AgentIssue } from '../../../../../../../types';
+import {
+  getRetiredProgramStatus,
+  RetiredProgramStakingDetails,
+  RetiredSafeState,
+} from '../../../../../../../utils/stakingProgram';
 import {
   makeAgentIssue,
   makeFailedPrestartCheck,
@@ -36,6 +42,7 @@ jest.mock('../../../../../../../hooks', () => ({
   useCompleteAgentSetup: jest.fn(),
   useIsAgentGeoRestricted: jest.fn(),
   useIsInitiallyFunded: jest.fn(),
+  useRetiredProgramStatus: jest.fn(),
   useMasterWalletContext: jest.fn(),
   usePageState: jest.fn(),
   usePrestartCheck: jest.fn(),
@@ -106,6 +113,34 @@ jest.mock(
   }),
 );
 jest.mock(
+  '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/RetiredContractAlert',
+  () => ({
+    RetiredContractAlert: ({
+      stakingProgramName,
+      state,
+    }: {
+      stakingProgramName?: string;
+      state: {
+        kind: string;
+        endsAt?: number;
+        onRetry?: () => void;
+        isRetrying?: boolean;
+      };
+    }) => (
+      <div>
+        {`contract-retired: ${stakingProgramName ?? 'unnamed'} ${state.kind}${
+          state.kind === 'cooldown' ? ` endsAt=${state.endsAt}` : ''
+        }`}
+        {state.onRetry && (
+          <button onClick={state.onRetry}>
+            {state.isRetrying ? 'retrying' : 'retry'}
+          </button>
+        )}
+      </div>
+    ),
+  }),
+);
+jest.mock(
   '../../../../../../../components/MainPage/Home/Overview/AgentInfo/AgentDisabledAlert/EvictedAlert',
   () => ({
     EvictedAlert: () => <div>evicted-locked</div>,
@@ -136,12 +171,17 @@ jest.mock(
   }),
 );
 
+const mockRefetchMultisigType = jest.fn();
+const mockRefetchStakingDetails = jest.fn();
+
 type StakingOverrides = {
   isSelectedStakingContractDetailsLoading?: boolean;
   isAgentEvicted?: boolean;
   isEligibleForStaking?: boolean;
   hasEnoughServiceSlots?: boolean | null;
   isServiceStaked?: boolean;
+  stakingDetailsState?: RetiredProgramStakingDetails;
+  isSelectedStakingContractDetailsFetching?: boolean;
   evictionExpiresAt?: number;
   availableRewards?: number;
 };
@@ -156,6 +196,11 @@ const setup = ({
   isAnotherAgentRunning = false,
   isAgentGeoRestricted = false,
   deprecatedStakingProgram = false,
+  retiredStakingProgram = false,
+  isWithdrawalOnly = false as boolean | 'unknown',
+  hasProgramMeta = true,
+  isMultisigTypeError = false,
+  isMultisigTypeFetching = false,
   isRunning = false,
   agentIssues,
   prestartCheck,
@@ -170,17 +215,30 @@ const setup = ({
   isAnotherAgentRunning?: boolean;
   isAgentGeoRestricted?: boolean;
   deprecatedStakingProgram?: boolean;
+  retiredStakingProgram?: boolean;
+  /** 'unknown': the Safe type is not known yet, so the hook returns undefined. */
+  isWithdrawalOnly?: boolean | 'unknown';
+  hasProgramMeta?: boolean;
+  isMultisigTypeError?: boolean;
+  isMultisigTypeFetching?: boolean;
   isRunning?: boolean;
   agentIssues?: AgentIssue[];
   prestartCheck?: PrestartCheck;
   isChecking?: boolean;
 } = {}) => {
+  const stakingDetailsState: RetiredProgramStakingDetails =
+    staking.stakingDetailsState ?? {
+      // Staked past its minimum period, as `isServiceStaked` below.
+      state: 'loaded',
+      placement: 'pastMinimumPeriod',
+    };
   (useActiveStakingContractDetails as jest.Mock).mockReturnValue({
     isSelectedStakingContractDetailsLoading: false,
     isAgentEvicted: false,
     isEligibleForStaking: true,
     hasEnoughServiceSlots: true,
     isServiceStaked: true,
+    evictionExpiresAt: 1_700_000_000,
     ...staking,
     selectedStakingContractDetails: {
       availableRewards: staking.availableRewards ?? 10,
@@ -230,9 +288,37 @@ const setup = ({
     isAgentGeoRestricted,
   });
   (useStakingProgram as jest.Mock).mockReturnValue({
-    selectedStakingProgramMeta: deprecatedStakingProgram
-      ? { deprecated: true, name: 'Beta 3' }
-      : { deprecated: false, name: 'Beta 3' },
+    selectedStakingProgramMeta: hasProgramMeta
+      ? {
+          deprecated: deprecatedStakingProgram,
+          retired: retiredStakingProgram,
+          name: 'Beta 3',
+        }
+      : null,
+  });
+  const safeState = ((): RetiredSafeState => {
+    if (isWithdrawalOnly === 'unknown') {
+      return isMultisigTypeError ? 'error' : 'loading';
+    }
+    return isWithdrawalOnly ? 'withdrawalOnly' : 'canSwitch';
+  })();
+  // The real classifier, so these tests pin the alert's mapping of each status.
+  (useRetiredProgramStatus as jest.Mock).mockReturnValue({
+    status: retiredStakingProgram
+      ? getRetiredProgramStatus({
+          safeState,
+          stakingDetails: stakingDetailsState,
+        })
+      : null,
+    stakingProgramName: hasProgramMeta ? 'Beta 3' : undefined,
+    safeTypeRetry: {
+      onRetry: mockRefetchMultisigType,
+      isRetrying: isMultisigTypeFetching,
+    },
+    stakingDetailsRetry: {
+      onRetry: mockRefetchStakingDetails,
+      isRetrying: staking.isSelectedStakingContractDetailsFetching ?? false,
+    },
   });
   return render(<AgentDisabledAlert />);
 };
@@ -535,6 +621,192 @@ describe('AgentDisabledAlert', () => {
 
       expect(screen.getByText('geo-blocked')).toBeInTheDocument();
       expect(screen.queryByText(/^issue:/)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('retired staking program', () => {
+    const retiredAlert = (variant: string, name = 'Beta 3') =>
+      screen.getByText(`contract-retired: ${name} ${variant}`);
+
+    const UNSTAKED = {
+      isServiceStaked: false,
+      stakingDetailsState: {
+        state: 'loaded',
+        placement: 'outOfContract',
+      } as RetiredProgramStakingDetails,
+    };
+    const inMinimumPeriod = (
+      cooldownEndsAt = 1_800_000_000,
+    ): RetiredProgramStakingDetails => ({
+      state: 'loaded',
+      placement: 'inMinimumPeriod',
+      cooldownEndsAt,
+    });
+
+    it('pre-empts no-slots, eviction, empty-pool and agent low-balance alerts, keeping the Master EOA one', () => {
+      setup({
+        retiredStakingProgram: true,
+        deprecatedStakingProgram: true,
+        staking: {
+          isServiceStaked: false,
+          hasEnoughServiceSlots: false,
+          isAgentEvicted: true,
+          isEligibleForStaking: false,
+          availableRewards: 0,
+        },
+      });
+
+      expect(retiredAlert('awaitingUnstake')).toBeInTheDocument();
+      expect(screen.getByText('master-eoa-low-balance')).toBeInTheDocument();
+      for (const marker of [
+        'contract-deprecated',
+        'no-slots',
+        'evicted',
+        'no-rewards',
+        'low-balance',
+      ]) {
+        expect(screen.queryByText(marker)).not.toBeInTheDocument();
+      }
+    });
+
+    it('passes the end of the minimum staking period while the agent is inside it', () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: { stakingDetailsState: inMinimumPeriod() },
+      });
+
+      expect(retiredAlert('cooldown endsAt=1800000000')).toBeInTheDocument();
+    });
+
+    it('offers no switch once the period is over but the agent is still in the contract', () => {
+      // The middleware unstakes it within the sweep interval.
+      setup({ retiredStakingProgram: true });
+
+      expect(retiredAlert('awaitingUnstake')).toBeInTheDocument();
+    });
+
+    it('offers the switch once the agent is unstaked', () => {
+      setup({ retiredStakingProgram: true, staking: UNSTAKED });
+
+      expect(retiredAlert('switch')).toBeInTheDocument();
+    });
+
+    it('shows the title only while the staking details are unknown', () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: {
+          isServiceStaked: false,
+          stakingDetailsState: { state: 'loading' },
+        },
+      });
+
+      expect(retiredAlert('stakingDetailsLoading')).toBeInTheDocument();
+    });
+
+    it("offers a retry of the staking details when they couldn't be read", () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: {
+          isServiceStaked: false,
+          stakingDetailsState: { state: 'error' },
+        },
+      });
+
+      expect(retiredAlert('stakingDetailsUnknown')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('retry'));
+      expect(mockRefetchStakingDetails).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows the staking-details retry as loading while it refetches', () => {
+      setup({
+        retiredStakingProgram: true,
+        staking: {
+          isServiceStaked: false,
+          stakingDetailsState: { state: 'error' },
+          isSelectedStakingContractDetailsFetching: true,
+        },
+      });
+
+      expect(screen.getByText('retrying')).toBeInTheDocument();
+    });
+
+    it('shows the Safe-type retry as loading while it re-reads', () => {
+      setup({
+        retiredStakingProgram: true,
+        isWithdrawalOnly: 'unknown',
+        staking: UNSTAKED,
+        isMultisigTypeError: true,
+        isMultisigTypeFetching: true,
+      });
+
+      expect(screen.getByText('retrying')).toBeInTheDocument();
+    });
+
+    it('offers no switch while the Safe type loads', () => {
+      setup({
+        retiredStakingProgram: true,
+        isWithdrawalOnly: 'unknown',
+        staking: UNSTAKED,
+      });
+
+      // Not the switch copy: a PolySafe agent can never switch.
+      expect(retiredAlert('safeTypeLoading')).toBeInTheDocument();
+      expect(screen.queryByText('retry')).not.toBeInTheDocument();
+    });
+
+    it("offers a retry of the Safe type read when it couldn't be read", () => {
+      setup({
+        retiredStakingProgram: true,
+        isWithdrawalOnly: 'unknown',
+        staking: UNSTAKED,
+        isMultisigTypeError: true,
+      });
+
+      expect(retiredAlert('safeTypeUnknown')).toBeInTheDocument();
+      fireEvent.click(screen.getByText('retry'));
+      expect(mockRefetchMultisigType).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the cooldown date ahead of an unreadable Safe type', () => {
+      setup({
+        retiredStakingProgram: true,
+        isWithdrawalOnly: 'unknown',
+        staking: { stakingDetailsState: inMinimumPeriod() },
+        isMultisigTypeError: true,
+      });
+
+      expect(retiredAlert('cooldown endsAt=1800000000')).toBeInTheDocument();
+    });
+
+    it('uses the withdrawal-only variant for a withdrawal-only service, even in its cooldown', () => {
+      setup({
+        retiredStakingProgram: true,
+        isWithdrawalOnly: true,
+        staking: { stakingDetailsState: inMinimumPeriod() },
+      });
+
+      expect(retiredAlert('withdrawalOnly')).toBeInTheDocument();
+    });
+
+    it('keeps the withdrawal-only alert after the unstake, when the program is stored as no_staking', () => {
+      setup({
+        retiredStakingProgram: true,
+        isWithdrawalOnly: true,
+        hasProgramMeta: false,
+        // A `no_staking` service's details query is disabled.
+        staking: {
+          isServiceStaked: false,
+          stakingDetailsState: { state: 'loading' },
+        },
+      });
+
+      expect(retiredAlert('withdrawalOnly', 'unnamed')).toBeInTheDocument();
+    });
+
+    it('yields to the earlier blocking alerts', () => {
+      setup({ retiredStakingProgram: true, isAnotherAgentRunning: true });
+
+      expect(screen.getByText('another-running')).toBeInTheDocument();
     });
   });
 

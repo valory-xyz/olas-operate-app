@@ -7,6 +7,10 @@ import { STAKING_PROGRAMS } from '../../config/stakingPrograms';
 import { TokenSymbolMap } from '../../config/tokens';
 import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap } from '../../constants/chains';
+import {
+  NO_STAKING_PROGRAM_ID,
+  STAKING_PROGRAM_IDS,
+} from '../../constants/stakingProgram';
 
 describe('AGENT_CONFIG', () => {
   it('has an entry for every agent type', () => {
@@ -111,12 +115,56 @@ describe('AGENT_CONFIG', () => {
 });
 
 describe('AGENT_CONFIG canRunWhileEvicted', () => {
-  it('lets only Omenstrat run while evicted', () => {
+  it('lets only Omenstrat and Connect run while evicted', () => {
     const agents = Object.entries(AGENT_CONFIG)
       .filter(([, config]) => config.canRunWhileEvicted)
       .map(([agentType]) => agentType);
 
-    expect(agents).toEqual([AgentMap.PredictTrader]);
+    expect(agents).toEqual([AgentMap.PredictTrader, AgentMap.Connect]);
+  });
+});
+
+describe('AGENT_CONFIG Connect staking', () => {
+  it('lets Connect stake on Gnosis and Robinhood only, never Polygon', () => {
+    expect(AGENT_CONFIG[AgentMap.Connect].stakingChains).toEqual([
+      EvmChainIdMap.Gnosis,
+      EvmChainIdMap.Robinhood,
+    ]);
+  });
+
+  it('keeps Connect unstaked by default', () => {
+    expect(AGENT_CONFIG[AgentMap.Connect].defaultStakingProgramId).toBe(
+      'no_staking',
+    );
+  });
+
+  describe.each(
+    Object.entries(AGENT_CONFIG).filter(([, config]) => config.stakingChains),
+  )('%s stakingChains', (_, config) => {
+    it('lists only chains the agent supports', () => {
+      const supported = config.supportedChains ?? [config.evmHomeChainId];
+      for (const chainId of config.stakingChains ?? []) {
+        expect(supported).toContain(chainId);
+      }
+    });
+
+    it('is set only on an agent that defaults to no_staking', () => {
+      expect(config.defaultStakingProgramId).toBe('no_staking');
+    });
+
+    it('is set only on an agent whose staking is not required', () => {
+      // isStakingAvailable reads stakingChains; useNotifyOnActivityGoal reads
+      // hasStaking, so the two must not disagree
+      expect(config.hasStaking).toBe(false);
+    });
+  });
+
+  it('runs only Connect on minutes per run', () => {
+    const agents = Object.entries(AGENT_CONFIG)
+      .filter(([, config]) => config.runsOnMinutesPerRun)
+      .map(([agentType]) => agentType);
+
+    expect(agents).toEqual([AgentMap.Connect]);
   });
 });
 
@@ -303,16 +351,34 @@ describe('AGENT_CONFIG defaultStakingProgramId', () => {
     Object.entries(AGENT_CONFIG).filter(
       ([, config]) =>
         config.isAgentEnabled &&
-        config.defaultStakingProgramId !== 'no_staking',
+        config.defaultStakingProgramId !== NO_STAKING_PROGRAM_ID,
     ),
   )(
-    '%s default is a non-deprecated program on its home chain that supports the agent',
+    '%s default is a non-deprecated, non-retired program on its home chain that supports the agent',
     (agentType, config) => {
       const program =
         STAKING_PROGRAMS[config.evmHomeChainId][config.defaultStakingProgramId];
       expect(program).toBeDefined();
       expect(program.deprecated).toBeFalsy();
+      expect(program.retired).toBeFalsy();
       expect(program.agentsSupported).toContain(agentType);
+    },
+  );
+
+  it.each([
+    [AgentMap.PredictTrader, STAKING_PROGRAM_IDS.OmenstratVIII],
+    [AgentMap.Polystrat, STAKING_PROGRAM_IDS.PolystratVII],
+    [AgentMap.Optimus, STAKING_PROGRAM_IDS.OptimusIV],
+    [AgentMap.Basius, STAKING_PROGRAM_IDS.BasiusIV],
+  ])(
+    '%s defaults to its 50 OLAS-deposit program %s',
+    (agentType, programId) => {
+      const config = AGENT_CONFIG[agentType];
+      expect(config.defaultStakingProgramId).toBe(programId);
+      expect(
+        STAKING_PROGRAMS[config.evmHomeChainId][programId].stakingRequirements
+          .OLAS,
+      ).toBe(100); // 50 OLAS deposit plus a 50 OLAS bond
     },
   );
 });

@@ -4,6 +4,7 @@ import { act } from 'react';
 import { AGENT_CONFIG } from '../../../../config/agents';
 import { AgentMap, AgentType } from '../../../../constants/agent';
 import { MiddlewareDeploymentStatusMap } from '../../../../constants/deployment';
+import { RETIRED_STAKING_PROGRAM_COPY } from '../../../../constants/stakingProgram';
 import {
   AUTO_RUN_HEALTH_METRIC,
   AUTO_RUN_START_STATUS,
@@ -743,6 +744,34 @@ describe('useAutoRunLifecycle', () => {
         expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
         expect(params.notifyGoalReachedOnHandOver).not.toHaveBeenCalled();
       });
+    });
+
+    it('never treats a staked Connect as stalled: it hands over on its minutes', async () => {
+      const stakedConnectMeta = {
+        ...connectMeta,
+        stakingProgramId: 'connect_i',
+      } as AgentMeta;
+      const params = makeConnectRunningParams({
+        configuredAgents: [stakedConnectMeta, traderMeta],
+        isStalled: jest.fn().mockReturnValue(true),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
+      expect(params.deferStalled).not.toHaveBeenCalled();
+      expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledTimes(1);
+      const logged = (params.logMessage as jest.Mock).mock.calls.map(
+        ([message]) => message,
+      );
+      expect(logged).not.toContainEqual(
+        expect.stringContaining('trigger=stall'),
+      );
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scConnect,
+        expect.objectContaining({ trigger: 'rewards' }),
+      );
     });
 
     it('hands Connect over to a runnable alternate with one notification', async () => {
@@ -1957,6 +1986,27 @@ describe('useAutoRunLifecycle', () => {
       expect(params.scanAndStartNext).toHaveBeenCalledWith(
         scTrader,
         expect.objectContaining({ first: scOptimus, trigger: 'eviction' }),
+      );
+    });
+
+    it('rotates away from an eviction on a retired program, which Start cannot restart', async () => {
+      const params = makeRunningParams({
+        getDeployabilityForRunningInstance: jest.fn().mockResolvedValue({
+          canRun: false,
+          reason: RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+          isAgentEvicted: true,
+          isEligibleAfterEviction: false,
+        }),
+        refreshRewardsEligibility: jest.fn().mockResolvedValue(false),
+      });
+
+      await runOneCheck(params);
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scTrader);
+      expect(params.startAgentWithRetries).not.toHaveBeenCalled();
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scTrader,
+        expect.objectContaining({ trigger: 'eviction' }),
       );
     });
 

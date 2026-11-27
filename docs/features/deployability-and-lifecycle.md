@@ -6,7 +6,7 @@ The deployability and lifecycle system determines whether an agent can be starte
 
 The system has four layers:
 
-1. **Deployability check** — `useDeployability` evaluates ~11 conditions to produce a `canRun` boolean with a reason string
+1. **Deployability check** — `useDeployability` evaluates its conditions to produce a `canRun` boolean with a reason string
 2. **Service start** — `useStartService` handles safe creation, service creation/update, and starting the service (shared by manual and auto-run)
 3. **Deployment workflow** — `useServiceDeployment` orchestrates the full manual start flow: polling control, status overrides, state refresh, and error handling
 4. **Stop** — `stopDeployment` stops a running service
@@ -18,6 +18,8 @@ useServiceDeployment (manual start orchestration)
   │     ├── useServices (selectedService, selectedAgentConfig)
   │     ├── useBalanceAndRefillRequirementsContext (allowStart, hasBalances)
   │     ├── useActiveStakingContractDetails (eviction, eligibility, slots)
+  │     ├── useRetiredProgramStatus (useIsPolySafeService's retiredSafeState + stakingDetailsState → getRetiredProgramStatus)
+  │     ├── getRetiredProgramReason (the status's alert copy)
   │     ├── useIsInitiallyFunded
   │     ├── useIsAgentGeoRestricted
   │     ├── useAgentRunning (isAnotherAgentRunning)
@@ -26,6 +28,7 @@ useServiceDeployment (manual start orchestration)
   ├── useStartService (shared start logic)
   │     ├── createSafeIfNeeded (safe eligibility + creation)
   │     ├── updateServiceIfNeeded (hash, env vars, fund requirements)
+  │     ├── enableWithdrawalOnlyMode (only with withdrawalOnly)
   │     └── ServicesService.startService / createService
   │
   └── polling control (pause/resume services, balances, staking)
@@ -41,10 +44,10 @@ SettingsService (backend config)
 
 ## Source of truth
 
-- `frontend/hooks/useDeployability.ts` — deployability decision tree (~11 branches, returns `canRun` + `reason`)
+- `frontend/hooks/useDeployability.ts` — deployability decision tree (returns `canRun` + `reason`)
 - `frontend/hooks/useStartService.ts` — shared service start logic (safe creation, service create/update, start)
 - `frontend/hooks/useServiceDeployment.ts` — manual deployment workflow (polling control, status overrides, error handling)
-- `frontend/utils/service.ts` — `updateServiceIfNeeded` (hash, env vars, fund requirements, agent release comparison), `isValidServiceId`
+- `frontend/utils/service.ts` — `updateServiceIfNeeded` (hash, env vars, fund requirements, agent release comparison), `isValidServiceId`, `enableWithdrawalOnlyMode` / `isInWithdrawalOnlyMode`
 - `frontend/utils/safe.ts` — `getSafeEligibility` (safe status derivation), `getSafeEligibilityMessage` (user-facing messages), `BACKUP_SIGNER_STATUS`
 - `frontend/context/SharedProvider/SharedProvider.tsx` — shared context (AgentsFun field check, recovery status, OLAS balance animation)
 - `frontend/hooks/useSharedContext.ts` — context accessor
@@ -76,7 +79,7 @@ SettingsService (backend config)
 
 ### Deployability result shape
 
-Defined as `DeployabilityResult` in `frontend/hooks/useDeployability.ts`. Fields: `isLoading`, `canRun`, `reason` (why `canRun` is false, e.g., `'Phased out'`, `'Under construction'`, `'Low balance'`, `'Evicted'`), `loadingReason` (comma-separated loading sources).
+Defined as `DeployabilityResult` in `frontend/hooks/useDeployability.ts`. Fields: `isLoading`, `canRun`, `reason` (why `canRun` is false, e.g., `'Phased out'`, `'Under construction'`, `'Low balance'`, `'Evicted'`), `loadingReason` (comma-separated loading sources), `isWithdrawalOnlyStart` (the start runs withdrawal-only; `useServiceDeployment` passes it on).
 
 ### SharedProvider context shape
 
@@ -114,37 +117,45 @@ The hook evaluates conditions in priority order. The first failing condition det
 3. selectedAgentConfig.isPhasedOut
    → canRun: false, reason: 'Phased out'
 
-4. selectedAgentConfig.isUnderConstruction
+4. isOnRetiredProgram, by getRetiredProgramStatus (the alert's classifier):
+   - `withdrawalOnly` → goes on: a withdrawal-only service starts unstaked (isWithdrawalOnlyStart)
+   - any other status → canRun: false, reason: getRetiredProgramReason(status), the alert's copy
+     (cooldown with its end date, STAKING_DETAILS_UNKNOWN, SAFE_TYPE_UNKNOWN, or SWITCH)
+   (`safeTypeLoading` and `stakingDetailsLoading` are loading sources, below)
+
+5. selectedAgentConfig.isUnderConstruction
    → canRun: false, reason: 'Under construction'
 
-5. isGeoLocationRestricted && isAgentGeoRestricted
+6. isGeoLocationRestricted && isAgentGeoRestricted
    → canRun: false, reason: 'Region restricted'
 
-6. isAnotherAgentRunning
+7. isAnotherAgentRunning
    → canRun: false, reason: 'Another agent running'
 
-7. hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted
+8. hasEnoughServiceSlots === false && !isServiceStaked && !runsEvicted && !isWithdrawalOnlyStart
    → canRun: false, reason: 'No available slots'
-   (`runsEvicted` = `runsInsideEvictionWindow`: evicted, `canRunWhileEvicted`, and more than `EVICTION_RUN_START_MARGIN_SECONDS` (30 min) of the eviction left; such a run does not re-stake, so it needs no slot. Closer to the end, a start could cross into a re-stake, so the slot check applies)
+   (`runsEvicted` = `runsInsideEvictionWindow`: evicted, `canRunWhileEvicted`, and more than `EVICTION_RUN_START_MARGIN_SECONDS` (30 min) of the eviction left; such a run does not re-stake, so it needs no slot. Closer to the end, a start could cross into a re-stake, so the slot check applies. A withdrawal-only start never stakes, so it needs no slot either)
 
-8. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted
-   → canRun: false, reason: 'Evicted'
-   (an agent that can run evicted, Omenstrat, keeps going: it redeems; see autorun.md §3.6)
+9. isAgentEvicted && !isEligibleForStaking && !selectedAgentConfig.canRunWhileEvicted && !isWithdrawalOnlyStart
+    → canRun: false, reason: 'Evicted'
+    (an agent that can run evicted, Omenstrat, keeps going: it redeems; see autorun.md §3.6. So does a withdrawal-only one)
 
-9. isAgentsFunFieldUpdateRequired
-   → canRun: false, reason: 'Update required'
+10. isAgentsFunFieldUpdateRequired
+    → canRun: false, reason: 'Update required'
 
-10. isInitialFunded === false
+11. isInitialFunded === false
     → canRun: false, reason: 'Unfinished setup'
 
-11. !canStartSelectedAgent (from refill requirements)
+12. !canStartSelectedAgent (from refill requirements)
     → canRun: false, reason: 'Low balance'
 
-12. All checks pass
+13. All checks pass
     → canRun: true
 ```
 
-**Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking, Geo, Safe, Setup (`isInitialFunded === undefined`).
+Step 4 and the withdrawal-only exemptions are explained in [staking-and-rewards.md](staking-and-rewards.md#retired-staking-programs).
+
+**Loading sources** checked (in order): Offline, Services, Balances (3 sub-checks: not enabled, loading, or no balances for selected agent), Staking (also status `stakingDetailsLoading`), Geo, Safe type (status `safeTypeLoading`, on a retired program only), Safe, Setup (`isInitialFunded === undefined`).
 
 The `safeEligibility` parameter is optional. Currently only auto-run's `useSelectedEligibility` passes it — `useServiceDeployment` calls `useDeployability()` with no argument, so manual deployment is **not** pre-blocked by safe eligibility at this level (safe eligibility is instead checked inside `createSafeIfNeeded` during the start flow). When provided, it's checked first, even before loading state.
 
@@ -171,6 +182,8 @@ Full lifecycle ladder: sunsetting (`shutdownDate`, banner only, still runs) → 
 Shared by both manual start (`useServiceDeployment`) and auto-run:
 
 ```
+0. If withdrawalOnly and no service → throw (withdrawal-only needs an existing service)
+
 1. createSafeIfNeeded()
    ├── getSafeEligibility() → check if safe exists on home chain
    ├── If HasSafe → return (no-op)
@@ -179,6 +192,8 @@ Shared by both manual start (`useServiceDeployment`) and auto-run:
 
 2. If service exists:
    ├── updateServiceIfNeeded(service, agentType)
+   ├── If withdrawalOnly → enableWithdrawalOnlyMode(service, agentType)
+   │     (see staking-and-rewards.md → "Retired staking programs")
    ├── runPrestartCheck(service.service_config_id)
    └── ServicesService.startService(service.service_config_id)
 
@@ -193,7 +208,7 @@ Shared by both manual start (`useServiceDeployment`) and auto-run:
    └── throw Error('Service not found for agent: {agentType}')
 ```
 
-`useStartService` always creates the safe first (step 1) before any service operations.
+Past step 0, `useStartService` always creates the safe first (step 1) before any service operations.
 
 **Prestart check.** Before every start, `runPrestartCheck` runs the agent's own checks (`GET /api/v2/service/{id}/prestart_check`) via `queryClient.fetchQuery(prestartCheckQuery(id))`. `failed` and `error` throw `PrestartCheckFailedError` before the on-chain start; `passed` and `not_supported` go on. A failed request counts as `error`, with its cause in `detail` and the error message. The cached result (`gcTime: Infinity`, so it lasts until the next start replaces it) drives the run button's "Checking" state and the alerts (see `services.md`). The contract switch (`ConfirmSwitchButton`) and the settings restart (`useConfirmModal`) start the service directly, so they call the exported `runPrestartCheck` themselves.
 
@@ -214,7 +229,7 @@ handleStart()
   │
   ├── overrideSelectedServiceStatus(DEPLOYING)
   │
-  ├── startService({ ... createServiceIfMissing: true })
+  ├── startService({ ... createServiceIfMissing: true, withdrawalOnly: deployability.isWithdrawalOnlyStart })
   │     ├── On error:
   │     │     ├── showNotification('An error occurred...') — not for gas errors (modal) or PrestartCheckFailedError (agent alert)
   │     │     ├── overrideSelectedServiceStatus(null)
@@ -278,8 +293,8 @@ On mount, SharedProvider queries recovery status once (via React Query with `sta
 
 ## Test-relevant notes
 
-- `useDeployability` has ~11 prioritized branches — test each in isolation by mocking all dependencies. Priority order matters: safe eligibility blocks before loading, loading blocks before all runtime checks, and `isPhasedOut` blocks before all other config/runtime checks (verify it pre-empts e.g. evicted/low-balance).
-- `useDeployability` loading sources — test each of the 7 loading conditions independently. The `loadingReason` string is comma-separated and reflects which sources are still loading.
+- `useDeployability`'s prioritized branches (the decision tree above) — test each in isolation by mocking all dependencies. Priority order matters: safe eligibility blocks before loading, loading blocks before all runtime checks, and `isPhasedOut` blocks before all other config/runtime checks (verify it pre-empts e.g. evicted/low-balance).
+- `useDeployability` loading sources (listed under the decision tree) — test each independently. The `loadingReason` string is comma-separated and reflects which sources are still loading.
 - `useDeployability` balance loading has 3 sub-checks: `!isBalancesAndFundingRequirementsEnabledForAllServices`, `isBalancesAndFundingRequirementsLoadingForAllServices`, and `!hasSelectedAgentBalances`. All three produce `'Balances'` in `loadingReason`.
 - `useDeployability` slot check — verify the `!isNil(hasEnoughServiceSlots)` guard: `undefined` should NOT trigger "No available slots", but `false` should (when not staked).
 - `useDeployability` geo check — only blocks when BOTH `isGeoLocationRestricted` AND `isAgentGeoRestricted` are true.

@@ -52,6 +52,14 @@ jest.mock('../../../../hooks/useIsAgentGeoRestricted', () => ({
     .fn()
     .mockReturnValue({ isAgentGeoRestricted: false }),
 }));
+const mockQueryClient = {};
+jest.mock('@tanstack/react-query', () => ({
+  ...jest.requireActual('@tanstack/react-query'),
+  useQueryClient: () => mockQueryClient,
+}));
+jest.mock('../../../../hooks/useIsPolySafeService', () => ({
+  fetchIsPolySafeService: jest.fn().mockResolvedValue(true),
+}));
 jest.mock('../../../../hooks/useIsInitiallyFunded', () => ({
   useIsInitiallyFunded: jest.fn().mockReturnValue({
     isInstanceInitiallyFunded: jest.fn().mockReturnValue(true),
@@ -61,6 +69,9 @@ jest.mock('../../../../context/AutoRunProvider/utils/autoRunHelpers', () => ({
   fetchDeployabilityForAgent: jest.fn().mockResolvedValue({ canRun: true }),
   getUsableRewardStatus: jest.fn().mockReturnValue(undefined),
   isStakingEpochExpired: jest.fn().mockReturnValue(false),
+  runsOnMinutesPerRun: jest.requireActual(
+    '../../../../context/AutoRunProvider/utils/autoRunHelpers',
+  ).runsOnMinutesPerRun,
 }));
 jest.mock(
   '../../../../context/AutoRunProvider/hooks/useLogAutoRunEvent',
@@ -153,6 +164,9 @@ const { useActivityGoal, useEpochWorkStatus, useRewardContext, useServices } =
     useRewardContext: jest.Mock;
     useServices: jest.Mock;
   };
+const { fetchIsPolySafeService } = jest.requireMock(
+  '../../../../hooks/useIsPolySafeService',
+) as { fetchIsPolySafeService: jest.Mock };
 const { fetchDeployabilityForAgent, getUsableRewardStatus } = jest.requireMock(
   '../../../../context/AutoRunProvider/utils/autoRunHelpers',
 ) as {
@@ -433,11 +447,11 @@ describe('useAutoRunController', () => {
       );
       const signalsArgs = lastCallArgs(useAutoRunSignals);
       expect(signalsArgs.isSelectedDoneForEpoch).toBe(true);
-      expect(signalsArgs.isSelectedNoStakingAgent).toBe(false);
+      expect(signalsArgs.isSelectedOnMinutesPerRun).toBe(false);
       expect(signalsArgs).not.toHaveProperty('isEpochTargetMet');
     });
 
-    it('flags a selected Connect instance as no-staking', () => {
+    it('flags a selected Connect instance as on minutes per run', () => {
       renderHook(() =>
         useAutoRunController(
           makeHookParams({
@@ -446,7 +460,25 @@ describe('useAutoRunController', () => {
           }),
         ),
       );
-      expect(lastCallArgs(useAutoRunSignals).isSelectedNoStakingAgent).toBe(
+      expect(lastCallArgs(useAutoRunSignals).isSelectedOnMinutesPerRun).toBe(
+        true,
+      );
+    });
+
+    it('flags a selected Connect instance as on minutes per run while it is staked', () => {
+      const stakedConnectMeta = {
+        ...connectMeta,
+        stakingProgramId: 'connect_i' as const,
+      };
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({
+            configuredAgents: [traderMeta, stakedConnectMeta],
+            selectedServiceConfigId: MOCK_SERVICE_CONFIG_ID_2,
+          }),
+        ),
+      );
+      expect(lastCallArgs(useAutoRunSignals).isSelectedOnMinutesPerRun).toBe(
         true,
       );
     });
@@ -479,6 +511,26 @@ describe('useAutoRunController', () => {
       expect(fetchDeployabilityForAgent).toHaveBeenCalledWith(
         traderMeta,
         expect.objectContaining({ ignoreRunningAgent: true }),
+      );
+    });
+
+    it("reads each instance's Safe type through the shared PolySafe query", async () => {
+      renderHook(() =>
+        useAutoRunController(
+          makeHookParams({ configuredAgents: [traderMeta] }),
+        ),
+      );
+      const { getHandOverDeployability } = lastCallArgs(useAutoRunLifecycle);
+      await act(async () => {
+        await getHandOverDeployability(DEFAULT_SERVICE_CONFIG_ID);
+      });
+      const [, ctx] = fetchDeployabilityForAgent.mock.calls[0];
+
+      await expect(ctx.isPolySafeService(traderMeta)).resolves.toBe(true);
+      expect(fetchIsPolySafeService).toHaveBeenCalledWith(
+        mockQueryClient,
+        traderMeta.chainId,
+        traderMeta.multisig,
       );
     });
 

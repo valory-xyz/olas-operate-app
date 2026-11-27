@@ -2,7 +2,13 @@ import { BigNumber } from 'ethers';
 import { isNil } from 'lodash';
 import { MutableRefObject } from 'react';
 
-import { AgentType, EvmChainId, StakingProgramId } from '@/constants';
+import { isRetiredStakingProgram } from '@/config/stakingPrograms';
+import {
+  AgentType,
+  EvmChainId,
+  RETIRED_STAKING_PROGRAM_COPY,
+  StakingProgramId,
+} from '@/constants';
 import { ServicesService } from '@/service/Services';
 import { ActivityGoal, StakingRewardsInfo, StakingState } from '@/types';
 import {
@@ -14,10 +20,17 @@ import {
   parseActivityGoal,
 } from '@/utils/activityGoal';
 import { sleepAwareDelay } from '@/utils/delay';
-import { isValidServiceId } from '@/utils/service';
+import { isInWithdrawalOnlyMode, isValidServiceId } from '@/utils/service';
 import {
+  getLoadedRetiredProgramStakingDetails,
+  getRetiredProgramReason,
+  getRetiredProgramStatus,
+  hasFreeServiceSlot,
   isNoStakingProgram,
+  RetiredProgramStakingDetails,
+  RetiredSafeState,
   runsInsideEvictionWindow,
+  toRetiredSafeState,
 } from '@/utils/stakingProgram';
 import {
   deriveIsEpochTargetMet,
@@ -38,6 +51,10 @@ import {
   STALL_CLOCK_MAX_READ_GAP_SECONDS,
 } from '../constants';
 import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
+
+/** See `AgentConfig.runsOnMinutesPerRun`. */
+export const runsOnMinutesPerRun = (meta: Pick<AgentMeta, 'agentConfig'>) =>
+  !!meta.agentConfig.runsOnMinutesPerRun;
 
 /**
  * Returns true when the staking epoch has expired but no on-chain checkpoint
@@ -339,9 +356,10 @@ export const refreshRewardsEligibility = async ({
     return done;
   };
 
-  // A no-staking agent that is not running is never done: no fetch needed,
-  // so it bypasses the throttle and the scanner never waits on its snapshot.
-  if (meta && isNoStakingProgram(meta.stakingProgramId) && !isRunning) {
+  // An agent on minutes per run that is not running is never done: no fetch
+  // needed, so it bypasses the throttle and the scanner never waits on its
+  // snapshot.
+  if (meta && runsOnMinutesPerRun(meta) && !isRunning) {
     return store(meta.stakingProgramId, false, NO_EPOCH);
   }
 
@@ -369,7 +387,7 @@ export const refreshRewardsEligibility = async ({
   lastRewardsFetchRef.current[serviceConfigId] = now;
   if (!meta) return;
 
-  if (isNoStakingProgram(meta.stakingProgramId)) {
+  if (runsOnMinutesPerRun(meta)) {
     const read = await readActivityGoal(
       serviceConfigId,
       logMessage,
@@ -387,7 +405,7 @@ export const refreshRewardsEligibility = async ({
     const doneForRun =
       deriveIsActivityGoalMet(read.goal, periodStartFloor) ?? false;
     logMessage(
-      `${serviceConfigId}: no staking, ` +
+      `${serviceConfigId}: minutes per run (${meta.stakingProgramId}), ` +
         `${formatGoalForLog(read, periodStartFloor)} → done=${doneForRun}`,
     );
     return store(meta.stakingProgramId, doneForRun, NO_EPOCH, read.goal);
@@ -624,6 +642,8 @@ export type FetchDeployabilityContext = {
     agentType: AgentType,
   ) => boolean;
   isGeoRestrictedForAgent: (agentType: AgentType) => boolean;
+  /** The instance's Safe type, from `fetchIsPolySafeService`. Rejects when unreadable. */
+  isPolySafeService: (agentMeta: AgentMeta) => Promise<boolean>;
   logMessage: (message: string) => void;
   /**
    * Skip the "Another agent running" gate, to ask whether an agent could take
@@ -696,6 +716,138 @@ type EvictionFacts = Pick<
   'isAgentEvicted' | 'isEligibleAfterEviction'
 >;
 
+/** The on-chain program while staked, else the stored one; rejects when the on-chain read fails. */
+const getCurrentStakingProgramId = async (
+  agentMeta: AgentMeta,
+): Promise<StakingProgramId> => {
+  if (
+    !isValidServiceId(agentMeta.serviceNftTokenId) ||
+    isNoStakingProgram(agentMeta.stakingProgramId)
+  ) {
+    return agentMeta.stakingProgramId;
+  }
+  const onChainProgramId =
+    await agentMeta.agentConfig.serviceApi.getCurrentStakingProgramByServiceIdOrThrow(
+      agentMeta.serviceNftTokenId,
+      agentMeta.chainId,
+    );
+  return onChainProgramId ?? agentMeta.stakingProgramId;
+};
+
+/** One read of a service's place in a staking program, for the retired check and step 4. */
+const readServiceStakingFacts = async (
+  agentMeta: AgentMeta,
+  serviceNftTokenId: number,
+  stakingProgramId: StakingProgramId,
+) => {
+  const { serviceApi } = agentMeta.agentConfig;
+  const [contractDetails, stakingDetails] = await Promise.all([
+    serviceApi.getStakingContractDetails(stakingProgramId, agentMeta.chainId),
+    serviceApi.getServiceStakingDetails(
+      serviceNftTokenId,
+      stakingProgramId,
+      agentMeta.chainId,
+    ),
+  ]);
+  const { serviceStakingState, serviceStakingStartTime } = stakingDetails;
+  const minimumStakingDuration = contractDetails?.minimumStakingDuration;
+  const evictionExpiresAt =
+    isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)
+      ? undefined
+      : serviceStakingStartTime + minimumStakingDuration;
+  return {
+    contractDetails,
+    isAgentEvicted: serviceStakingState === StakingState.Evicted,
+    isServiceStaked:
+      !!serviceStakingStartTime && serviceStakingState === StakingState.Staked,
+    isServiceStakedForMinimumDuration:
+      !isNil(evictionExpiresAt) &&
+      Math.round(Date.now() / 1000) >= evictionExpiresAt,
+    evictionExpiresAt: evictionExpiresAt ?? 0,
+  };
+};
+
+/** The instance's place in its retired program; rejects on missing contract details, as the provider does. */
+const readRetiredProgramStakingDetails = async (
+  agentMeta: AgentMeta,
+  stakingProgramId: StakingProgramId,
+): Promise<{
+  stakingDetails: RetiredProgramStakingDetails;
+  isAgentEvicted: boolean;
+}> => {
+  if (!isValidServiceId(agentMeta.serviceNftTokenId)) {
+    return {
+      stakingDetails: { state: 'loaded', placement: 'outOfContract' },
+      isAgentEvicted: false,
+    };
+  }
+  const facts = await readServiceStakingFacts(
+    agentMeta,
+    agentMeta.serviceNftTokenId,
+    stakingProgramId,
+  );
+  if (!facts.contractDetails) {
+    throw new Error(
+      `getStakingContractDetails returned undefined for program ${stakingProgramId}`,
+    );
+  }
+  return {
+    stakingDetails: getLoadedRetiredProgramStakingDetails({
+      isServiceInContract: facts.isAgentEvicted || facts.isServiceStaked,
+      isServiceStakedForMinimumDuration:
+        facts.isServiceStakedForMinimumDuration,
+      cooldownEndsAt: facts.evictionExpiresAt,
+    }),
+    isAgentEvicted: facts.isAgentEvicted,
+  };
+};
+
+/** The retired-contract alert's copy for this instance, as the skip reason. */
+const getRetiredProgramSkip = async (
+  agentMeta: AgentMeta,
+  ctx: FetchDeployabilityContext,
+  stakingProgramId: StakingProgramId,
+  evictionFacts: EvictionFacts,
+): Promise<DeployabilityCheckResult> => {
+  let safeState: RetiredSafeState;
+  try {
+    const isPolySafeService = await ctx.isPolySafeService(agentMeta);
+    safeState = toRetiredSafeState(isPolySafeService ? 'polySafe' : 'standard');
+  } catch (error) {
+    // The read's own log is renderer-only; this one reaches the saved logs.
+    ctx.logMessage(
+      `fetchDeployabilityForAgent: Safe type read failed for ${agentMeta.serviceConfigId} (multisig ${agentMeta.multisig} on chain ${agentMeta.chainId}): ${error}`,
+    );
+    safeState = 'error';
+  }
+  // Read even for a PolySafe: its copy ignores the details, but the watchdog needs the eviction.
+  let stakingDetails: RetiredProgramStakingDetails;
+  try {
+    const read = await readRetiredProgramStakingDetails(
+      agentMeta,
+      stakingProgramId,
+    );
+    stakingDetails = read.stakingDetails;
+    evictionFacts.isAgentEvicted = read.isAgentEvicted;
+    // Start is blocked on a retired program, so the watchdog rotates it rather than restarting it.
+    if (read.isAgentEvicted) evictionFacts.isEligibleAfterEviction = false;
+  } catch (error) {
+    ctx.logMessage(
+      `fetchDeployabilityForAgent: retired-program staking details read failed for ${agentMeta.serviceConfigId}: ${error}`,
+    );
+    stakingDetails = { state: 'error' };
+  }
+  const status = getRetiredProgramStatus({ safeState, stakingDetails });
+  return {
+    canRun: false,
+    reason:
+      getRetiredProgramReason(status) ?? RETIRED_STAKING_PROGRAM_COPY.SWITCH,
+    // Both unknowns clear once the read works.
+    ...((status.kind === 'safeTypeUnknown' ||
+      status.kind === 'stakingDetailsUnknown') && { isTransient: true }),
+  };
+};
+
 const runDeployabilityChecks = async (
   agentMeta: AgentMeta,
   ctx: FetchDeployabilityContext,
@@ -716,6 +868,14 @@ const runDeployabilityChecks = async (
   // 2. Static agent-config flags (no API needed).
   if (agentMeta.agentConfig.isPhasedOut) {
     return { canRun: false, reason: 'Phased out' };
+  }
+
+  // Withdrawal-only instances run only when the user starts them.
+  if (isInWithdrawalOnlyMode(agentMeta.service)) {
+    return {
+      canRun: false,
+      reason: RETIRED_STAKING_PROGRAM_COPY.WITHDRAWAL_ONLY,
+    };
   }
 
   if (agentMeta.agentConfig.isUnderConstruction) {
@@ -742,6 +902,29 @@ const runDeployabilityChecks = async (
     };
   }
 
+  // A service whose current (on-chain, else stored) program is retired skips before the staking reads below.
+  let currentStakingProgramId: StakingProgramId;
+  try {
+    currentStakingProgramId = await getCurrentStakingProgramId(agentMeta);
+  } catch (error) {
+    ctx.logMessage(
+      `fetchDeployabilityForAgent: current staking program read failed for ${agentMeta.serviceConfigId}: ${error}`,
+    );
+    return {
+      canRun: false,
+      reason: 'Staking data unavailable',
+      isTransient: true,
+    };
+  }
+  if (isRetiredStakingProgram(agentMeta.chainId, currentStakingProgramId)) {
+    return getRetiredProgramSkip(
+      agentMeta,
+      ctx,
+      currentStakingProgramId,
+      evictionFacts,
+    );
+  }
+
   // Reward-pool balance of the staking contract, read in step 4 but evaluated
   // last (step 7). Deferring it means an `EMPTY_REWARD_POOL_REASON` result
   // guarantees every other gate passed — which is what lets the scanner start
@@ -753,48 +936,32 @@ const runDeployabilityChecks = async (
   // 4. On-chain staking state via direct API calls (same endpoints as
   //    StakingContractDetailsProvider, but for any service, not just selected).
   //    Skip if the service hasn't been deployed yet (no NFT token ID or staking
-  //    program), or has no staking contract at all (`no_staking`).
+  //    program), has no staking contract at all (`no_staking`), or runs on
+  //    minutes per run, which no staking state stops.
   if (
     isValidServiceId(agentMeta.serviceNftTokenId) &&
     agentMeta.stakingProgramId &&
-    !isNoStakingProgram(agentMeta.stakingProgramId)
+    !isNoStakingProgram(agentMeta.stakingProgramId) &&
+    !runsOnMinutesPerRun(agentMeta)
   ) {
     try {
-      const [contractDetails, stakingDetails] = await Promise.all([
-        agentMeta.agentConfig.serviceApi.getStakingContractDetails(
-          agentMeta.stakingProgramId,
-          agentMeta.chainId,
-        ),
-        agentMeta.agentConfig.serviceApi.getServiceStakingDetails(
-          agentMeta.serviceNftTokenId,
-          agentMeta.stakingProgramId,
-          agentMeta.chainId,
-        ),
-      ]);
-
-      const { serviceStakingState, serviceStakingStartTime } = stakingDetails;
-      const isAgentEvicted = serviceStakingState === StakingState.Evicted;
-      const isServiceStaked =
-        !!serviceStakingStartTime &&
-        serviceStakingState === StakingState.Staked;
-
       const {
-        serviceIds,
-        maxNumServices,
-        minimumStakingDuration,
-        availableRewards: contractAvailableRewards,
-      } = contractDetails ?? {};
-      availableRewards = contractAvailableRewards;
-      const hasEnoughServiceSlots =
-        isNil(serviceIds) || isNil(maxNumServices)
-          ? null
-          : serviceIds.length < maxNumServices;
+        contractDetails,
+        isAgentEvicted,
+        isServiceStaked,
+        isServiceStakedForMinimumDuration: isEligibleAfterEviction,
+        evictionExpiresAt,
+      } = await readServiceStakingFacts(
+        agentMeta,
+        agentMeta.serviceNftTokenId,
+        agentMeta.stakingProgramId,
+      );
 
-      const isEligibleAfterEviction =
-        !isNil(serviceStakingStartTime) &&
-        !isNil(minimumStakingDuration) &&
-        Math.round(Date.now() / 1000) - serviceStakingStartTime >=
-          minimumStakingDuration;
+      const { availableRewards: contractAvailableRewards } =
+        contractDetails ?? {};
+      availableRewards = contractAvailableRewards;
+      const hasEnoughServiceSlots = hasFreeServiceSlot(contractDetails);
+
       isEvictedRunnable =
         isAgentEvicted &&
         !isEligibleAfterEviction &&
@@ -802,10 +969,7 @@ const runDeployabilityChecks = async (
       const runsEvicted = runsInsideEvictionWindow({
         isAgentEvicted,
         canRunWhileEvicted: agentMeta.agentConfig.canRunWhileEvicted,
-        evictionExpiresAt:
-          isNil(serviceStakingStartTime) || isNil(minimumStakingDuration)
-            ? 0
-            : serviceStakingStartTime + minimumStakingDuration,
+        evictionExpiresAt,
         nowSeconds: Math.round(Date.now() / 1000),
       });
 

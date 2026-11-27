@@ -1,7 +1,12 @@
 import { Contract as MulticallContract } from 'ethers-multicall';
 
-import { AgentType, EvmChainId, EvmChainIdMap } from '@/constants';
-import { Address } from '@/types';
+import {
+  AgentType,
+  EvmChainId,
+  EvmChainIdMap,
+  StakingProgramId,
+} from '@/constants';
+import { Address, Nullable } from '@/types';
 
 import { MechType } from '../mechs';
 import { BASE_STAKING_PROGRAMS } from './base';
@@ -9,6 +14,7 @@ import { GNOSIS_STAKING_PROGRAMS } from './gnosis';
 import { MODE_STAKING_PROGRAMS } from './mode';
 import { OPTIMISM_STAKING_PROGRAMS } from './optimism';
 import { POLYGON_STAKING_PROGRAMS } from './polygon';
+import { ROBINHOOD_STAKING_PROGRAMS } from './robinhood';
 
 /**
  * Single non-chain specific staking program configuration
@@ -16,12 +22,12 @@ import { POLYGON_STAKING_PROGRAMS } from './polygon';
 export type StakingProgramConfig = {
   chainId: EvmChainId;
   deprecated?: boolean; // hides program from UI unless user is already staked in this program
+  /** No longer staked on or run; must hold the same ids as the middleware's `RETIRED_STAKING_PROGRAMS`. */
+  retired?: boolean;
   /**
    * The contract pins `service.multisig.codehash` to the PolySafe proxy
    * (`POLY_SAFE_PROXY_CODEHASH`), so only services deployed with a PolySafe can
    * stake there. Absent → the contract expects a standard Safe proxy.
-   * Do NOT mark these programs `deprecated` while PolySafe services exist —
-   * their users would be left with an empty contract list.
    */
   requiresPolySafe?: boolean;
   /**
@@ -68,6 +74,10 @@ export const STAKING_PROGRAMS: {
   [EvmChainIdMap.Mode]: MODE_STAKING_PROGRAMS,
   [EvmChainIdMap.Optimism]: OPTIMISM_STAKING_PROGRAMS,
   [EvmChainIdMap.Polygon]: POLYGON_STAKING_PROGRAMS,
-  // No staking programmes on Robinhood Chain yet (Connect runs `no_staking`).
-  [EvmChainIdMap.Robinhood]: {},
+  [EvmChainIdMap.Robinhood]: ROBINHOOD_STAKING_PROGRAMS,
 };
+
+export const isRetiredStakingProgram = (
+  chainId: EvmChainId,
+  programId: Nullable<StakingProgramId> | undefined,
+): boolean => !!programId && !!STAKING_PROGRAMS[chainId]?.[programId]?.retired;

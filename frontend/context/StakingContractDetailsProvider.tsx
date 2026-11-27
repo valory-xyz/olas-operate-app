@@ -135,8 +135,8 @@ const useStakingContractDetailsByStakingProgram = ({
         );
       }
 
-      return Promise.all(promises).then(
-        ([stakingContractDetails, serviceStakingDetails]) => {
+      return Promise.all(promises)
+        .then(([stakingContractDetails, serviceStakingDetails]) => {
           // Throw when contract details resolve to undefined (e.g. missing
           // staking program / chain config) so React Query treats it as an
           // error and keeps previousData instead of overwriting with {}.
@@ -151,8 +151,14 @@ const useStakingContractDetailsByStakingProgram = ({
               ? (serviceStakingDetails as ServiceStakingDetails)
               : {}),
           };
-        },
-      );
+        })
+        .catch((error) => {
+          console.error(
+            `Couldn't read the staking details of program ${stakingProgramId}, service ${serviceNftTokenId}, on chain ${evmHomeChainId}:`,
+            error,
+          );
+          throw error;
+        });
     },
     // 'no_staking' has no on-chain contract — disable the query so the
     // serviceApi.getStakingContractDetails call (which throws when it
@@ -170,6 +176,9 @@ type StakingContractDetailsContextProps = {
     Partial<StakingContractDetails & ServiceStakingDetails>
   >;
   isSelectedStakingContractDetailsLoading: boolean;
+  /** The read failed and there are no earlier details to show. */
+  isSelectedStakingContractDetailsError: boolean;
+  isSelectedStakingContractDetailsFetching: boolean;
   isPaused: boolean;
   allStakingContractDetailsRecord?: Record<
     StakingProgramId,
@@ -186,6 +195,8 @@ type StakingContractDetailsContextProps = {
 export const StakingContractDetailsContext =
   createContext<StakingContractDetailsContextProps>({
     isSelectedStakingContractDetailsLoading: false,
+    isSelectedStakingContractDetailsError: false,
+    isSelectedStakingContractDetailsFetching: false,
     selectedStakingContractDetails: null,
     isAllStakingContractDetailsRecordLoaded: false,
     refetchSelectedStakingContractDetails: async () => {},
@@ -207,6 +218,8 @@ export const StakingContractDetailsProvider = ({
   const {
     data: selectedStakingContractDetails,
     isLoading,
+    errorUpdateCount,
+    isFetching,
     refetch,
   } = useStakingContractDetailsByStakingProgram({
     serviceNftTokenId,
@@ -217,6 +230,9 @@ export const StakingContractDetailsProvider = ({
   const { allStakingContractDetailsRecord, isAllStakingContractDetailsLoaded } =
     useAllStakingContractDetails();
 
+  const isSelectedStakingContractDetailsError =
+    errorUpdateCount > 0 && !selectedStakingContractDetails;
+
   const refetchSelectedStakingContractDetails = useCallback(async () => {
     await refetch();
   }, [refetch]);
@@ -226,7 +242,10 @@ export const StakingContractDetailsProvider = ({
       value={{
         // selected staking contract details
         selectedStakingContractDetails,
-        isSelectedStakingContractDetailsLoading: isLoading,
+        isSelectedStakingContractDetailsLoading:
+          isLoading && !isSelectedStakingContractDetailsError,
+        isSelectedStakingContractDetailsError,
+        isSelectedStakingContractDetailsFetching: isFetching,
         refetchSelectedStakingContractDetails,
 
         // all staking contract details

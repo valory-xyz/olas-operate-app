@@ -9,14 +9,17 @@
  * even when they have completed work — leading to missed rewards and eviction.
  */
 
+import { REQUESTER_ACTIVITY_CHECKER_ABI } from '../../abis/requesterActivityChecker';
 import {
   BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS,
   GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS,
   MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS,
   OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS,
   POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS,
+  ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS,
 } from '../../config/activityCheckers';
 import { STAKING_PROGRAM_IDS } from '../../constants/stakingProgram';
+import { mockMulticallContract } from '../mocks/ethersMulticall';
 
 jest.mock(
   'ethers-multicall',
@@ -24,6 +27,12 @@ jest.mock(
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     require('../mocks/ethersMulticall').ethersMulticallMock,
 );
+
+/** How many requester-checker contracts the config built for one address. */
+const requesterCheckersAt = (address: string) =>
+  mockMulticallContract.mock.calls.filter(
+    ([at, abi]) => at === address && abi === REQUESTER_ACTIVITY_CHECKER_ABI,
+  ).length;
 
 describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
   const gnosisIds = [
@@ -50,6 +59,11 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'OmenstratV',
     'OmenstratVI',
     'OmenstratVII',
+    'OmenstratVIII',
+    'OmenstratIX',
+    'OmenstratX',
+    'ConnectGnosisI',
+    'ConnectGnosisII',
   ] as const;
 
   it('has an activity checker for every Gnosis staking program', () => {
@@ -61,10 +75,30 @@ describe('GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 23 Gnosis staking programs', () => {
+  it('covers exactly 28 Gnosis staking programs', () => {
     expect(Object.keys(GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      23,
+      28,
     );
+  });
+
+  it("gives Connect Omenstrat's V2 requester checker", () => {
+    // 10 Omenstrat + 2 Connect programs share the one checker
+    expect(
+      requesterCheckersAt('0x3514EeA47C03dF8d9FdD68A469908755d2870c48'),
+    ).toBe(12);
+  });
+});
+
+describe('ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
+  it('gives every Connect program the Robinhood V2 requester checker', () => {
+    expect(Object.keys(ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toEqual([
+      'connect_i',
+      'connect_ii',
+      'connect_iii',
+    ]);
+    expect(
+      requesterCheckersAt('0x8d790f3ac75fD9c0F7fdB84fd09FE8CF7D0dBB6B'),
+    ).toBe(3);
   });
 });
 
@@ -84,6 +118,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'BasiusI',
     'BasiusII',
     'BasiusIII',
+    'BasiusIV',
+    'BasiusV',
+    'BasiusVI',
   ] as const;
 
   it('has an activity checker for every Base staking program', () => {
@@ -93,9 +130,9 @@ describe('BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 14 Base staking programs', () => {
+  it('covers exactly 17 Base staking programs', () => {
     expect(Object.keys(BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS)).toHaveLength(
-      14,
+      17,
     );
   });
 });
@@ -131,6 +168,9 @@ describe('OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'OptimusI',
     'OptimusII',
     'OptimusIII',
+    'OptimusIV',
+    'OptimusV',
+    'OptimusVI',
   ] as const;
 
   it('has an activity checker for every Optimism staking program', () => {
@@ -142,10 +182,10 @@ describe('OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 6 Optimism staking programs', () => {
+  it('covers exactly 9 Optimism staking programs', () => {
     expect(
       Object.keys(OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS),
-    ).toHaveLength(6);
+    ).toHaveLength(9);
   });
 });
 
@@ -160,6 +200,9 @@ describe('POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     'PolystratIV',
     'PolystratV',
     'PolystratVI',
+    'PolystratVII',
+    'PolystratVIII',
+    'PolystratIX',
   ] as const;
 
   it('has an activity checker for every Polygon staking program', () => {
@@ -171,10 +214,10 @@ describe('POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS', () => {
     }
   });
 
-  it('covers exactly 9 Polygon staking programs', () => {
+  it('covers exactly 12 Polygon staking programs', () => {
     expect(
       Object.keys(POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS),
-    ).toHaveLength(9);
+    ).toHaveLength(12);
   });
 });
 
@@ -185,10 +228,11 @@ describe('cross-chain completeness', () => {
       Object.keys(BASE_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length +
       Object.keys(MODE_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length +
       Object.keys(OPTIMISM_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length +
-      Object.keys(POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length;
+      Object.keys(POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length +
+      Object.keys(ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS).length;
 
     const totalPrograms = Object.keys(STAKING_PROGRAM_IDS).length;
-    // 16 + 11 + 5 + 3 + 3 = 38 (matches STAKING_PROGRAM_IDS count)
+    // one checker per staking program id, on every chain
     expect(totalCheckers).toBe(totalPrograms);
   });
 });
