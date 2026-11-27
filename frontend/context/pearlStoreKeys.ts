@@ -40,4 +40,5 @@ export const BACKEND_BOUND_KEYS: (keyof PearlStore)[] = [
   'keepDeviceAwake',
   'onboardingSurvey',
   'retiredStakingProgramIdByServiceConfigId',
+  'connectStakingAnnouncementSeen',
 ];

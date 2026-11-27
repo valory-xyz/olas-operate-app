@@ -62,6 +62,10 @@ const GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES: Record<string, Address> = {
     '0x36CB5b4e6befc5Cc3f6801Cc290C3d9148f6D7Cf',
   [STAKING_PROGRAM_IDS.OmenstratX]:
     '0xd467492f65FCA11786982b9743ed4E1F79cE81A1',
+  [STAKING_PROGRAM_IDS.ConnectGnosisI]:
+    '0xe09B0b884A0d483f52BE854CdaaA59e0150bF9c2',
+  [STAKING_PROGRAM_IDS.ConnectGnosisII]:
+    '0xC6860D6127fa605403f1567513D9c6ebfB8A278A',
 } as const;
 
 export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
@@ -834,6 +838,62 @@ export const GNOSIS_STAKING_PROGRAMS: StakingProgramMap = {
     id: deriveStakingProgramId(
       GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
         STAKING_PROGRAM_IDS.OmenstratX
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.ConnectGnosisI]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Connect I',
+    stakingVersion: '0.4',
+    agentsSupported: [AgentMap.Connect],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 5000,
+    },
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.ConnectGnosisI
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ConnectGnosisI
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ConnectGnosisI
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ConnectGnosisI
+      ],
+    ),
+  },
+  [STAKING_PROGRAM_IDS.ConnectGnosisII]: {
+    chainId: EvmChainIdMap.Gnosis,
+    name: 'Connect II',
+    stakingVersion: '0.4',
+    agentsSupported: [AgentMap.Connect],
+    stakingRequirements: {
+      [TokenSymbolMap.OLAS]: 10000,
+    },
+    activityChecker:
+      GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS[
+        STAKING_PROGRAM_IDS.ConnectGnosisII
+      ],
+    address:
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ConnectGnosisII
+      ],
+    contract: new MulticallContract(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ConnectGnosisII
+      ],
+      STAKING_TOKEN_PROXY_ABI,
+    ),
+    id: deriveStakingProgramId(
+      GNOSIS_STAKING_PROGRAMS_CONTRACT_ADDRESSES[
+        STAKING_PROGRAM_IDS.ConnectGnosisII
       ],
     ),
   },

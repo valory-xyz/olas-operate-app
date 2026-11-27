@@ -115,12 +115,56 @@ describe('AGENT_CONFIG', () => {
 });
 
 describe('AGENT_CONFIG canRunWhileEvicted', () => {
-  it('lets only Omenstrat run while evicted', () => {
+  it('lets only Omenstrat and Connect run while evicted', () => {
     const agents = Object.entries(AGENT_CONFIG)
       .filter(([, config]) => config.canRunWhileEvicted)
       .map(([agentType]) => agentType);
 
-    expect(agents).toEqual([AgentMap.PredictTrader]);
+    expect(agents).toEqual([AgentMap.PredictTrader, AgentMap.Connect]);
+  });
+});
+
+describe('AGENT_CONFIG Connect staking', () => {
+  it('lets Connect stake on Gnosis and Robinhood only, never Polygon', () => {
+    expect(AGENT_CONFIG[AgentMap.Connect].stakingChains).toEqual([
+      EvmChainIdMap.Gnosis,
+      EvmChainIdMap.Robinhood,
+    ]);
+  });
+
+  it('keeps Connect unstaked by default', () => {
+    expect(AGENT_CONFIG[AgentMap.Connect].defaultStakingProgramId).toBe(
+      'no_staking',
+    );
+  });
+
+  describe.each(
+    Object.entries(AGENT_CONFIG).filter(([, config]) => config.stakingChains),
+  )('%s stakingChains', (_, config) => {
+    it('lists only chains the agent supports', () => {
+      const supported = config.supportedChains ?? [config.evmHomeChainId];
+      for (const chainId of config.stakingChains ?? []) {
+        expect(supported).toContain(chainId);
+      }
+    });
+
+    it('is set only on an agent that defaults to no_staking', () => {
+      expect(config.defaultStakingProgramId).toBe('no_staking');
+    });
+
+    it('is set only on an agent whose staking is not required', () => {
+      // isStakingAvailable reads stakingChains; useNotifyOnActivityGoal reads
+      // hasStaking, so the two must not disagree
+      expect(config.hasStaking).toBe(false);
+    });
+  });
+
+  it('runs only Connect on minutes per run', () => {
+    const agents = Object.entries(AGENT_CONFIG)
+      .filter(([, config]) => config.runsOnMinutesPerRun)
+      .map(([agentType]) => agentType);
+
+    expect(agents).toEqual([AgentMap.Connect]);
   });
 });
 

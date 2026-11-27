@@ -12,7 +12,11 @@ import { MEME_ACTIVITY_CHECKER_ABI } from '@/abis/memeActivityChecker';
 import { PET_ACTIVITY_CHECKER_ABI } from '@/abis/petActivityChecker';
 import { REQUESTER_ACTIVITY_CHECKER_ABI } from '@/abis/requesterActivityChecker';
 import { STAKING_ACTIVITY_CHECKER_ABI } from '@/abis/stakingActivityChecker';
-import { OptimismStakingProgramId, STAKING_PROGRAM_IDS } from '@/constants';
+import {
+  OptimismStakingProgramId,
+  RobinhoodStakingProgramId,
+  STAKING_PROGRAM_IDS,
+} from '@/constants';
 import { Address } from '@/types';
 
 const getMechActivityCheckerContract = (
@@ -133,6 +137,13 @@ export const GNOSIS_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
     '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
   ),
   [STAKING_PROGRAM_IDS.OmenstratX]: getRequesterActivityCheckerContract(
+    '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  ),
+  // Connect — the same V2 requester activity checker as Omenstrat.
+  [STAKING_PROGRAM_IDS.ConnectGnosisI]: getRequesterActivityCheckerContract(
+    '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
+  ),
+  [STAKING_PROGRAM_IDS.ConnectGnosisII]: getRequesterActivityCheckerContract(
     '0x3514EeA47C03dF8d9FdD68A469908755d2870c48',
   ),
 } as const;
@@ -291,4 +302,21 @@ export const POLYGON_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
   [STAKING_PROGRAM_IDS.PolystratIX]: getRequesterActivityCheckerContract(
     '0x5B70A66fe68c4c86FFd724B58cc56049c70e9D3D',
   ),
+} as const;
+
+export const ROBINHOOD_STAKING_PROGRAMS_ACTIVITY_CHECKERS: Record<
+  RobinhoodStakingProgramId,
+  MulticallContract
+> = {
+  // Connect — V2 requester activity checker shared by every Connect contract.
+  [STAKING_PROGRAM_IDS.ConnectRobinhoodI]: getRequesterActivityCheckerContract(
+    '0x8d790f3ac75fD9c0F7fdB84fd09FE8CF7D0dBB6B',
+  ),
+  [STAKING_PROGRAM_IDS.ConnectRobinhoodII]: getRequesterActivityCheckerContract(
+    '0x8d790f3ac75fD9c0F7fdB84fd09FE8CF7D0dBB6B',
+  ),
+  [STAKING_PROGRAM_IDS.ConnectRobinhoodIII]:
+    getRequesterActivityCheckerContract(
+      '0x8d790f3ac75fD9c0F7fdB84fd09FE8CF7D0dBB6B',
+    ),
 } as const;

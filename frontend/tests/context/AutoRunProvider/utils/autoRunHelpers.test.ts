@@ -1391,7 +1391,7 @@ describe('refreshRewardsEligibility', () => {
     });
   });
 
-  describe('no-staking agent (Connect)', () => {
+  describe('agent on minutes per run (Connect, staked or not)', () => {
     const CONNECT_ID = 'sc-connect';
     const startRequestedAtSeconds = 1_800_000_000;
     const connectMeta = {
@@ -1435,6 +1435,33 @@ describe('refreshRewardsEligibility', () => {
       mockGetAgentPerformance.mockResolvedValue(makePerformance(connectGoal()));
       await refreshRewardsEligibility(makeConnectParams());
       expect(mockFetchRewards).not.toHaveBeenCalled();
+    });
+
+    it('stays on minutes per run once the user staked it', async () => {
+      const stakedConnect = { ...connectMeta, stakingProgramId: 'connect_i' };
+      mockGetAgentPerformance.mockResolvedValue(makePerformance(connectGoal()));
+
+      const result = await refreshRewardsEligibility(
+        makeConnectParams({ configuredAgents: [stakedConnect as AgentMeta] }),
+      );
+
+      expect(result).toBe(true);
+      expect(mockFetchRewards).not.toHaveBeenCalled();
+    });
+
+    it('is never done while a staked instance is not running', async () => {
+      const stakedConnect = { ...connectMeta, stakingProgramId: 'connect_i' };
+
+      const result = await refreshRewardsEligibility(
+        makeConnectParams({
+          configuredAgents: [stakedConnect as AgentMeta],
+          runningServiceConfigIdRef: { current: null },
+        }),
+      );
+
+      expect(result).toBe(false);
+      expect(mockFetchRewards).not.toHaveBeenCalled();
+      expect(mockGetAgentPerformance).not.toHaveBeenCalled();
     });
 
     it('is done when the running process met its goal', async () => {
@@ -2475,6 +2502,49 @@ describe('fetchDeployabilityForAgent', () => {
     expect(mockGetServiceStakingDetails).not.toHaveBeenCalled();
     expect(mockGetStakingContractDetails).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['evicted', StakingState.Evicted, 10, 5],
+    ['on an empty reward pool', StakingState.Staked, 0, 5],
+    ['on a full contract', StakingState.NotStaked, 10, 0],
+  ])(
+    'runs a staked agent on minutes per run even when %s',
+    async (_, serviceStakingState, availableRewards, freeSlots) => {
+      const meta = {
+        ...makeAgentMeta(),
+        agentConfig: {
+          ...makeAgentMeta().agentConfig,
+          runsOnMinutesPerRun: true,
+        },
+        stakingProgramId: 'connect_i',
+      } as AgentMeta;
+      mockGetStakingContractDetails.mockResolvedValue({
+        ...makeOkStaking().contractDetails,
+        availableRewards,
+        maxNumServices: 5,
+        serviceIds: Array.from({ length: 5 - freeSlots }, (_, i) => i),
+      });
+      mockGetServiceStakingDetails.mockResolvedValue({
+        serviceStakingState,
+        serviceStakingStartTime: Math.floor(Date.now() / 1000) - 100,
+      });
+
+      const result = await fetchDeployabilityForAgent(meta, makeCtx());
+
+      expect(result).toEqual({ canRun: true });
+      expect(mockGetServiceStakingDetails).not.toHaveBeenCalled();
+
+      // control: the same agent off minutes per run is held by that gate
+      const gated = await fetchDeployabilityForAgent(
+        {
+          ...meta,
+          agentConfig: { ...meta.agentConfig, runsOnMinutesPerRun: false },
+        } as AgentMeta,
+        makeCtx(),
+      );
+      expect(gated.canRun).toBe(false);
+    },
+  );
 
   it('bypasses the another-agent-running gate when asked to ignore it', async () => {
     const ctx = makeCtx({

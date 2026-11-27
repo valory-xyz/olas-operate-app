@@ -28,6 +28,11 @@ const GNOSIS_STAKING_PROGRAM_IDS = {
   OmenstratVIII: 'omenstrat_viii',
   OmenstratIX: 'omenstrat_ix',
   OmenstratX: 'omenstrat_x',
+  // Connect agent (optional staking). Ids are unique per chain only, so each
+  // chain's Connect keys carry the chain name: the maps are spread into one
+  // STAKING_PROGRAM_IDS object below.
+  ConnectGnosisI: 'connect_i',
+  ConnectGnosisII: 'connect_ii',
 } as const;
 
 const BASE_STAKING_PROGRAM_IDS = {
@@ -102,6 +107,16 @@ export type PolygonStakingProgramId = ValueOf<
   typeof POLYGON_STAKING_PROGRAM_IDS
 >;
 
+const ROBINHOOD_STAKING_PROGRAM_IDS = {
+  ConnectRobinhoodI: 'connect_i',
+  ConnectRobinhoodII: 'connect_ii',
+  ConnectRobinhoodIII: 'connect_iii',
+} as const;
+
+export type RobinhoodStakingProgramId = ValueOf<
+  typeof ROBINHOOD_STAKING_PROGRAM_IDS
+>;
+
 /**
  * @link https://github.com/valory-xyz/olas-operate-middleware/blob/9ca362f302ae749dd99b236d062ccc5c722acabf/operate/ledger/profiles.py#L115
  * Refer the above link for the list of staking program ids.
@@ -112,6 +127,7 @@ export const STAKING_PROGRAM_IDS = {
   ...MODE_STAKING_PROGRAM_IDS,
   ...OPTIMISM_STAKING_PROGRAM_IDS,
   ...POLYGON_STAKING_PROGRAM_IDS,
+  ...ROBINHOOD_STAKING_PROGRAM_IDS,
 } as const;
 
 /**
@@ -123,7 +139,8 @@ export const STAKING_PROGRAM_IDS = {
 export const POLY_SAFE_PROXY_CODEHASH =
   '0x92565062fdea8761e07d9df2fcdbd66c0582af6ddf0e0355bc07754ad97400b0';
 
-export const NO_STAKING_PROGRAM_ID = 'no_staking';
+/** A service that runs unstaked (Connect, unless its user stakes it). */
+export const NO_STAKING_PROGRAM_ID = 'no_staking' as const;
 
 export type StakingProgramId =
   | ValueOf<typeof STAKING_PROGRAM_IDS>

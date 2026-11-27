@@ -80,7 +80,7 @@ The user picks which staking program to use. The view cycles through these state
 
 Component: `frontend/components/MainPage/Home/Overview/Staking/Staking.tsx`
 
-Always visible in the main page Overview section. Displays:
+Visible in the main page Overview section wherever the agent can stake; for an agent whose staking is optional see [Optional staking (Connect)](#optional-staking-connect). Displays:
 
 - **`EpochClock`** — countdown to epoch end. Color-coded: warning (yellow) when < 12 h remain, danger (red) when < 3 h remain. Derived from `currentEpochLifetime` in `useStakingDetails`.
 - **`Streak`** — consecutive epochs with rewards earned, with a flame icon. Uses `optimisticStreak` (adds 1 if `isEligibleForRewards` is true, since the subgraph lags the current epoch).
@@ -153,7 +153,7 @@ AutoRun schedules on "done for the epoch": staking eligibility combined with the
 
 **`refreshRewardsEligibility(candidate)`** returns whether the agent is done for the epoch:
 - Throttled per `serviceConfigId` (minimum 120 s between fetches)
-- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block
+- Calls `fetchAgentStakingRewardsInfo()` to get the current epoch snapshot, and `getAgentPerformance()` for the `activity_goal` block. An agent with `runsOnMinutesPerRun` (Connect) skips the staking read: done is its run window's goal ([Optional staking (Connect)](#optional-staking-connect))
 - Done = `isEpochTargetMet` and the current activity goal met, or a current block with `no_markets_left: true` (`deriveIsDoneForEpoch`), with or without `isEpochTargetMet` for an agent with `canReportNoMarketsLeft` (Omenstrat) and only once it is met for any other agent; without a block, `isEpochTargetMet` alone
 - Stale epoch detection: if `isStakingEpochExpired()` returns `true` (i.e. `livenessPeriod ≤ now − tsCheckpoint`) and the agent is done, overrides it to `false` so the agent runs and triggers the on-chain checkpoint
 - Returns `true` (done), `false` (not done), or `undefined` (data missing, the goal unreadable once `isEpochTargetMet` is true, or the goal unreadable before it while the instance was already done this epoch)
@@ -321,6 +321,19 @@ Derives several status flags from `selectedStakingContractDetails`:
 
 The pure logic lives in `getCompatibleStakingProgramIds()` (`frontend/utils/stakingProgram.ts`). Returns empty array (and `isStakingContractsLoaded: false`) while `isActiveStakingProgramLoaded` or `isMultisigTypeLoaded` is false.
 
+When staking is optional for the agent on this chain (`hasUnstakedOption`: its default is `no_staking` and `isStakingAvailable` allows the chain), `no_staking` is put first: the Unstaked tile (0 OLAS reward, 0 OLAS deposit). See [Optional staking (Connect)](#optional-staking-connect).
+
+### Optional staking (Connect)
+
+Connect defaults to `no_staking` and may stake only on the chains in `AgentConfig.stakingChains`; `isStakingAvailable(agentConfig, chainId)` replaces direct `hasStaking` reads, and agents without `stakingChains` keep `hasStaking`. `useNotifyOnActivityGoal` goes through `isStakingAvailable` too, and leaves out agents on minutes per run: Connect's goal is its run window, so its "daily goal" notification comes from Auto-Run's hand-over instead. A chain outside `stakingChains` (Polygon) has no staking UI.
+
+- **Setup:** `useCreateConnectService` creates the instance unstaked, then opens `SelectStaking` (instead of funding) on a chain where it can stake. The Configure view shows Unstaked as the *Default configuration*; Continue keeps it unstaked, Change Configuration opens the list. FundYourAgent's Back returns there.
+- **Existing instance:** the Overview shows a Staking section with the not-staked card and Manage Staking (to the contract list) while unstaked, and the usual countdown, streak and Manage Staking once staked. It decides from the service's own `staking_program_id` (`isInStakingMode`), not `selectedStakingProgramId`, whose cached subgraph source can outlive an unstake; while that is unknown, neither renders. Picking Unstaked while staked goes through Confirm Switch with `no_staking`, after the minimum staking period (`useCanMigrate`). It needs no OLAS because `ConfirmSwitchSection` renders `ConfirmUnstakeSection` for `no_staking`, which never calls `useShouldAllowStakingContractSwitch`. `SwitchingContractModal` has its own unstaking copy.
+- **Eligibility:** `ConnectService` reads the requester activity checker: `getMultisigNonces(safe)[1] - serviceInfo.nonces[1]` against `ceil(max(livenessPeriod, now - tsCheckpoint) * livenessRatio / 1e18)`, with no safety margin, so the one Marketplace request a day the user makes earns the epoch.
+- **Eviction:** `canRunWhileEvicted` keeps Start Agent enabled; `EvictedAlert` has a Connect branch.
+- **Announcement:** `ConnectStakingAnnouncement` (mounted in `MainPage`) shows "Staking for Connect agents" once per user (`connectStakingAnnouncementSeen`, backend-bound). It waits for the onboarding survey, Connect's first-run modal and an achievement that is loading, showing or about to show (`AchievementModal` publishes it through `useAchievementPending`), and for the services to load. "Stake your Connect Agent" opens the contract list of the first non-archived Connect instance in `stakingChains` order, else Connect setup with no chain chosen (`setPreselectedAgentType`, a one-shot that `AgentOnboarding` consumes on mount, so a Back inside Setup still opens empty).
+- **Omenstrat full:** Omenstrat's list shows "All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead." when no Omenstrat contract still offered to PredictTrader (one with an `activityTarget`, not deprecated: `getOmenstratProgramIds`) has a free slot (`useAreOmenstratContractsFull`).
+
 ### Multisig compatibility (OPE-1919)
 
 Staking contracts pin `service.multisig.codehash`. The original six Polygon contracts (Polygon Beta I–III, Polystrat I–III) only accept services deployed with a **PolySafe** multisig (`proxyHash() = POLY_SAFE_PROXY_CODEHASH`), while new Pearl versions deploy a standard Safe — so old and new Polystrat services need different contract sets. Polystrat IV/V/VI accepted a standard Safe and are now retired. New standard-Safe services default to Polystrat VII (`defaultStakingProgramId: PolystratVII`; the VII/VIII/IX tiers need 100/1000/10000 OLAS).
@@ -358,7 +371,7 @@ Clamps to 0 when negative. Returns `countdownDisplay` as a formatted string via 
 
 Aggregates rewards across all services on a given chain:
 
-1. Filters services matching the chain
+1. Filters services matching the chain, skipping those whose own `staking_program_id` is `no_staking` (an unstaked Connect)
 2. For each service, queries `activeStakingProgramId` via `createActiveStakingProgramIdQuery` (multicall, not subgraph)
 3. For each service + program pair, queries rewards via `createStakingRewardsQuery`
 4. Sums `accruedServiceStakingRewards` across all successful queries

@@ -1,13 +1,22 @@
+import { isNil } from 'lodash';
+
 import type {
   StakingProgramConfig,
   StakingProgramMap,
 } from '@/config/stakingPrograms';
-import type { AgentType, StakingProgramId } from '@/constants';
+import type { AgentType, EvmChainId } from '@/constants';
 import {
   NO_STAKING_PROGRAM_ID,
   RETIRED_STAKING_PROGRAM_COPY,
+  type StakingProgramId,
 } from '@/constants/stakingProgram';
-import { Address, Nullable } from '@/types';
+import {
+  Address,
+  AgentConfig,
+  MiddlewareServiceResponse,
+  Nullable,
+  StakingContractDetails,
+} from '@/types';
 import { formatToShortDateTime } from '@/utils/time';
 
 /**
@@ -21,13 +30,84 @@ export const deriveStakingProgramId = (address: Address): string => {
 };
 
 /**
- * Whether a service runs without staking (Connect). Such agents have no
- * staking contract or epoch, so staking reads and the staking KPI do not apply.
+ * Whether the program id is the Unstaked choice (`no_staking`): no staking
+ * contract or epoch applies, so staking reads and the staking KPI do not.
  */
 export const isNoStakingProgram = (
   stakingProgramId: Nullable<StakingProgramId> | undefined,
 ): stakingProgramId is typeof NO_STAKING_PROGRAM_ID =>
   stakingProgramId === NO_STAKING_PROGRAM_ID;
+
+/**
+ * Whether an instance of the agent on `chainId` can stake. Agents with
+ * `stakingChains` (Connect) stake only on those chains; others follow
+ * `hasStaking`.
+ */
+export const isStakingAvailable = (
+  agentConfig: Pick<AgentConfig, 'hasStaking' | 'stakingChains'>,
+  chainId: EvmChainId,
+) =>
+  agentConfig.stakingChains
+    ? agentConfig.stakingChains.includes(chainId)
+    : agentConfig.hasStaking;
+
+/**
+ * Whether the agent's contract lists offer an Unstaked option: staking is
+ * optional for it (its default is `no_staking`) and possible on this chain.
+ */
+export const hasUnstakedOption = (
+  agentConfig: Pick<
+    AgentConfig,
+    'hasStaking' | 'stakingChains' | 'defaultStakingProgramId'
+  >,
+  chainId: EvmChainId,
+) =>
+  isNoStakingProgram(agentConfig.defaultStakingProgramId) &&
+  isStakingAvailable(agentConfig, chainId);
+
+/** The staking program a service has stored for its home chain, if any. */
+export const getServiceStakingProgramId = (
+  service:
+    | Pick<MiddlewareServiceResponse, 'chain_configs' | 'home_chain'>
+    | undefined,
+): Nullable<StakingProgramId> | undefined =>
+  service?.chain_configs?.[service.home_chain]?.chain_data?.user_params
+    ?.staking_program_id;
+
+/**
+ * Whether the instance is staked, for what the UI shows: `false` where it
+ * cannot stake, `true` where staking is not optional, and otherwise its own
+ * stored program, not the subgraph's cached latest contract, which can outlive
+ * an unstake. `undefined` while that program is unknown.
+ */
+export const isInStakingMode = (
+  agentConfig: Pick<
+    AgentConfig,
+    'hasStaking' | 'stakingChains' | 'defaultStakingProgramId'
+  >,
+  chainId: EvmChainId,
+  service: Parameters<typeof getServiceStakingProgramId>[0],
+): boolean | undefined => {
+  if (!isStakingAvailable(agentConfig, chainId)) return false;
+  if (!isNoStakingProgram(agentConfig.defaultStakingProgramId)) return true;
+  const stakingProgramId = getServiceStakingProgramId(service);
+  if (isNil(stakingProgramId)) return undefined;
+  return !isNoStakingProgram(stakingProgramId);
+};
+
+/**
+ * Whether a contract has a free service slot; `null` while its details are
+ * unknown.
+ */
+export const hasFreeServiceSlot = (
+  details:
+    | Partial<Pick<StakingContractDetails, 'serviceIds' | 'maxNumServices'>>
+    | undefined
+    | null,
+): boolean | null =>
+  isNil(details?.serviceIds) || isNil(details?.maxNumServices)
+    ? null
+    : details.serviceIds.length < details.maxNumServices;
 
 /** Whether any program on the chain only accepts PolySafe-deployed services. */
 export const chainHasPolySafePrograms = (programs: StakingProgramMap) =>

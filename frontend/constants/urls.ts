@@ -32,7 +32,7 @@ export const TERMS_AND_CONDITIONS_URL: Url = 'https://olas.network/pearl-terms';
 export const PEARL_CONNECT_RISKS_TERMS_URL: Url = `${TERMS_AND_CONDITIONS_URL}#section-6-1-2`;
 
 // Staking history
-// Absent for chains with no staking programmes (Robinhood): `useRewardsHistory`
+// Absent for chains with no staking subgraph (Robinhood): `useRewardsHistory`
 // does not query there. Base and Polygon use SQD squids, served path-style under
 // the shared host; the rest are graph-node subgraph proxies (host-style).
 // Rollback: restore the chain's https://staking-{chain}.subgraph.autonolas.tech

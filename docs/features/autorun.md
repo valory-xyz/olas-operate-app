@@ -145,15 +145,15 @@ The goal is read once the staking signal is met, and before it only for an agent
 
 Note: Resetting `lastRewardsEligibilityRef` on successful stop is critical — without it the guard stays `true` from the current epoch and permanently blocks rotation in all future epochs when this instance runs again.
 
-### 3.2a Connect (no-staking agents)
+### 3.2a Connect (agents on minutes per run)
 
-Connect (`stakingProgramId === 'no_staking'`) has no epoch. It is an ordinary checklist row and uses the same "done" rule as every other agent, with no staking half: its `activity_goal` block is current and `is_met`. Connect opens one run window per process and keeps `is_met` true once its minutes have elapsed, so it rotates through the same `false → true` rotation effect.
+Connect (`agentConfig.runsOnMinutesPerRun`, read through `runsOnMinutesPerRun(meta)`) has no epoch, whether or not the user staked it: its rewards depend on the request the user makes in its session, not on the run. It is an ordinary checklist row and uses the same "done" rule as every other agent, with no staking half: its `activity_goal` block is current and `is_met`. Connect opens one run window per process and keeps `is_met` true once its minutes have elapsed, so it rotates through the same `false → true` rotation effect.
 
 - **Not running:** `refreshRewardsEligibility` returns `false` without a fetch or throttle, since its next process opens a fresh window. The circular order reaches it after every other agent has had a turn, and `rotateToNext` from a finished staking agent hands over to it.
 - **Running:** done when the block is current and `is_met`. Freshness is the only per-type difference: the block is current when `period_start >= floor(startRequestedAt / 1000)`, the moment the app last asked the backend to start the instance (`ServicesService.getStartRequestedAt`). `ServicesService.startService` records it on every path, so a manual start or restart counts the same as an Auto-run start. That ignores a leftover `is_met: true` from the previous process before the new one rewrites the file at boot. The record lives in memory: after a frontend reload while Connect keeps running there is no floor, and a leftover met block counts until the process rewrites it. The start request is used rather than `lastStartedAt`, which is stamped only once the deployment is confirmed, after the new process has already opened its window.
 - **Hand-over:** the §3.2 pre-check, and the scan starts the agent it chose. Connect is stopped only if one can start; the goal-reached notification ("Connect agent "…" finished its run") is sent on that stop, once per hand-over. Otherwise Connect keeps running and `lastRewardsEligibilityRef[connect]` is reset, as on a stop failure: Connect's `is_met` never goes back to false within a process, so the reset is what lets the next rewards poll re-check, and hand over once another agent becomes ready.
 - A watchdog or eviction hand-over sends no goal-reached notification.
-- `fetchDeployabilityForAgent` skips the staking reads for `no_staking`, and `AgentMeta.chainId` is the instance's own chain (`getServiceEvmChainId`).
+- `fetchDeployabilityForAgent` skips the staking reads for `no_staking` and for an agent on minutes per run, so a staked Connect is never skipped for eviction, an empty reward pool or a full contract, and `AgentMeta.chainId` is the instance's own chain (`getServiceEvmChainId`).
 - **Upgrade:** Connect instances that exist when the version first loads are added once to `userExcludedAgentInstances` (`autoRun.connectAutoRunMigrated`); later instances are auto-added.
 
 ### 3.3 Resume After Stop (Sleep/Wake, Backend Crash)
@@ -226,7 +226,7 @@ A staking agent can meet its staking KPI but never reach its activity goal (e.g.
 - After `ACTIVITY_GOAL_STALL_SECONDS` without a change, the read is "stalled": `deriveIsDoneForEpoch` returns `true` and the decision log ends `→ done=true stalled=true`, so the usual `false → true` edge fires with `trigger=stall`.
 - If the pre-check finds another agent, the stalled one is stopped and, once the stop is confirmed, deferred (`stallDeferredRef`), with no goal-reached notification. After a stop timeout it keeps running and is not deferred. For the rest of the epoch the scanner tries it only after every rewarded and empty-pool candidate (a stalled instance on an empty pool counts as stalled), unless the pre-check chose it, and starts it with a fresh hour. The deferral ends with the epoch.
 - If no other agent can start, it keeps running and its hour starts again.
-- Connect (`no_staking`) is never stalled.
+- Connect (minutes per run) is never stalled.
 
 ### 3.10 Retired Staking Program
 

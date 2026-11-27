@@ -7,6 +7,7 @@ import { StakingProgramContext } from '@/context/StakingProgramProvider';
 import { Maybe, StakingState } from '@/types';
 import {
   getLoadedRetiredProgramStakingDetails,
+  hasFreeServiceSlot,
   isNoStakingProgram,
   RetiredProgramStakingDetails,
 } from '@/utils/stakingProgram';
@@ -35,8 +36,6 @@ export const useActiveStakingContractDetails = () => {
     serviceStakingStartTime,
     minimumStakingDuration,
     availableRewards,
-    serviceIds,
-    maxNumServices,
   } = selectedStakingContractDetails ?? {};
 
   const isAgentEvicted = serviceStakingState === StakingState.Evicted;
@@ -46,10 +45,9 @@ export const useActiveStakingContractDetails = () => {
 
   const isRewardsAvailable = (availableRewards ?? 0) > 0;
 
-  const hasEnoughServiceSlots =
-    isNil(serviceIds) || isNil(maxNumServices)
-      ? null
-      : serviceIds.length < maxNumServices;
+  const hasEnoughServiceSlots = hasFreeServiceSlot(
+    selectedStakingContractDetails,
+  );
 
   const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughServiceSlots;
 
@@ -143,15 +141,12 @@ export const useStakingContractDetails = (
     ? allStakingContractDetailsRecord?.[stakingProgramId]
     : null;
 
-  const { serviceIds, maxNumServices, availableRewards } =
-    stakingContractInfo ?? {};
+  const { availableRewards } = stakingContractInfo ?? {};
 
   const isRewardsAvailable = (availableRewards ?? 0) > 0;
 
   const hasEnoughServiceSlots =
-    !isNil(serviceIds) &&
-    !isNil(maxNumServices) &&
-    serviceIds.length < maxNumServices;
+    hasFreeServiceSlot(stakingContractInfo) ?? false;
 
   const hasEnoughRewardsAndSlots = isRewardsAvailable && hasEnoughServiceSlots;
 

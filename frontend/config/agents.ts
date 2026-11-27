@@ -360,6 +360,11 @@ export const AGENT_CONFIG: {
       },
     },
     defaultStakingProgramId: NO_STAKING_PROGRAM_ID,
+    stakingChains: [EvmChainIdMap.Gnosis, EvmChainIdMap.Robinhood],
+    // The user's own session makes the epoch's request, not the run, and an
+    // evicted Connect keeps working as a wallet.
+    runsOnMinutesPerRun: true,
+    canRunWhileEvicted: true,
     serviceApi: ConnectService,
     displayName: 'Connect',
     description: 'Connect agent powered by a local Claude Code session.',

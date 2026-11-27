@@ -15,6 +15,7 @@ import { ServiceTemplate } from '@/types';
 import {
   asEvmChainId,
   asMiddlewareChain,
+  hasUnstakedOption,
   matchesAgentConfig,
   onDummyServiceCreation,
 } from '@/utils';
@@ -57,8 +58,9 @@ const buildSingleChainTemplate = (chainId: EvmChainId): ServiceTemplate => {
 
 /**
  * Creates a Connect service on the selected chain (connect-gated path — does
- * NOT touch the shared staking-select create), then routes to the appropriate
- * funding screen. Bypasses SelectStaking entirely (Connect uses `no_staking`).
+ * NOT touch the shared staking-select create), unstaked. On a chain where
+ * Connect can stake it then opens the staking step, whose default is Unstaked;
+ * elsewhere it routes straight to the appropriate funding screen.
  */
 export const useCreateConnectService = () => {
   const { goto: gotoSetup } = useSetup();
@@ -72,14 +74,14 @@ export const useCreateConnectService = () => {
 
   return useCallback(
     async (chainId: EvmChainId) => {
-      // Select an existing/new Connect service and route to the appropriate
-      // funding screen. `resolveFundingRoute` is a network call — if it fails,
-      // the service already exists, so fall back to FundYourAgent rather than
-      // throwing (throwing would surface a "create failed" error to the caller
-      // and tempt the user into creating a duplicate service on retry).
-      const selectAndRouteToFunding = async (serviceConfigId: string) => {
+      // Never throw once the service exists: a retry would create a duplicate.
+      const selectAndRoute = async (serviceConfigId: string) => {
         updateSelectedServiceConfigId(serviceConfigId);
         setDefaultStakingProgramId(NO_STAKING_PROGRAM_ID);
+        if (hasUnstakedOption(AGENT_CONFIG[AgentMap.Connect], chainId)) {
+          gotoSetup(SETUP_SCREEN.SelectStaking);
+          return;
+        }
         try {
           const route = await resolveFundingRoute(serviceConfigId);
           gotoSetup(route);
@@ -91,7 +93,7 @@ export const useCreateConnectService = () => {
 
       // Occupancy guard: Connect is one instance per chain. If the chosen chain
       // already has a Connect instance, never create a second one — select the
-      // existing instance and route to funding instead.
+      // existing instance and route it on instead.
       const connectConfig = AGENT_CONFIG[AgentMap.Connect];
       const existing = (services ?? []).find(
         (service) =>
@@ -99,7 +101,7 @@ export const useCreateConnectService = () => {
           asEvmChainId(service.home_chain) === chainId,
       );
       if (existing) {
-        await selectAndRouteToFunding(existing.service_config_id);
+        await selectAndRoute(existing.service_config_id);
         return;
       }
 
@@ -113,7 +115,7 @@ export const useCreateConnectService = () => {
 
       markServiceAsNotInitiallyFunded(newServiceConfigId);
       await refetchServices?.();
-      await selectAndRouteToFunding(newServiceConfigId);
+      await selectAndRoute(newServiceConfigId);
     },
     [
       services,

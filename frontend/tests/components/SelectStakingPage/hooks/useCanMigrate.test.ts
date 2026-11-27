@@ -345,4 +345,30 @@ describe('useCanMigrate', () => {
       },
     );
   });
+
+  describe('the Unstaked option (no_staking)', () => {
+    const renderUnstaked = () =>
+      renderHook(() =>
+        useCanMigrate({
+          stakingProgramId: 'no_staking',
+          isCurrentStakingProgram: false,
+        }),
+      );
+
+    it('can be selected: it has no contract, so no slots to run out of', () => {
+      setupMocks({ contractDetails: null });
+      const { result } = renderUnstaked();
+      expect(result.current.buttonText).toBe(MigrateButtonText.SelectContract);
+      expect(result.current.canMigrate).toBe(true);
+    });
+
+    it('is blocked inside the minimum staking period, like any switch', () => {
+      setupMocks({ isServiceStakedForMinimumDuration: false });
+      const { result } = renderUnstaked();
+      expect(result.current.buttonText).toBe(
+        MigrateButtonText.AgentInCooldownPeriod,
+      );
+      expect(result.current.canMigrate).toBe(false);
+    });
+  });
 });

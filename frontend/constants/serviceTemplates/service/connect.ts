@@ -142,7 +142,8 @@ export const connectFundRequirementsFor = (chain: MiddlewareChain): string => {
  * Connect service template.
  *
  * One `configurations` block per supported chain (Polygon / Gnosis / Robinhood),
- * each with `staking_program_id: 'no_staking'`. The same `name` is shared across chains;
+ * each created with `staking_program_id: 'no_staking'`; on the chains in
+ * `AgentConfig.stakingChains` the user may then stake it. The same `name` is shared across chains;
  * the chain is selected at setup time (see `SelectChain`).
  */
 export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
@@ -151,14 +152,14 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
   description: `${KPI_DESC_PREFIX} An agent that provides on-chain wallet and agent capabilities for your AI agent`,
   image:
     'https://gateway.autonolas.tech/ipfs/bafybeidldvcrd7exlqwutoa5fj7nh6mjrkh7w6tuuwofwdifavvezj6g2e',
-  hash: 'bafybeibpfdkrdgxqe334ep3yadn22roycqmyd6bjx72dycrwdoqe2ld42u',
-  service_version: 'v0.1.21',
+  hash: 'bafybeid2cbheg4esc4bz4w57l3ruxtdmxdfacormrt3sdx5rgjshyeyms4',
+  service_version: 'v0.1.22',
   agent_release: {
     is_aea: false,
     repository: {
       owner: 'valory-xyz',
       name: 'connect',
-      version: 'v0.1.21',
+      version: 'v0.1.22',
     },
   },
   home_chain: MiddlewareChainMap.GNOSIS,
@@ -226,6 +227,25 @@ export const CONNECT_SERVICE_TEMPLATE: ServiceTemplate = {
     },
     ROBINHOOD_LEDGER_RPC: {
       name: 'Robinhood ledger RPC',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    // Set by the middleware per chain; zero address while no_staking.
+    STAKING_CONTRACT_ADDRESS: {
+      name: 'Staking contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    ACTIVITY_CHECKER_CONTRACT_ADDRESS: {
+      name: 'Activity checker contract address',
+      description: '',
+      value: '',
+      provision_type: EnvProvisionType.COMPUTED,
+    },
+    SERVICE_ID: {
+      name: 'Service ID',
       description: '',
       value: '',
       provision_type: EnvProvisionType.COMPUTED,

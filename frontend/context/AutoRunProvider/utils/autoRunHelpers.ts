@@ -25,6 +25,7 @@ import {
   getLoadedRetiredProgramStakingDetails,
   getRetiredProgramReason,
   getRetiredProgramStatus,
+  hasFreeServiceSlot,
   isNoStakingProgram,
   RetiredProgramStakingDetails,
   RetiredSafeState,
@@ -50,6 +51,10 @@ import {
   STALL_CLOCK_MAX_READ_GAP_SECONDS,
 } from '../constants';
 import { AgentMeta, ObservedGoal, RewardSnapshot, StallClock } from '../types';
+
+/** See `AgentConfig.runsOnMinutesPerRun`. */
+export const runsOnMinutesPerRun = (meta: Pick<AgentMeta, 'agentConfig'>) =>
+  !!meta.agentConfig.runsOnMinutesPerRun;
 
 /**
  * Returns true when the staking epoch has expired but no on-chain checkpoint
@@ -351,9 +356,10 @@ export const refreshRewardsEligibility = async ({
     return done;
   };
 
-  // A no-staking agent that is not running is never done: no fetch needed,
-  // so it bypasses the throttle and the scanner never waits on its snapshot.
-  if (meta && isNoStakingProgram(meta.stakingProgramId) && !isRunning) {
+  // An agent on minutes per run that is not running is never done: no fetch
+  // needed, so it bypasses the throttle and the scanner never waits on its
+  // snapshot.
+  if (meta && runsOnMinutesPerRun(meta) && !isRunning) {
     return store(meta.stakingProgramId, false, NO_EPOCH);
   }
 
@@ -381,7 +387,7 @@ export const refreshRewardsEligibility = async ({
   lastRewardsFetchRef.current[serviceConfigId] = now;
   if (!meta) return;
 
-  if (isNoStakingProgram(meta.stakingProgramId)) {
+  if (runsOnMinutesPerRun(meta)) {
     const read = await readActivityGoal(
       serviceConfigId,
       logMessage,
@@ -399,7 +405,7 @@ export const refreshRewardsEligibility = async ({
     const doneForRun =
       deriveIsActivityGoalMet(read.goal, periodStartFloor) ?? false;
     logMessage(
-      `${serviceConfigId}: no staking, ` +
+      `${serviceConfigId}: minutes per run (${meta.stakingProgramId}), ` +
         `${formatGoalForLog(read, periodStartFloor)} → done=${doneForRun}`,
     );
     return store(meta.stakingProgramId, doneForRun, NO_EPOCH, read.goal);
@@ -930,11 +936,13 @@ const runDeployabilityChecks = async (
   // 4. On-chain staking state via direct API calls (same endpoints as
   //    StakingContractDetailsProvider, but for any service, not just selected).
   //    Skip if the service hasn't been deployed yet (no NFT token ID or staking
-  //    program), or has no staking contract at all (`no_staking`).
+  //    program), has no staking contract at all (`no_staking`), or runs on
+  //    minutes per run, which no staking state stops.
   if (
     isValidServiceId(agentMeta.serviceNftTokenId) &&
     agentMeta.stakingProgramId &&
-    !isNoStakingProgram(agentMeta.stakingProgramId)
+    !isNoStakingProgram(agentMeta.stakingProgramId) &&
+    !runsOnMinutesPerRun(agentMeta)
   ) {
     try {
       const {
@@ -949,16 +957,10 @@ const runDeployabilityChecks = async (
         agentMeta.stakingProgramId,
       );
 
-      const {
-        serviceIds,
-        maxNumServices,
-        availableRewards: contractAvailableRewards,
-      } = contractDetails ?? {};
+      const { availableRewards: contractAvailableRewards } =
+        contractDetails ?? {};
       availableRewards = contractAvailableRewards;
-      const hasEnoughServiceSlots =
-        isNil(serviceIds) || isNil(maxNumServices)
-          ? null
-          : serviceIds.length < maxNumServices;
+      const hasEnoughServiceSlots = hasFreeServiceSlot(contractDetails);
 
       isEvictedRunnable =
         isAgentEvicted &&

@@ -28,6 +28,11 @@ jest.mock('../../../components/AchievementModal', () => ({
   AchievementModal: () => <div data-testid="achievement-modal" />,
 }));
 
+jest.mock('../../../components/ConnectStakingAnnouncement', () => ({
+  ConnectStakingAnnouncement: () => (
+    <div data-testid="connect-staking-announcement" />
+  ),
+}));
 jest.mock('../../../components/OnboardingSurvey', () => ({
   OnboardingSurvey: () => <div data-testid="onboarding-survey" />,
 }));
@@ -173,6 +178,13 @@ describe('Main (MainPage entry)', () => {
     it('renders AchievementModal regardless of page state', () => {
       renderWithPage(PAGES.HelpAndSupport);
       expect(screen.getByTestId('achievement-modal')).toBeInTheDocument();
+    });
+
+    it('mounts the Connect staking announcement regardless of page state', () => {
+      renderWithPage(PAGES.HelpAndSupport);
+      expect(
+        screen.getByTestId('connect-staking-announcement'),
+      ).toBeInTheDocument();
     });
   });
 

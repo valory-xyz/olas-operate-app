@@ -147,11 +147,17 @@ jest.mock(
   }),
 );
 
+const mockSetPreselectedAgentType = jest.fn();
+
 describe('AgentOnboarding', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockUseSetup.mockReturnValue({ goto: jest.fn() });
+    mockUseSetup.mockReturnValue({
+      goto: jest.fn(),
+      preselectedAgentType: null,
+      setPreselectedAgentType: mockSetPreselectedAgentType,
+    });
     mockUsePageState.mockReturnValue({ goto: jest.fn() });
     mockUseServices.mockReturnValue({
       services: [
@@ -174,6 +180,35 @@ describe('AgentOnboarding', () => {
       isGeoLoading: false,
       isGeoError: false,
     });
+  });
+
+  it('opens with nothing selected when no agent was asked for', () => {
+    render(<AgentOnboarding />);
+    // the funding step renders only for a selected agent
+    expect(screen.queryByTestId('mock-has-accepted')).not.toBeInTheDocument();
+    expect(mockSetPreselectedAgentType).not.toHaveBeenCalled();
+  });
+
+  it('opens with nothing selected after a Back inside Setup, as on staging', () => {
+    // a pick left over in ServicesProvider is no preselection
+    mockUseServices.mockReturnValue({
+      ...mockUseServices(),
+      pendingAgentType: 'trader',
+    });
+    render(<AgentOnboarding />);
+    // the funding step renders only for a selected agent
+    expect(screen.queryByTestId('mock-has-accepted')).not.toBeInTheDocument();
+  });
+
+  it('opens once on the agent an entry point asked for, then forgets it', () => {
+    mockUseSetup.mockReturnValue({
+      ...mockUseSetup(),
+      preselectedAgentType: 'connect',
+    });
+    render(<AgentOnboarding />);
+    // Connect's own funding step, with no chain chosen yet
+    expect(screen.getByTestId('mock-has-accepted')).toHaveTextContent('false');
+    expect(mockSetPreselectedAgentType).toHaveBeenCalledWith(null);
   });
 
   it('keeps the new agents tab selected by default when archived instances exist', () => {

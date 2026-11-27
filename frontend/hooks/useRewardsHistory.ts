@@ -179,7 +179,7 @@ const useServiceRewardsHistory = (
 ) => {
   const transformCheckpoints = useTransformCheckpoints();
 
-  // Chains without staking programmes (Robinhood) have no staking subgraph.
+  // Chains without a staking subgraph (Robinhood) are absent from the map.
   const subgraphUrl = REWARDS_HISTORY_SUBGRAPH_URLS_BY_EVM_CHAIN[chainId];
 
   return useQuery({

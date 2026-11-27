@@ -33,6 +33,14 @@ jest.mock('../../../components/SelectStakingPage/hooks/useCanMigrate', () => ({
   useCanMigrate: jest.fn(() => ({ canMigrate: true, buttonText: 'Select' })),
 }));
 
+const mockUseAreOmenstratContractsFull = jest.fn(() => false);
+jest.mock(
+  '../../../components/SelectStakingPage/hooks/useAreOmenstratContractsFull',
+  () => ({
+    useAreOmenstratContractsFull: () => mockUseAreOmenstratContractsFull(),
+  }),
+);
+
 jest.mock('../../../components/NoStakingRewardsAlert', () => ({
   NoStakingRewardsAlert: () => null,
 }));
@@ -64,13 +72,22 @@ const mockUseStakingContracts = useStakingContracts as jest.MockedFunction<
 const mockRetry = jest.fn();
 
 const setup = ({
-  orderedStakingProgramIds = [] as string[],
+  orderedStakingProgramIds = [],
+  stakingContractIds = orderedStakingProgramIds.filter(
+    (id) => id !== 'no_staking',
+  ),
   isStakingContractsLoaded = true,
   isStakingContractsError = false,
+}: {
+  orderedStakingProgramIds?: string[];
+  stakingContractIds?: string[];
+  isStakingContractsLoaded?: boolean;
+  isStakingContractsError?: boolean;
 } = {}) => {
   mockUseStakingContracts.mockReturnValue({
     currentStakingProgramId: null,
     orderedStakingProgramIds,
+    stakingContractIds,
     isStakingContractsLoaded,
     isStakingContractsError,
     retryStakingContracts: mockRetry,
@@ -143,6 +160,7 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
     mockUseStakingContracts.mockReturnValue({
       currentStakingProgramId: null,
       orderedStakingProgramIds: [],
+      stakingContractIds: [],
       isStakingContractsLoaded: true,
       isStakingContractsError: false,
       retryStakingContracts: mockRetry,
@@ -159,6 +177,12 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
     ).not.toBeInTheDocument();
   });
 
+  it('still says no contract is compatible when the list holds only Unstaked', () => {
+    setup({ orderedStakingProgramIds: ['no_staking'] });
+    expect(screen.getByTestId('alert-info')).toBeInTheDocument();
+    expect(screen.getByTestId('card-no_staking')).toBeInTheDocument();
+  });
+
   it('keeps the existing card order when the same ids arrive re-sorted', () => {
     const { rerender } = setup({
       orderedStakingProgramIds: [
@@ -169,6 +193,10 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
     mockUseStakingContracts.mockReturnValue({
       currentStakingProgramId: SECOND_STAKING_PROGRAM_ID,
       orderedStakingProgramIds: [
+        SECOND_STAKING_PROGRAM_ID,
+        DEFAULT_STAKING_PROGRAM_ID,
+      ],
+      stakingContractIds: [
         SECOND_STAKING_PROGRAM_ID,
         DEFAULT_STAKING_PROGRAM_ID,
       ],
@@ -187,5 +215,26 @@ describe('SelectActivityRewardsConfiguration — empty state (OPE-1919)', () => 
       `card-${DEFAULT_STAKING_PROGRAM_ID}`,
       `card-${SECOND_STAKING_PROGRAM_ID}`,
     ]);
+  });
+});
+
+describe('SelectActivityRewardsConfiguration — Omenstrat contracts full', () => {
+  const HINT =
+    'All new Omenstrat contracts are full. You can stake a Connect agent on Gnosis instead.';
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it('points at Connect when every new Omenstrat contract is full', () => {
+    mockUseAreOmenstratContractsFull.mockReturnValue(true);
+    setup({ orderedStakingProgramIds: [DEFAULT_STAKING_PROGRAM_ID] });
+
+    expect(screen.getByText(HINT)).toBeInTheDocument();
+  });
+
+  it('says nothing while a slot is free', () => {
+    mockUseAreOmenstratContractsFull.mockReturnValue(false);
+    setup({ orderedStakingProgramIds: [DEFAULT_STAKING_PROGRAM_ID] });
+
+    expect(screen.queryByText(HINT)).toBeNull();
   });
 });

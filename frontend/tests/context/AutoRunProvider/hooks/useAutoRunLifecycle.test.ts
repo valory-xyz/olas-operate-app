@@ -746,6 +746,34 @@ describe('useAutoRunLifecycle', () => {
       });
     });
 
+    it('never treats a staked Connect as stalled: it hands over on its minutes', async () => {
+      const stakedConnectMeta = {
+        ...connectMeta,
+        stakingProgramId: 'connect_i',
+      } as AgentMeta;
+      const params = makeConnectRunningParams({
+        configuredAgents: [stakedConnectMeta, traderMeta],
+        isStalled: jest.fn().mockReturnValue(true),
+      });
+
+      renderHook(() => useAutoRunLifecycle(params));
+      await flush();
+
+      expect(params.stopAgentWithRecovery).toHaveBeenCalledWith(scConnect);
+      expect(params.deferStalled).not.toHaveBeenCalled();
+      expect(params.notifyGoalReachedOnHandOver).toHaveBeenCalledTimes(1);
+      const logged = (params.logMessage as jest.Mock).mock.calls.map(
+        ([message]) => message,
+      );
+      expect(logged).not.toContainEqual(
+        expect.stringContaining('trigger=stall'),
+      );
+      expect(params.scanAndStartNext).toHaveBeenCalledWith(
+        scConnect,
+        expect.objectContaining({ trigger: 'rewards' }),
+      );
+    });
+
     it('hands Connect over to a runnable alternate with one notification', async () => {
       const params = makeConnectRunningParams();
 

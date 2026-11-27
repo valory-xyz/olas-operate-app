@@ -1,5 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
+import { AGENT_CONFIG } from '../../config/agents';
+import { AgentMap } from '../../constants/agent';
 import { EvmChainIdMap, MiddlewareChainMap } from '../../constants/chains';
 import { SETUP_SCREEN } from '../../constants/setupScreen';
 import { useCreateConnectService } from '../../hooks/useCreateConnectService';
@@ -52,6 +54,9 @@ const GNOSIS_CONFIG = CONNECT_SERVICE_TEMPLATE.configurations.gnosis;
 // --- @/utils (onDummyServiceCreation + chain/config helpers) -----------------
 const mockOnDummyServiceCreation = jest.fn();
 const mockMatchesAgentConfig = jest.fn();
+// Whether Connect can stake on the chosen chain; the funding-route cases below
+// stand for a chain where it cannot.
+const mockHasUnstakedOption = jest.fn();
 const MIDDLEWARE_BY_EVM: Record<number, string> = {
   [EvmChainIdMap.Polygon]: MiddlewareChainMap.POLYGON,
   [EvmChainIdMap.Gnosis]: MiddlewareChainMap.GNOSIS,
@@ -79,14 +84,21 @@ jest.mock('../../utils', () => {
     asEvmChainId: (middlewareChain: string) =>
       EVM_BY_MIDDLEWARE[middlewareChain],
     matchesAgentConfig: (...args: unknown[]) => mockMatchesAgentConfig(...args),
+    hasUnstakedOption: (...args: unknown[]) => mockHasUnstakedOption(...args),
   };
 });
 
-// AGENT_CONFIG is only read to hand the Connect config to `matchesAgentConfig`
-// (which is mocked), so any object per agent key suffices.
-jest.mock('../../config/agents', () => ({
-  AGENT_CONFIG: new Proxy({}, { get: () => ({ servicePublicId: 'connect' }) }),
-}));
+// AGENT_CONFIG is only read to hand the Connect config to the mocked
+// `matchesAgentConfig` and `hasUnstakedOption`; one stable object per key, so a
+// test can check which config they were handed.
+jest.mock('../../config/agents', () => {
+  const configs: Record<string, object> = {};
+  return {
+    AGENT_CONFIG: new Proxy(configs, {
+      get: (target, key: string) => (target[key] ??= { servicePublicId: key }),
+    }),
+  };
+});
 
 // --- resolveFundingRoute ----------------------------------------------------
 const mockResolveFundingRoute = jest.fn();
@@ -137,6 +149,7 @@ describe('useCreateConnectService', () => {
     mockResolveFundingRoute.mockResolvedValue(SETUP_SCREEN.FundYourAgent);
     mockRefetchServices.mockResolvedValue(undefined);
     mockMatchesAgentConfig.mockReturnValue(true);
+    mockHasUnstakedOption.mockReturnValue(false);
   });
 
   it('creates a single-chain no_staking Connect service on the chosen chain', async () => {
@@ -264,5 +277,48 @@ describe('useCreateConnectService', () => {
       EXISTING_SERVICE_CONFIG_ID,
     );
     expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.FundYourAgent);
+  });
+
+  describe('on a chain where Connect can stake', () => {
+    beforeEach(() => mockHasUnstakedOption.mockReturnValue(true));
+
+    it('creates the service unstaked, then opens the staking step instead of funding', async () => {
+      const { result } = renderHook(() => useCreateConnectService());
+
+      await act(async () => {
+        await result.current(EvmChainIdMap.Gnosis);
+      });
+
+      expect(mockOnDummyServiceCreation.mock.calls[0][0]).toBe('no_staking');
+      // decided on Connect's own config, not whichever agent is selected
+      expect(mockHasUnstakedOption.mock.calls[0][0]).toBe(
+        AGENT_CONFIG[AgentMap.Connect],
+      );
+      expect(mockHasUnstakedOption.mock.calls[0][1]).toBe(EvmChainIdMap.Gnosis);
+      expect(mockUpdateSelectedServiceConfigId).toHaveBeenCalledWith(
+        NEW_SERVICE_CONFIG_ID,
+      );
+      expect(mockSetDefaultStakingProgramId).toHaveBeenCalledWith('no_staking');
+      expect(mockResolveFundingRoute).not.toHaveBeenCalled();
+      expect(mockGotoSetup).toHaveBeenCalledTimes(1);
+      expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.SelectStaking);
+    });
+
+    it('opens the staking step for an existing instance on that chain too', async () => {
+      mockServices = [
+        {
+          service_config_id: 'sc-existing-gnosis-connect',
+          home_chain: MiddlewareChainMap.GNOSIS,
+        },
+      ];
+      const { result } = renderHook(() => useCreateConnectService());
+
+      await act(async () => {
+        await result.current(EvmChainIdMap.Gnosis);
+      });
+
+      expect(mockOnDummyServiceCreation).not.toHaveBeenCalled();
+      expect(mockGotoSetup).toHaveBeenCalledWith(SETUP_SCREEN.SelectStaking);
+    });
   });
 });

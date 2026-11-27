@@ -24,7 +24,7 @@ jest.mock(
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 describe('GNOSIS_STAKING_PROGRAMS', () => {
-  it('covers all 26 Gnosis staking program IDs (16 legacy + 10 decoupled Omenstrat)', () => {
+  it('covers all 28 Gnosis staking program IDs (16 legacy + 10 decoupled Omenstrat + 2 Connect)', () => {
     const expectedIds = [
       STAKING_PROGRAM_IDS.PearlAlpha,
       STAKING_PROGRAM_IDS.PearlBeta,
@@ -52,11 +52,13 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
       STAKING_PROGRAM_IDS.OmenstratVIII,
       STAKING_PROGRAM_IDS.OmenstratIX,
       STAKING_PROGRAM_IDS.OmenstratX,
+      STAKING_PROGRAM_IDS.ConnectGnosisI,
+      STAKING_PROGRAM_IDS.ConnectGnosisII,
     ];
     for (const id of expectedIds) {
       expect(GNOSIS_STAKING_PROGRAMS[id]).toBeDefined();
     }
-    expect(Object.keys(GNOSIS_STAKING_PROGRAMS)).toHaveLength(26);
+    expect(Object.keys(GNOSIS_STAKING_PROGRAMS)).toHaveLength(28);
   });
 
   it('all programs are on Gnosis chain (chainId 100)', () => {
@@ -65,11 +67,39 @@ describe('GNOSIS_STAKING_PROGRAMS', () => {
     }
   });
 
-  it('all programs support the PredictTrader agent', () => {
-    for (const program of Object.values(GNOSIS_STAKING_PROGRAMS)) {
-      expect(program.agentsSupported).toContain(AgentMap.PredictTrader);
+  it('every program supports exactly one of PredictTrader and Connect', () => {
+    for (const [id, program] of Object.entries(GNOSIS_STAKING_PROGRAMS)) {
+      const expected = id.startsWith('connect_')
+        ? AgentMap.Connect
+        : AgentMap.PredictTrader;
+      expect(program.agentsSupported).toEqual([expected]);
     }
   });
+
+  it.each([
+    [
+      STAKING_PROGRAM_IDS.ConnectGnosisI,
+      'connect_i',
+      '0xe09B0b884A0d483f52BE854CdaaA59e0150bF9c2',
+      5000,
+    ],
+    [
+      STAKING_PROGRAM_IDS.ConnectGnosisII,
+      'connect_ii',
+      '0xC6860D6127fa605403f1567513D9c6ebfB8A278A',
+      10000,
+    ],
+  ])(
+    "pins the Connect program %s (id %s, the middleware's) to its contract",
+    (programId, middlewareId, address, olas) => {
+      expect(programId).toBe(middlewareId);
+      const program = GNOSIS_STAKING_PROGRAMS[programId];
+      expect(program.address).toBe(address);
+      expect(program.stakingRequirements.OLAS).toBe(olas);
+      expect(program.stakingVersion).toBe('0.4');
+      expect(program.mechType).toBeUndefined();
+    },
+  );
 
   it('all programs have a non-empty name string', () => {
     for (const program of Object.values(GNOSIS_STAKING_PROGRAMS)) {

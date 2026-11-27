@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 import { COLOR } from '@/constants';
 import { useServices } from '@/hooks';
+import { isNoStakingProgram } from '@/utils/stakingProgram';
 
 import { StakingContractCard } from '../../StakingContractCard';
 import { SelectStakingButton } from './SelectStakingButton';
@@ -58,7 +59,9 @@ export const ConfigureActivityRewards = ({
 
       <ConfigureStakingContractCardContainer>
         <Text className="text-neutral-secondary">
-          Recommended configuration
+          {isNoStakingProgram(defaultStakingProgramId)
+            ? 'Default configuration'
+            : 'Recommended configuration'}
         </Text>
         <StakingContractCard
           stakingProgramId={defaultStakingProgramId}
