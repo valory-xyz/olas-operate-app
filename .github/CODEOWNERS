@@ -1,5 +1,3 @@
-# Paths listed without owners intentionally have no assigned code owner.
-
 # CODEOWNERS — supply-chain-relevant paths
 #
 # Owners listed here are auto-requested as reviewers on matching paths.
@@ -15,41 +13,41 @@
 # these owners gate.
 
 # ── Default owner for the whole repo (catches frontend code, docs, configs) ──
-*
+*                                @atepem
 
 # ── CI / supply-chain infrastructure ──────────────────────────────────────────
-/.github/
-/.supply-chain/
-/frontend/.supply-chain/
-/frontend/scripts/
+/.github/                        @atepem
+/.supply-chain/                  @atepem
+/frontend/.supply-chain/         @atepem
+/frontend/scripts/               @atepem
 
 # ── Frontend / Node dependency and toolchain pins ─────────────────────────────
-/package.json
-/yarn.lock
-/frontend/package.json
-/frontend/yarn.lock
-/.npmrc
-/frontend/.npmrc
-/.nvmrc
+/package.json                    @atepem
+/yarn.lock                       @atepem
+/frontend/package.json           @atepem
+/frontend/yarn.lock              @atepem
+/.npmrc                          @atepem
+/frontend/.npmrc                 @atepem
+/.nvmrc                          @atepem
 
 # ── Security policy and ownership ─────────────────────────────────────────────
-/SECURITY.md
-/SUPPLY-CHAIN-SECURITY.md
-/.github/CODEOWNERS
+/SECURITY.md                     @atepem
+/SUPPLY-CHAIN-SECURITY.md        @atepem
+/.github/CODEOWNERS              @atepem
 
 # ── Backend / infrastructure ownership ────────────────────────────────────────
 # Last-match-wins: these rules override every earlier section for the matched
 # paths. *.sh matches shell scripts anywhere in the tree (build_pearl.sh,
 # download_binaries.sh, scripts/*.sh, electron/*.sh, etc.).
-/pyproject.toml                  @OjusWiZard
-/uv.lock                         @OjusWiZard
-/operate/                        @OjusWiZard
-/electron/                       @OjusWiZard
-/scripts/                        @OjusWiZard
-/build.js                        @OjusWiZard
-/build-linux.js                  @OjusWiZard
-/build-win.js                    @OjusWiZard
-/build-win-tenderly.js           @OjusWiZard
-/build.tester.js                 @OjusWiZard
-/customSign.js                   @OjusWiZard
-*.sh                             @OjusWiZard
+/pyproject.toml                  @OjusWiZard @atepem
+/uv.lock                         @OjusWiZard @atepem
+/operate/                        @OjusWiZard @atepem
+/electron/                       @OjusWiZard @atepem
+/scripts/                        @OjusWiZard @atepem
+/build.js                        @OjusWiZard @atepem
+/build-linux.js                  @OjusWiZard @atepem
+/build-win.js                    @OjusWiZard @atepem
+/build-win-tenderly.js           @OjusWiZard @atepem
+/build.tester.js                 @OjusWiZard @atepem
+/customSign.js                   @OjusWiZard @atepem
+*.sh                             @OjusWiZard @atepem
