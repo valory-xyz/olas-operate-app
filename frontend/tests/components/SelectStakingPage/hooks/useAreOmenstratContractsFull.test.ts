@@ -18,13 +18,9 @@ jest.mock('../../../../hooks', () => ({
 // What Gnosis offers new PredictTraders; update when the offered Omenstrat
 // contracts change.
 const OMENSTRAT_IDS = [
-  STAKING_PROGRAM_IDS.OmenstratI,
-  STAKING_PROGRAM_IDS.OmenstratII,
-  STAKING_PROGRAM_IDS.OmenstratIII,
-  STAKING_PROGRAM_IDS.OmenstratIV,
-  STAKING_PROGRAM_IDS.OmenstratV,
-  STAKING_PROGRAM_IDS.OmenstratVI,
-  STAKING_PROGRAM_IDS.OmenstratVII,
+  STAKING_PROGRAM_IDS.OmenstratVIII,
+  STAKING_PROGRAM_IDS.OmenstratIX,
+  STAKING_PROGRAM_IDS.OmenstratX,
 ];
 
 const full = { maxNumServices: 2, serviceIds: [1, 2] };
@@ -55,7 +51,7 @@ describe('useAreOmenstratContractsFull', () => {
 
   it('is false while any one of them has not loaded', () => {
     const record = allOmenstrat(full);
-    delete record[STAKING_PROGRAM_IDS.OmenstratIV];
+    delete record[STAKING_PROGRAM_IDS.OmenstratIX];
     expect(setup(record)).toBe(false);
     expect(setup(undefined)).toBe(false);
   });
@@ -101,6 +97,7 @@ describe('getOmenstratProgramIds', () => {
     const programs = {
       kept: program({}),
       deprecated: program({ deprecated: true }),
+      retired: program({ retired: true }),
       noTarget: program({ activityTarget: undefined }),
       otherAgent: program({ agentsSupported: [AgentMap.Connect] }),
     } as unknown as Parameters<typeof getOmenstratProgramIds>[0];

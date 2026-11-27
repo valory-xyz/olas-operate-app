@@ -7,7 +7,7 @@ import { hasFreeServiceSlot } from '@/utils/stakingProgram';
 
 /**
  * The Omenstrat contracts a new PredictTrader can join: the decoupled-activity
- * ones (they carry an `activityTarget`) that are still offered.
+ * ones (they carry an `activityTarget`) that are neither deprecated nor retired.
  */
 export const getOmenstratProgramIds = (
   programs: StakingProgramMap,
@@ -17,7 +17,8 @@ export const getOmenstratProgramIds = (
       ([, program]) =>
         program.agentsSupported.includes(AgentMap.PredictTrader) &&
         !isNil(program.activityTarget) &&
-        !program.deprecated,
+        !program.deprecated &&
+        !program.retired,
     )
     .map(([id]) => id as StakingProgramId);
 
