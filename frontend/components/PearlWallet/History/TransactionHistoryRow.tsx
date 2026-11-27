@@ -17,6 +17,8 @@ import { asMiddlewareChain } from '@/utils/middlewareHelpers';
 import {
   balanceFormat,
   formatAmountNormalized,
+  formatBelowPrecision,
+  formatUnits,
   formatUnitsToNumber,
 } from '@/utils/numberFormatters';
 import { truncateAddress } from '@/utils/truncate';
@@ -199,10 +201,18 @@ export const TransactionHistoryRow = ({
           // 2-decimal rendering collapses to 0.00 — give ETH up to 5 decimals
           // (the 6th is sub-cent and has no user value).
           const isEth = tokenInfo?.symbol === TokenSymbolMap.ETH;
+          const tokenDecimals = tokenInfo?.decimals ?? 18;
           const amountNumber = formatUnitsToNumber(
             transfer.amount,
-            tokenInfo?.decimals ?? 18,
+            tokenDecimals,
             isEth ? 5 : 4,
+          );
+          // Checked on the unrounded amount: the rounding above is a ceil,
+          // and a dust amount must read "<0.01", not "0.00" or a rounded-up
+          // value.
+          const belowPrecision = formatBelowPrecision(
+            parseFloat(formatUnits(transfer.amount, tokenDecimals)),
+            isEth ? 5 : 2,
           );
           const prefix = SIGN_BY_DIRECTION[transfer.direction];
           const className =
@@ -221,9 +231,10 @@ export const TransactionHistoryRow = ({
             <Fragment key={i}>
               <Text className={`${className} text-base`}>
                 {prefix}
-                {isEth
-                  ? formatAmountNormalized(amountNumber, 5)
-                  : balanceFormat(amountNumber, 2)}
+                {belowPrecision ??
+                  (isEth
+                    ? formatAmountNormalized(amountNumber, 5)
+                    : balanceFormat(amountNumber, 2))}
               </Text>
               <Flex align="center" gap={8}>
                 {iconSrc ? (

@@ -92,7 +92,9 @@ describe('getTransactionRowLabel', () => {
     expect(label).toBe('Fund Polystrat');
   });
 
-  it('labels MASTER_TO_AGENT to Agent EOA as "Allocated for execution costs"', () => {
+  it('labels MASTER_TO_AGENT to the Agent Signer as "Fund <agent>" too', () => {
+    // The Pearl Wallet does not tell Agent Signer and Agent Safe funding
+    // apart; only the Agent Wallet shows "Allocated for execution costs".
     const label = getTransactionRowLabel(
       makeRow({
         category: 'MASTER_TO_AGENT',
@@ -100,6 +102,6 @@ describe('getTransactionRowLabel', () => {
       }),
       'Polystrat',
     );
-    expect(label).toBe('Allocated for execution costs');
+    expect(label).toBe('Fund Polystrat');
   });
 });

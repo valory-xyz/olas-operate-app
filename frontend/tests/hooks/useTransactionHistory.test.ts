@@ -218,10 +218,9 @@ describe('buildTransactionHistoryRows', () => {
     ]);
   });
 
-  it('flags Agent EOA recipients on STANDALONE MASTER_TO_AGENT rows', () => {
-    // Native gas top-up to the Agent EOA that lands outside an
-    // AgentFundingEvent. The row must surface agentInstanceAddress so the
-    // UI renders "Allocated for execution costs".
+  it('does not flag an Agent Signer recipient on a standalone MASTER_TO_AGENT row', () => {
+    // The Pearl Wallet reads "Fund <agent>" whichever Agent Wallet address
+    // was funded, so no row carries agentInstanceAddress.
     const data = makeTransactionHistoryResponse({
       fundsMovements: [
         makeFundsMovement({
@@ -241,7 +240,7 @@ describe('buildTransactionHistoryRows', () => {
 
     const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
     expect(rows).toHaveLength(1);
-    expect(rows[0].agentInstanceAddress).toBe(MOCK_INSTANCE_ADDRESS);
+    expect(rows[0].agentInstanceAddress).toBeNull();
     expect(rows[0].agentSafeAddress).toBe(MOCK_MULTISIG_ADDRESS);
   });
 
@@ -264,7 +263,9 @@ describe('buildTransactionHistoryRows', () => {
     expect(rows[0].agentInstanceAddress).toBeNull();
   });
 
-  it('flags Agent EOA recipients in AgentFundingEvent rows', () => {
+  it('does not flag an Agent Signer-only AgentFundingEvent row', () => {
+    // A Funding Alert top-up pays the Agent Signer alone; the Pearl Wallet
+    // still reads it as "Fund <agent>" with its amount.
     const fundingTx = MOCK_TX_HASH_3;
     const data = makeTransactionHistoryResponse({
       agentFundingEvents: [
@@ -289,7 +290,67 @@ describe('buildTransactionHistoryRows', () => {
     });
 
     const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
-    expect(rows[0].agentInstanceAddress).toBe(MOCK_INSTANCE_ADDRESS);
+    expect(rows[0].agentInstanceAddress).toBeNull();
+    expect(rows[0].agentSafeAddress).toBe(MOCK_MULTISIG_ADDRESS);
+    expect(rows[0].transfers).toEqual([
+      { tokenAddress: null, amount: '1', direction: 'out' },
+    ]);
+  });
+
+  it('sums the Agent Signer and Agent Safe legs into one amount per token', () => {
+    // The user approved 0.0004 ETH, split in one MultiSend between the
+    // Agent Signer and the Agent Safe. The row shows the total.
+    const fundingTx = MOCK_TX_HASH_3;
+    const agentSafe = {
+      id: MOCK_MULTISIG_ADDRESS,
+      service: { id: '42', agentIds: [25] },
+    };
+    const data = makeTransactionHistoryResponse({
+      agentFundingEvents: [
+        makeAgentFundingEvent({
+          txHash: fundingTx,
+          transfers: [
+            makeFundsMovement({
+              id: `${fundingTx}-safe`,
+              category: 'MASTER_TO_AGENT',
+              token: null,
+              amount: '78019210675581',
+              from: DEFAULT_SAFE_ADDRESS,
+              to: MOCK_MULTISIG_ADDRESS,
+              transactionHash: fundingTx,
+              agentSafe,
+            }),
+            makeFundsMovement({
+              id: `${fundingTx}-olas`,
+              category: 'MASTER_TO_AGENT',
+              token: MOCK_OLAS_TOKEN_ADDRESS,
+              amount: '5',
+              from: DEFAULT_SAFE_ADDRESS,
+              to: MOCK_MULTISIG_ADDRESS,
+              transactionHash: fundingTx,
+              agentSafe,
+            }),
+            makeFundsMovement({
+              id: `${fundingTx}-signer`,
+              category: 'MASTER_TO_AGENT',
+              token: null,
+              amount: '321980789324419',
+              from: DEFAULT_SAFE_ADDRESS,
+              to: MOCK_INSTANCE_ADDRESS,
+              transactionHash: fundingTx,
+              agentSafe,
+            }),
+          ],
+        }),
+      ],
+    });
+
+    const rows = buildTransactionHistoryRows(data, DEFAULT_SAFE_ADDRESS);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].transfers).toEqual([
+      { tokenAddress: null, amount: '400000000000000', direction: 'out' },
+      { tokenAddress: MOCK_OLAS_TOKEN_ADDRESS, amount: '5', direction: 'out' },
+    ]);
   });
 
   it('does NOT flag Agent EOA on a mixed Safe+EOA funding event', () => {

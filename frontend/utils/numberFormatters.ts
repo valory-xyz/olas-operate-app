@@ -146,3 +146,19 @@ export const formatAmountNormalized = (
   }
   return amount.toFixed(decimals).replace(/\.?0+$/, '');
 };
+
+/**
+ * Text for an amount too small to show at `decimals` places, so a positive
+ * amount never reads as zero. Returns null when the amount displays normally.
+ * @example formatBelowPrecision(0.00000094, 2) => '<0.01'
+ * @example formatBelowPrecision(0.000003, 5) => '<0.00001'
+ * @example formatBelowPrecision(0.5, 2) => null
+ */
+export const formatBelowPrecision = (
+  amount: number,
+  decimals: number,
+): string | null => {
+  const smallest = 10 ** -decimals;
+  if (amount > 0 && amount < smallest) return `<${smallest.toFixed(decimals)}`;
+  return null;
+};

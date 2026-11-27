@@ -22,6 +22,27 @@ jest.mock('graphql-request', () => ({
     String.raw({ raw: strings }, ...values),
 }));
 
+describe('AgentTransactionHistoryService.get (v1 schema)', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it('does not ask v0.0.6 for AGENT_SAFE_TO_AGENT_EOA, which it does not know', async () => {
+    mockGraphqlRequest.mockResolvedValueOnce({
+      fundsMovements: [],
+      _meta: makeSubgraphMeta(),
+    });
+
+    await AgentTransactionHistoryService.get({
+      chainId: EvmChainIdMap.Gnosis,
+      agentSafe: MOCK_MULTISIG_ADDRESS,
+    });
+
+    const [, query] = mockGraphqlRequest.mock.calls[0];
+    expect(query).toContain('GetAgentTransactionHistory(');
+    expect(query).toContain('category_in: [MASTER_TO_AGENT, AGENT_TO_MASTER]');
+    expect(query).not.toContain('AGENT_SAFE_TO_AGENT_EOA');
+  });
+});
+
 describe('AgentTransactionHistoryService.get (v2 schema)', () => {
   const URL = 'https://pearl-transactions.subgraph.example';
 
@@ -48,6 +69,7 @@ describe('AgentTransactionHistoryService.get (v2 schema)', () => {
     const [url, query, variables] = mockGraphqlRequest.mock.calls[0];
     expect(url).toBe(URL);
     expect(query).toContain('GetAgentTransactionHistoryV2');
+    expect(query).toContain('AGENT_SAFE_TO_AGENT_EOA');
     expect(query).not.toContain('bondType');
     expect(variables).toEqual({
       agentSafe: MOCK_MULTISIG_ADDRESS.toLowerCase(),
@@ -138,6 +160,7 @@ describe('AgentTransactionHistoryService.get (sqd schema)', () => {
     expect(url).toBe(URL);
     expect(query).toContain('GetAgentTransactionHistorySqd');
     expect(query).toContain('agentSafe: { id_eq: $agentSafe }');
+    expect(query).toContain('AGENT_SAFE_TO_AGENT_EOA');
     expect(query).toContain('orderBy: blockTimestamp_DESC');
     expect(query).toContain('indexerStatus: indexerStatusById(id: "1")');
     expect(query).not.toContain('orderDirection');
